@@ -1,18 +1,19 @@
 package com.unifapi.academico.api.dto.request;
 
-import jakarta.validation.constraints.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import lombok.*;
 
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 public class SignupRequestDTO {
+    
     @NotBlank(message = "Email é obrigatório")
-    @Email(message = "Email deve ser válido")
+    @Email(message = "Email inválido")
     private String email;
     
     @NotBlank(message = "Nome é obrigatório")
@@ -20,6 +21,7 @@ public class SignupRequestDTO {
     private String nome;
     
     @NotBlank(message = "Curso é obrigatório")
+    @Size(min = 3, max = 255, message = "Curso deve ter entre 3 e 255 caracteres")
     private String curso;
     
     @NotBlank(message = "Senha é obrigatória")
