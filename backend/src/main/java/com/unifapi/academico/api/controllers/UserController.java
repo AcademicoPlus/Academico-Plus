@@ -23,7 +23,7 @@ public class UserController {
     @Autowired
     private UserService userService;
     
-    // 1. ROTAS ESPECÍFICAS PRIMEIRO (com paths fixos)
+    
     @GetMapping("/type/{type}")
     @Operation(summary = "Listar usuários por tipo", description = "Retorna usuários filtrados por tipo (STUDENT ou PROFESSOR)")
     public ResponseEntity<List<UserDTO>> getUsersByType(@PathVariable String type) {
@@ -32,7 +32,7 @@ public class UserController {
         return ResponseEntity.ok(users);
     }
     
-    // 2. ROTAS GENÉRICAS DEPOIS (com {id})
+    
     @GetMapping
     @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista de todos os usuários cadastrados")
     public ResponseEntity<List<UserDTO>> getAllUsers() {

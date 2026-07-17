@@ -35,8 +35,8 @@ public class CandidaturaController {
             @PathVariable Long projetoId,
             @Valid @RequestBody CreateCandidaturaRequestDTO request) {
         try {
-            // TODO: Pegar usuarioId do token JWT
-            Long usuarioId = 1L; // HARDCODED POR ENQUANTO
+            
+            Long usuarioId = 1L;
             
             Candidatura candidatura = candidaturaService.criar(projetoId, usuarioId, request.getMensagem());
             return ResponseEntity.status(HttpStatus.CREATED).body(CandidaturaDTO.from(candidatura));

@@ -66,7 +66,7 @@ public class AuthController {
     @Operation (summary = "Obter dados do usuário autenticado", description = "Retorna os dados do usuário autenticado com base no token JWT fornecido")
     public ResponseEntity<Map<String, Object>> me(@RequestHeader("Authorization") String token) {
         try {
-            // Remover "Bearer " do token
+            
             String jwtToken = token.replace("Bearer ", "");
             Map<String, Object> response = authService.me(jwtToken);
             return ResponseEntity.ok(response);

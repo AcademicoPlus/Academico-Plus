@@ -66,7 +66,7 @@ public class AuthService {
             .nome(nome)
             .curso(curso)
             .senhaHash(passwordEncoder.encode(senha))
-            .tipo(TipoUsuario.ALUNO) // Default
+            .tipo(TipoUsuario.ALUNO) 
             .ativo(true)
             .build();
 

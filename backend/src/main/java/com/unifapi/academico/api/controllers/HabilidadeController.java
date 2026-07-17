@@ -33,7 +33,9 @@ public class HabilidadeController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Listar habilidades", description = "Retorna uma lista paginada de habilidades")
-    public ResponseEntity<Page<HabilidadeDTO>> listar(Pageable pageable) {
+    public ResponseEntity<Page<HabilidadeDTO>> listar(
+            @org.springframework.data.web.PageableDefault(sort = "nome", direction = org.springframework.data.domain.Sort.Direction.ASC) Pageable pageable) {
+        
         Page<Habilidade> page = habilidadeService.findAll(pageable);
         List<HabilidadeDTO> dtos = page.getContent().stream()
             .map(HabilidadeDTO::from)

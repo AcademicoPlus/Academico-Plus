@@ -40,6 +40,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(authz -> authz
                         // Endpoints públicos (sem autenticação)
                         .requestMatchers(
+                                "/endosso/**",
+                                "/recomendacao/**",
                                 "/habilidades/**",
                                 "/candidatura/**",
                                 "/projetos/**",

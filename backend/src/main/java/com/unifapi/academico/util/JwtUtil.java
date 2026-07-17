@@ -45,11 +45,11 @@ public class JwtUtil {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
         return Jwts.builder()
-            .setClaims(claims)
-            .setSubject(email)
-            .setIssuedAt(now)
-            .setExpiration(expiryDate)
-            .signWith(key, SignatureAlgorithm.HS512)
+            .claims(claims)          
+            .subject(email)          
+            .issuedAt(now)           
+            .expiration(expiryDate)  
+            .signWith(key, Jwts.SIG.HS512) 
             .compact();
     }
 
@@ -75,10 +75,10 @@ public class JwtUtil {
         SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
 
         return Jwts.parser()
-            .setSigningKey(key)
+            .verifyWith(key)             
             .build()
-            .parseClaimsJws(token)
-            .getBody();
+            .parseSignedClaims(token)    
+            .getPayload();               
     }
 
     /**
@@ -138,9 +138,9 @@ public class JwtUtil {
         try {
             SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
             Jwts.parser()
-                .setSigningKey(key)
+                .verifyWith(key)          
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token); 
         } catch (SecurityException e) {
             log.error("JWT signature é inválida: {}", e.getMessage());
             throw new JwtException("JWT signature é inválida", e);
@@ -176,9 +176,9 @@ public class JwtUtil {
         try {
             SecretKey key = Keys.hmacShaKeyFor(jwtSecret.getBytes());
             Jwts.parser()
-                .setSigningKey(key)
+                .verifyWith(key)         
                 .build()
-                .parseClaimsJws(token);
+                .parseSignedClaims(token); 
             return false;
         } catch (ExpiredJwtException e) {
             return true;

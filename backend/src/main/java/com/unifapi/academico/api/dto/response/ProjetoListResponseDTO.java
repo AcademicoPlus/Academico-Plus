@@ -24,7 +24,7 @@ public class ProjetoListResponseDTO {
      */
     public static ProjetoListResponseDTO from(Page<?> page, List<ProjetoListDTO> dados) {
         return ProjetoListResponseDTO.builder()
-            .pagina(page.getNumber() + 1)  // Spring usa 0-indexed
+            .pagina(page.getNumber() + 1)  
             .limite(page.getSize())
             .total(page.getTotalElements())
             .totalPaginas(page.getTotalPages())
