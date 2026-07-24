@@ -8,12 +8,12 @@ import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.List;
-
+//Visão Completa: Retorna todos os detalhes de um único projeto (GET /api/projetos/{id}). Inclui membros, candidatos, etc.
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjetoDetalheDTO {
+public class ProjetoDetailResponseDTO {
     private Long id;
     private String titulo;
     private String descricao;

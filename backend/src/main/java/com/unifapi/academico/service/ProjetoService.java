@@ -3,9 +3,9 @@ package com.unifapi.academico.service;
 import com.unifapi.academico.domain.model.Projeto;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.repository.ProjetoRepository;
-import com.unifapi.academico.api.dto.response.ProjetoDetalheDTO;
-import com.unifapi.academico.api.dto.response.ProjetoListDTO;
-import com.unifapi.academico.api.dto.response.ProjetoListResponseDTO;
+import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
+import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
+import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import com.unifapi.academico.api.dto.response.UserDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,7 +26,7 @@ public class ProjetoService {
     /**
      * Buscar projeto por ID com detalhes
      */
-    public Optional<ProjetoDetalheDTO> findByIdDetail(Long id) {
+    public Optional<ProjetoDetailResponseDTO> findByIdDetail(Long id) {
         return projetoRepository.findById(id)
             .map(this::converterParaDetalhe);  // ← USE UM MÉTODO AUXILIAR
     }
@@ -34,7 +34,7 @@ public class ProjetoService {
     /**
      * Converter Projeto para ProjetoDetalheDTO
      */
-    private ProjetoDetalheDTO converterParaDetalhe(Projeto projeto) {
+    private ProjetoDetailResponseDTO converterParaDetalhe(Projeto projeto) {
         UserDTO criadorDTO = null;
         if (projeto.getCriador() != null) {
             criadorDTO = UserDTO.from(projeto.getCriador());
@@ -48,7 +48,7 @@ public class ProjetoService {
             .map(pm -> UserDTO.from(pm.getUsuario()))
             .toList();
 
-        return ProjetoDetalheDTO.builder()
+        return ProjetoDetailResponseDTO.builder()
             .id(projeto.getId())
             .titulo(projeto.getTitulo())
             .descricao(projeto.getDescricao())
@@ -67,20 +67,20 @@ public class ProjetoService {
     /**
      * Listar todos os projetos
      */
-    public ProjetoListResponseDTO findByStatusWithDetails(StatusProjeto status, Pageable pageable) {
+    public ProjetoPageResponseDTO findByStatusWithDetails(StatusProjeto status, Pageable pageable) {
     Page<Projeto> page = projetoRepository.findByStatus(status, pageable);
-    List<ProjetoListDTO> dados = page.getContent().stream()
-        .map(ProjetoListDTO::from)
+    List<ProjetoCardDTO> dados = page.getContent().stream()
+        .map(ProjetoCardDTO::from)
         .toList();
-    return ProjetoListResponseDTO.from(page, dados);
+    return ProjetoPageResponseDTO.from(page, dados);
     }
 
-    public ProjetoListResponseDTO findAllWithDetails(Pageable pageable) {
+    public ProjetoPageResponseDTO findAllWithDetails(Pageable pageable) {
     Page<Projeto> page = projetoRepository.findByAtivoTrue(pageable);
-    List<ProjetoListDTO> dados = page.getContent().stream()
-        .map(ProjetoListDTO::from)
+    List<ProjetoCardDTO> dados = page.getContent().stream()
+        .map(ProjetoCardDTO::from)
         .toList();
-    return ProjetoListResponseDTO.from(page, dados);
+    return ProjetoPageResponseDTO.from(page, dados);
     }
 
     /**

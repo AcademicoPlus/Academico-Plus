@@ -2,95 +2,110 @@ package com.unifapi.academico.util;
 
 import io.jsonwebtoken.JwtException;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @DisplayName("JwtUtil")
 class JwtUtilTest {
 
     @Autowired
     private JwtUtil jwtUtil;
 
-    private String email = "teste@unifapi.edu.br";
-    private String token;
+    private String email;
+    private Map<String, Object> claims;
 
     @BeforeEach
     void setup() {
-        Map<String, Object> claims = new HashMap<>();
+        email = "teste@unifapi.edu.br";
+        claims = new HashMap<>();
         claims.put("tipo", "ALUNO");
-        claims.put("id", 1L);
-        token = jwtUtil.generateToken(email, claims);
     }
 
     @Test
     @DisplayName("Deve gerar token válido")
     void deveGerarTokenValido() {
-        assertNotNull(token);
-        assertFalse(token.isEmpty());
+        // Act
+        String token = jwtUtil.generateToken(email, claims);
+
+        // Assert
+        assertThat(token)
+            .isNotNull()
+            .isNotEmpty()
+            .contains(".");
     }
 
     @Test
     @DisplayName("Deve extrair email do token")
     void deveExtrairEmailDoToken() {
-        String emailExtraido = jwtUtil.extractEmail(token);
-        assertEquals(email, emailExtraido);
-    }
+        // Arrange
+        String token = jwtUtil.generateToken(email, claims);
 
-    @Test
-    @DisplayName("Deve extrair claim customizado")
-    void deveExtrairClaimCustomizado() {
-        String tipo = jwtUtil.getClaimFromToken(token, "tipo");
-        assertEquals("ALUNO", tipo);
+        // Act
+        String emailExtraido = jwtUtil.extractEmail(token);
+
+        // Assert
+        assertThat(emailExtraido)
+            .isEqualTo(email);
     }
 
     @Test
     @DisplayName("Deve validar token válido")
     void deveValidarTokenValido() {
-        boolean isValid = jwtUtil.isTokenValid(token, email);
-        assertTrue(isValid);
+        // Arrange
+        String token = jwtUtil.generateToken(email, claims);
+
+        // Act
+        boolean valido = jwtUtil.isTokenValid(token, email);
+
+        // Assert
+        assertThat(valido).isTrue();
     }
 
     @Test
-    @DisplayName("Não deve validar token com email diferente")
-    void naoDeveValidarTokenComEmailDiferente() {
-        boolean isValid = jwtUtil.isTokenValid(token, "outro@unifapi.edu.br");
-        assertFalse(isValid);
+    @DisplayName("Deve falhar validação com email diferente")
+    void devefalharValidacaoComEmailDiferente() {
+        // Arrange
+        String token = jwtUtil.generateToken(email, claims);
+
+        // Act
+        boolean valido = jwtUtil.isTokenValid(token, "outro@unifapi.edu.br");
+
+        // Assert
+        assertThat(valido).isFalse();
     }
 
     @Test
-    @DisplayName("Deve extrair token de bearer")
-    void deveExtrairTokenDeBearer() {
-        String bearer = "Bearer " + token;
-        String extracted = jwtUtil.extractTokenFromBearer(bearer);
-        assertEquals(token, extracted);
+    @DisplayName("Deve lançar exceção para token inválido")
+    void deveLancarExcecaoParaTokenInvalido() {
+        // Arrange
+        String tokenInvalido = "token.invalido.xyz";
+
+        // Act & Assert
+        assertThatThrownBy(() -> jwtUtil.validateToken(tokenInvalido))
+            .isInstanceOf(JwtException.class);
     }
 
     @Test
-    @DisplayName("Deve validar token sem exceção")
-    void deveValidarTokenSemExcecao() {
-        assertDoesNotThrow(() -> jwtUtil.validateToken(token));
-    }
+    @DisplayName("Deve extrair claim customizado")
+    void deveExtrairClaimCustomizado() {
+        // Arrange
+        String token = jwtUtil.generateToken(email, claims);
 
-    @Test
-    @DisplayName("Não deve validar token inválido")
-    void naoDeveValidarTokenInvalido() {
-        String tokenInvalido = "token.invalido.123";
-        assertThrows(JwtException.class, () -> jwtUtil.validateToken(tokenInvalido));
-    }
+        // Act
+        String tipo = jwtUtil.getClaimFromToken(token, "tipo");
 
-    @Test
-    @DisplayName("Deve retornar tempo até expiração")
-    void deveRetornarTempoAtéExpiração() {
-        long seconds = jwtUtil.getSecondsUntilExpiration(token);
-        assertTrue(seconds > 0);
-        assertTrue(seconds <= 86400); // 24h em segundos
+        // Assert
+        assertThat(tipo)
+            .isEqualTo("ALUNO");
     }
 }

@@ -32,6 +32,10 @@ public class AuthService {
             throw new RuntimeException("Senha incorreta");
         }
 
+        if (Boolean.FALSE.equals(usuario.getAtivo())) {
+            throw new RuntimeException("Usuário inativo");
+        }
+
         // Gerar token com claims
         Map<String, Object> claims = new HashMap<>();
         claims.put("tipo", usuario.getTipo().toString());
@@ -88,20 +92,20 @@ public class AuthService {
      * Validar e decodificar token JWT
      */
     public Map<String, Object> me(String token) {
-        // Validar e extrair email
-        jwtUtil.validateToken(token);
-        String email = jwtUtil.extractEmail(token);
-        
-        Usuario usuario = usuarioRepository.findByEmail(email)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+    jwtUtil.validateToken(token);
+    String email = jwtUtil.extractEmail(token);
+    
+    Usuario usuario = usuarioRepository.findByEmail(email)
+        .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
-        return Map.of(
-            "id", usuario.getId(),
-            "email", usuario.getEmail(),
-            "nome", usuario.getNome(),
-            "tipo", usuario.getTipo(),
-            "curso", usuario.getCurso()
-        );
+    Map<String, Object> response = new HashMap<>();
+    response.put("id", usuario.getId());
+    response.put("email", usuario.getEmail());
+    response.put("nome", usuario.getNome());
+    response.put("tipo", usuario.getTipo());
+    response.put("curso", usuario.getCurso()); // Aceita null sem quebrar
+
+    return response;
     }
 
     /**

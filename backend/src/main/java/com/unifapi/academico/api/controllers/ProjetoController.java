@@ -1,15 +1,21 @@
 package com.unifapi.academico.api.controllers;
 
 import com.unifapi.academico.domain.model.Projeto;
+import com.unifapi.academico.domain.model.Usuario;
+import com.unifapi.academico.repository.UsuarioRepository;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.service.ProjetoService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.validation.Valid;
 
-import com.unifapi.academico.api.dto.response.ProjetoDetalheDTO;
-import com.unifapi.academico.api.dto.response.ProjetoListResponseDTO;
+import com.unifapi.academico.api.dto.request.ProjetoRequestDTO;
+import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
+import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
+import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.security.core.Authentication;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -25,17 +31,19 @@ public class ProjetoController {
 
     private final ProjetoService projetoService;
 
+    private final UsuarioRepository usuarioRepository;
+
     /**
      * GET /api/projetos - Listar com filtros
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Listar projetos", description = "Retorna uma lista paginada de projetos, podendo filtrar por status")
-    public ResponseEntity<ProjetoListResponseDTO> listar(
+    public ResponseEntity<ProjetoPageResponseDTO> listar(
             @RequestParam(required = false) StatusProjeto status,
             @ParameterObject Pageable pageable) {
         
-        ProjetoListResponseDTO response;
+        ProjetoPageResponseDTO response;
         
         if (status != null) {
             response = projetoService.findByStatusWithDetails(status, pageable);
@@ -52,7 +60,7 @@ public class ProjetoController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Obter detalhes do projeto", description = "Retorna os detalhes de um projeto específico pelo seu ID")
-    public ResponseEntity<ProjetoDetalheDTO> obter(@PathVariable Long id) {
+    public ResponseEntity<ProjetoDetailResponseDTO> obter(@PathVariable Long id) {
         return projetoService.findByIdDetail(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
@@ -64,14 +72,30 @@ public class ProjetoController {
     @PostMapping
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Criar novo projeto", description = "Cria um novo projeto no sistema")
-    public ResponseEntity<Projeto> criar(@RequestBody Projeto projeto) {
-        try {
-            Projeto criado = projetoService.create(projeto);
-            return ResponseEntity.status(HttpStatus.CREATED).body(criado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.badRequest().build();
-        }
+    public ResponseEntity<ProjetoCardDTO> criar (
+        @RequestBody @Valid ProjetoRequestDTO dto,
+        Authentication authentication) {
+
+            String email = authentication.getName();
+            Usuario criador = usuarioRepository.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
+            
+            Projeto projeto = Projeto.builder()
+            .titulo(dto.getTitulo())
+            .descricao(dto.getDescricao())
+            .vagas(dto.getVagas())
+            .dataFim(dto.getDataFim())
+            .criador(criador)
+            .status(StatusProjeto.ABERTO)
+            .vagasPreenchidas(0)
+            .ativo(true)
+            .build();
+
+        // 3. Salva e retorna o DTO de resposta
+        Projeto criado = projetoService.create(projeto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ProjetoCardDTO.from(criado));
     }
+    
 
     /**
      * PUT /api/projetos/{id} - Atualizar

@@ -4,6 +4,7 @@ import jakarta.validation.constraints.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import com.unifapi.academico.domain.enums.TipoUsuario;
 
@@ -14,6 +15,7 @@ import java.util.Set;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Builder
 @Entity
 @Table(name = "usuarios", indexes = {
@@ -25,6 +27,7 @@ public class Usuario {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     @NotBlank(message = "Email é obrigatório")

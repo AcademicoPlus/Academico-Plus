@@ -12,7 +12,7 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjetoListDTO {
+public class ProjetoCardDTO {
     
     private Long id;
     private String titulo;
@@ -25,9 +25,9 @@ public class ProjetoListDTO {
     private List<String> habilidades;
 
     /**
-     * Converter Projeto para ProjetoListDTO (para listas)
+     * Visão Resumida (Item): Retorna apenas os dados essenciais de um projeto para ser exibido em cards/listas.
      */
-    public static ProjetoListDTO from(Projeto projeto) {
+    public static ProjetoCardDTO from(Projeto projeto) {
         if (projeto == null) {
             return null;
         }
@@ -36,7 +36,7 @@ public class ProjetoListDTO {
             .map(ph -> ph.getHabilidade().getNome())
             .toList();
 
-        return ProjetoListDTO.builder()
+        return ProjetoCardDTO.builder()
             .id(projeto.getId())
             .titulo(projeto.getTitulo())
             .descricao(projeto.getDescricao())

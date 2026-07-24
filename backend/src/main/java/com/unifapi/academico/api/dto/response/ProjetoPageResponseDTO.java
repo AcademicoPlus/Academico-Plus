@@ -11,19 +11,19 @@ import java.util.List;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ProjetoListResponseDTO {
+public class ProjetoPageResponseDTO {
     
     private Integer pagina;
     private Integer limite;
     private Long total;
     private Integer totalPaginas;
-    private List<ProjetoListDTO> dados;
+    private List<ProjetoCardDTO> dados;
 
     /**
      * Converter Page<Projeto> para ProjetoListResponseDTO
      */
-    public static ProjetoListResponseDTO from(Page<?> page, List<ProjetoListDTO> dados) {
-        return ProjetoListResponseDTO.builder()
+    public static ProjetoPageResponseDTO from(Page<?> page, List<ProjetoCardDTO> dados) {
+        return ProjetoPageResponseDTO.builder()
             .pagina(page.getNumber() + 1)  
             .limite(page.getSize())
             .total(page.getTotalElements())

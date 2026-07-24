@@ -5,20 +5,22 @@ import com.unifapi.academico.domain.enums.TipoUsuario;
 import com.unifapi.academico.repository.UsuarioRepository;
 import com.unifapi.academico.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Map;
 import java.util.Optional;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
+@ExtendWith(MockitoExtension.class)
 @DisplayName("AuthService")
 class AuthServiceTest {
 
@@ -34,20 +36,17 @@ class AuthServiceTest {
     @InjectMocks
     private AuthService authService;
 
-    private Usuario usuarioValido;
+    private Usuario usuarioTeste;
 
     @BeforeEach
     void setup() {
-        MockitoAnnotations.openMocks(this);
-
-        usuarioValido = Usuario.builder()
+        usuarioTeste = Usuario.builder()
             .id(1L)
             .email("teste@unifapi.edu.br")
             .nome("Teste User")
-            .curso("Computação")
-            .tipo(TipoUsuario.ALUNO)
             .senhaHash("hashedPassword")
             .ativo(true)
+            .tipo(TipoUsuario.ALUNO)
             .build();
     }
 
@@ -55,79 +54,158 @@ class AuthServiceTest {
     @DisplayName("Deve fazer login com sucesso")
     void deveLoginComSucesso() {
         // Arrange
-        when(usuarioRepository.findByEmail("teste@unifapi.edu.br"))
-            .thenReturn(Optional.of(usuarioValido));
+        String email = "teste@unifapi.edu.br";
+        String senha = "password123";
+
+        when(usuarioRepository.findByEmail(email))
+            .thenReturn(Optional.of(usuarioTeste));
         
-        when(passwordEncoder.matches("senha123", "hashedPassword"))
+        when(passwordEncoder.matches(senha, usuarioTeste.getSenhaHash()))
             .thenReturn(true);
         
         when(jwtUtil.generateToken(any(), any()))
-            .thenReturn("jwt_token_123");
+            .thenReturn("token_valido");
 
         // Act
-        Map<String, Object> resultado = authService.login("teste@unifapi.edu.br", "senha123");
+        Map<String, Object> resultado = authService.login(email, senha);
 
         // Assert
-        assertNotNull(resultado);
-        assertEquals("teste@unifapi.edu.br", resultado.get("email"));
-        assertEquals("jwt_token_123", resultado.get("token"));
+        assertThat(resultado)
+            .isNotNull()
+            .containsKeys("id", "email", "token", "expiresIn");
+        
+        assertThat(resultado)
+            .extracting("email")
+            .isEqualTo(email);
+        
+        assertThat(resultado)
+            .extracting("token")
+            .isEqualTo("token_valido");
+
+        verify(usuarioRepository).findByEmail(email);
+        verify(passwordEncoder).matches(senha, usuarioTeste.getSenhaHash());
+        verify(jwtUtil).generateToken(any(), any());
     }
 
     @Test
-    @DisplayName("Não deve fazer login com senha incorreta")
-    void naoDeveLoginComSenhaIncorreta() {
+    @DisplayName("Deve falhar login com usuario não encontrado")
+    void deveFalharLoginUsuarioNaoEncontrado() {
         // Arrange
-        when(usuarioRepository.findByEmail("teste@unifapi.edu.br"))
-            .thenReturn(Optional.of(usuarioValido));
+        String email = "inexistente@unifapi.edu.br";
+        String senha = "password123";
+
+        when(usuarioRepository.findByEmail(email))
+            .thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.login(email, senha))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Usuário não encontrado");
+    }
+
+    @Test
+    @DisplayName("Deve falhar login com senha incorreta")
+    void deveFalharLoginSenhaIncorreta() {
+        // Arrange
+        String email = "teste@unifapi.edu.br";
+        String senha = "senhaErrada";
+
+        when(usuarioRepository.findByEmail(email))
+            .thenReturn(Optional.of(usuarioTeste));
         
-        when(passwordEncoder.matches("senhaErrada", "hashedPassword"))
+        when(passwordEncoder.matches(senha, usuarioTeste.getSenhaHash()))
             .thenReturn(false);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> {
-            authService.login("teste@unifapi.edu.br", "senhaErrada");
-        });
+        assertThatThrownBy(() -> authService.login(email, senha))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Senha incorreta");
+    }
+
+    @Test
+    @DisplayName("Deve falhar login com usuario inativo")
+    void deveFalharLoginUsuarioInativo() {
+        // Arrange
+        usuarioTeste.setAtivo(false);
+        String email = "teste@unifapi.edu.br";
+        String senha = "password123";
+
+        when(usuarioRepository.findByEmail(email))
+            .thenReturn(Optional.of(usuarioTeste));
+        
+        when(passwordEncoder.matches(senha, usuarioTeste.getSenhaHash()))
+            .thenReturn(true);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.login(email, senha))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Usuário inativo");
     }
 
     @Test
     @DisplayName("Deve fazer signup com sucesso")
     void deveSignupComSucesso() {
         // Arrange
-        when(usuarioRepository.existsByEmail("novo@unifapi.edu.br"))
+        String email = "novo@unifapi.edu.br";
+        String nome = "Novo Usuario";
+        String curso = "Computação";
+        String senha = "password123";
+
+        when(usuarioRepository.existsByEmail(email))
             .thenReturn(false);
         
-        when(passwordEncoder.encode("senha123"))
-            .thenReturn("encoded_senha");
+        when(passwordEncoder.encode(senha))
+            .thenReturn("encodedPassword");
         
         when(usuarioRepository.save(any(Usuario.class)))
-            .thenReturn(usuarioValido);
+            .thenReturn(usuarioTeste);
         
         when(jwtUtil.generateToken(any(), any()))
-            .thenReturn("jwt_token_123");
+            .thenReturn("token_novo");
 
         // Act
-        Map<String, Object> resultado = authService.signup(
-            "novo@unifapi.edu.br",
-            "Novo User",
-            "Computação",
-            "senha123"
-        );
+        Map<String, Object> resultado = authService.signup(email, nome, curso, senha);
 
         // Assert
-        assertNotNull(resultado);
-        assertEquals("teste@unifapi.edu.br", resultado.get("email"));
+        assertThat(resultado)
+            .isNotNull()
+            .containsKeys("id", "email", "nome", "token");
+
+        verify(usuarioRepository).existsByEmail(email);
+        verify(passwordEncoder).encode(senha);
+        verify(usuarioRepository).save(any(Usuario.class));
     }
 
     @Test
-    @DisplayName("Não deve fazer signup com email duplicado")
-    void naoDeveSignupComEmailDuplicado() {
+    @DisplayName("Deve falhar signup com email já registrado")
+    void deveFalharSignupEmailJaRegistrado() {
         // Arrange
-        when(usuarioRepository.existsByEmail("teste@unifapi.edu.br"))
+        String email = "existente@unifapi.edu.br";
+
+        when(usuarioRepository.existsByEmail(email))
             .thenReturn(true);
 
         // Act & Assert
-        assertThrows(RuntimeException.class, () -> {
-            authService.signup("teste@unifapi.edu.br", "User", "Curso", "senha123");
-        });
+        assertThatThrownBy(() -> authService.signup(email, "Nome", "Curso", "password123"))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Email já registrado");
+    }
+
+    @Test
+    @DisplayName("Deve falhar signup com senha muito curta")
+    void deveFalharSignupSenhamuito() {
+        // Arrange
+        when(usuarioRepository.existsByEmail(any()))
+            .thenReturn(false);
+
+        // Act & Assert
+        assertThatThrownBy(() -> authService.signup(
+            "novo@unifapi.edu.br", 
+            "Nome", 
+            "Curso", 
+            "12345"  
+        ))
+            .isInstanceOf(RuntimeException.class)
+            .hasMessage("Senha deve ter no mínimo 8 caracteres");
     }
 }
