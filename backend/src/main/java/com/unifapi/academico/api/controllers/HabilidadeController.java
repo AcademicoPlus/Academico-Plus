@@ -5,7 +5,7 @@ import com.unifapi.academico.service.HabilidadeService;
 
 import io.swagger.v3.oas.annotations.Operation;
 
-import com.unifapi.academico.api.dto.request.CreateHabilidadeRequestDTO;
+import com.unifapi.academico.api.dto.request.CriarHabilidadeDTO;
 import com.unifapi.academico.api.dto.response.HabilidadeDTO;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -18,6 +18,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/habilidades")
@@ -63,7 +64,7 @@ public class HabilidadeController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Obter detalhes da habilidade", description = "Retorna os detalhes de uma habilidade específica pelo seu ID")
-    public ResponseEntity<HabilidadeDTO> obter(@PathVariable Long id) {
+    public ResponseEntity<HabilidadeDTO> obter(@PathVariable UUID id) {
         return habilidadeService.findById(id)
             .map(h -> ResponseEntity.ok(HabilidadeDTO.from(h)))
             .orElse(ResponseEntity.notFound().build());
@@ -75,7 +76,7 @@ public class HabilidadeController {
     @PostMapping
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Criar habilidade", description = "Cria uma nova habilidade (somente para administradores)")
-    public ResponseEntity<HabilidadeDTO> criar(@Valid @RequestBody CreateHabilidadeRequestDTO request) {
+    public ResponseEntity<HabilidadeDTO> criar(@Valid @RequestBody CriarHabilidadeDTO request) {
         try {
             Habilidade habilidade = Habilidade.builder()
                 .nome(request.getNome())
@@ -99,8 +100,8 @@ public class HabilidadeController {
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Atualizar habilidade", description = "Atualiza os dados de uma habilidade específica pelo seu ID (somente para administradores)")
     public ResponseEntity<HabilidadeDTO> atualizar(
-            @PathVariable Long id,
-            @Valid @RequestBody CreateHabilidadeRequestDTO request) {
+            @PathVariable UUID id,
+            @Valid @RequestBody CriarHabilidadeDTO request) {
         try {
             Habilidade habilidade = Habilidade.builder()
                 .nome(request.getNome())
@@ -121,7 +122,7 @@ public class HabilidadeController {
     @DeleteMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
     @Operation(summary = "Deletar habilidade", description = "Deleta uma habilidade específica pelo seu ID (somente para administradores)")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         habilidadeService.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -8,6 +8,7 @@ import lombok.NoArgsConstructor;
 import com.unifapi.academico.domain.enums.NivelHabilidade;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -24,8 +25,8 @@ import java.time.LocalDateTime;
 public class UsuarioHabilidade {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "usuario_id", nullable = false)

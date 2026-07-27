@@ -14,6 +14,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -28,7 +29,7 @@ public class CandidaturaService {
     /**
      * Criar candidatura (usuário se candidata a projeto)
      */
-    public Candidatura criar(Long projetoId, Long usuarioId, String mensagem) {
+    public Candidatura criar(UUID projetoId, UUID usuarioId, String mensagem) {
         Projeto projeto = projetoRepository.findById(projetoId)
             .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
 
@@ -62,21 +63,21 @@ public class CandidaturaService {
     /**
      * Buscar candidatura por ID
      */
-    public Optional<Candidatura> findById(Long id) {
+    public Optional<Candidatura> findById(UUID id) {
         return candidaturaRepository.findById(id);
     }
 
     /**
      * Listar candidaturas de um projeto
      */
-    public List<Candidatura> findByProjetoId(Long projetoId) {
+    public List<Candidatura> findByProjetoId(UUID projetoId) {
         return candidaturaRepository.findByProjetoId(projetoId);
     }
 
     /**
      * Listar candidaturas pendentes de um projeto
      */
-    public List<Candidatura> findPendentesByProjetoId(Long projetoId) {
+    public List<Candidatura> findPendentesByProjetoId(UUID projetoId) {
         List<Candidatura> todasCandidaturas = candidaturaRepository.findByProjetoId(projetoId);
         return todasCandidaturas.stream()
             .filter(c -> c.getStatus() == StatusCandidatura.PENDENTE)
@@ -86,7 +87,7 @@ public class CandidaturaService {
     /**
      * Aceitar candidatura
      */
-    public Candidatura aceitar(Long candidaturaId) {
+    public Candidatura aceitar(UUID candidaturaId) {
         Candidatura candidatura = candidaturaRepository.findById(candidaturaId)
             .orElseThrow(() -> new RuntimeException("Candidatura não encontrada"));
 
@@ -115,7 +116,7 @@ public class CandidaturaService {
     /**
      * Rejeitar candidatura
      */
-    public Candidatura rejeitar(Long candidaturaId, String motivo) {
+    public Candidatura rejeitar(UUID candidaturaId, String motivo) {
         Candidatura candidatura = candidaturaRepository.findById(candidaturaId)
             .orElseThrow(() -> new RuntimeException("Candidatura não encontrada"));
 
@@ -140,7 +141,7 @@ public class CandidaturaService {
     /**
      * Contar candidaturas pendentes de um projeto
      */
-    public long countPendentesByProjetoId(Long projetoId) {
+    public long countPendentesByProjetoId(UUID projetoId) {
         return candidaturaRepository.findByProjetoId(projetoId).stream()
             .filter(c -> c.getStatus() == StatusCandidatura.PENDENTE)
             .count();

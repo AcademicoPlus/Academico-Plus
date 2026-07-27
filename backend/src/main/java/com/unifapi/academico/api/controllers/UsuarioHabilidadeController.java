@@ -5,7 +5,7 @@ import com.unifapi.academico.service.UsuarioHabilidadeService;
 
 import io.swagger.v3.oas.annotations.Operation;
 
-import com.unifapi.academico.api.dto.request.AddHabilidadeRequestDTO;
+import com.unifapi.academico.api.dto.request.AdicionarHabilidadeDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.*;
 import jakarta.validation.Valid;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/usuarios/{usuarioId}/habilidades")
@@ -30,7 +31,7 @@ public class UsuarioHabilidadeController {
     @GetMapping
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Listar habilidades de um usuário", description = "Lista todas as habilidades de um usuário específico.")
-    public ResponseEntity<List<Map<String, Object>>> listar(@PathVariable Long usuarioId) {
+    public ResponseEntity<List<Map<String, Object>>> listar(@PathVariable UUID usuarioId) {
         try {
             List<UsuarioHabilidade> habilidades = usuarioHabilidadeService.listarHabilidades(usuarioId);
             
@@ -58,8 +59,8 @@ public class UsuarioHabilidadeController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Obter habilidade de um usuário", description = "Obtém uma habilidade específica de um usuário.")
     public ResponseEntity<?> obter(
-            @PathVariable Long usuarioId,
-            @PathVariable Long habilidadeId) {
+            @PathVariable UUID usuarioId,
+            @PathVariable UUID habilidadeId) {
         try {
             var usuarioHabilidade = usuarioHabilidadeService.obterHabilidade(usuarioId, habilidadeId)
                 .orElseThrow(() -> new RuntimeException("Habilidade não encontrada"));
@@ -84,8 +85,8 @@ public class UsuarioHabilidadeController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Adicionar habilidade a um usuário", description = "Adiciona uma habilidade a um usuário específico, ou atualiza o nível se já existir.")
     public ResponseEntity<?> adicionar(
-            @PathVariable Long usuarioId,
-            @Valid @RequestBody AddHabilidadeRequestDTO request) {
+            @PathVariable UUID usuarioId,
+            @Valid @RequestBody AdicionarHabilidadeDTO request) {
         try {
             UsuarioHabilidade usuarioHabilidade = usuarioHabilidadeService.adicionarHabilidade(
                 usuarioId,
@@ -113,9 +114,9 @@ public class UsuarioHabilidadeController {
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Atualizar nível de uma habilidade do usuário", description = "Atualiza o nível de uma habilidade específica de um usuário.")
     public ResponseEntity<?> atualizar(
-            @PathVariable Long usuarioId,
-            @PathVariable Long habilidadeId,
-            @Valid @RequestBody AddHabilidadeRequestDTO request) {
+            @PathVariable UUID usuarioId,
+            @PathVariable UUID habilidadeId,
+            @Valid @RequestBody AdicionarHabilidadeDTO request) {
         try {
             UsuarioHabilidade usuarioHabilidade = usuarioHabilidadeService.atualizarNivel(
                 usuarioId,
@@ -143,8 +144,8 @@ public class UsuarioHabilidadeController {
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Remover habilidade de um usuário", description = "Remove uma habilidade específica de um usuário.")
     public ResponseEntity<?> remover(
-            @PathVariable Long usuarioId,
-            @PathVariable Long habilidadeId) {
+            @PathVariable UUID usuarioId,
+            @PathVariable UUID habilidadeId) {
         try {
             usuarioHabilidadeService.removerHabilidade(usuarioId, habilidadeId);
             return ResponseEntity.ok(Map.of("mensagem", "Habilidade removida com sucesso"));

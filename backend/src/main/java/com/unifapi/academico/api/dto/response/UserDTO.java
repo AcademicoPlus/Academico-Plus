@@ -5,6 +5,7 @@ import com.unifapi.academico.domain.model.Usuario;
 
 import lombok.*;
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -12,8 +13,8 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class UserDTO {
-    
-    private Long id;
+
+    private UUID id;
     private String email;
     private String nome;
     private TipoUsuario userType;
@@ -23,22 +24,23 @@ public class UserDTO {
     private Boolean isActive;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+
     public static UserDTO from(Usuario usuario) {
-    if (usuario == null) {
-        return null;
+        if (usuario == null) {
+            return null;
+        }
+
+        return UserDTO.builder()
+                .id(usuario.getId())
+                .email(usuario.getEmail())
+                .nome(usuario.getNome())
+                .userType(usuario.getTipo())
+                .academicInfo(usuario.getCurso())
+                .bio(usuario.getBio())
+                .profilePhotoUrl(usuario.getFotoUrl())
+                .isActive(usuario.getAtivo())
+                .createdAt(usuario.getCriadoEm())
+                .updatedAt(usuario.getAtualizadoEm())
+                .build();
     }
-    
-    return UserDTO.builder()
-        .id(usuario.getId())
-        .email(usuario.getEmail())
-        .nome(usuario.getNome())
-        .userType(usuario.getTipo())
-        .academicInfo(usuario.getCurso())
-        .bio(usuario.getBio())
-        .profilePhotoUrl(usuario.getFotoUrl())
-        .isActive(usuario.getAtivo())
-        .createdAt(usuario.getCriadoEm())
-        .updatedAt(usuario.getAtualizadoEm())
-        .build();
-}
 }

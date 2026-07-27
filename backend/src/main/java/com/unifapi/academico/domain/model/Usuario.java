@@ -11,6 +11,7 @@ import com.unifapi.academico.domain.enums.TipoUsuario;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -26,9 +27,9 @@ import java.util.Set;
 public class Usuario {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(strategy = GenerationType.UUID)
     @EqualsAndHashCode.Include
-    private Long id;
+    private UUID id;
 
     @NotBlank(message = "Email é obrigatório")
     @Email(message = "Email deve ser válido")
@@ -100,13 +101,6 @@ public class Usuario {
     @Builder.Default
     private Set<Candidatura> candidaturas = new HashSet<>();
 
-    @OneToMany(mappedBy = "professor", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<EndossoProfessor> endossosFeitos = new HashSet<>();
-
-    @OneToMany(mappedBy = "aluno", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<EndossoProfessor> endossosRecebidos = new HashSet<>();
 
     // ============================================
     // MÉTODOS HELPER

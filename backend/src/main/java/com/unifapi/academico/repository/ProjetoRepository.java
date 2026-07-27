@@ -8,10 +8,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.UUID;
 
 @Repository
-public interface ProjetoRepository extends JpaRepository<Projeto, Long> {
-    List<Projeto> findByCriadorId(Long criadorId);
+public interface ProjetoRepository extends JpaRepository<Projeto, UUID> {
+    List<Projeto> findByCriadorId(UUID criadorId);
     Page<Projeto> findByStatus(StatusProjeto status, Pageable pageable);
     Page<Projeto> findByAtivoTrue(Pageable pageable);
 }

@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateHabilidadeRequestDTO {
+public class CriarHabilidadeDTO {
     
     @NotBlank(message = "Nome da habilidade é obrigatório")
     @Size(min = 2, max = 100, message = "Nome deve ter entre 2 e 100 caracteres")

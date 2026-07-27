@@ -16,6 +16,9 @@ import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.security.core.Authentication;
+
+import java.util.UUID;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
@@ -60,7 +63,7 @@ public class ProjetoController {
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Obter detalhes do projeto", description = "Retorna os detalhes de um projeto específico pelo seu ID")
-    public ResponseEntity<ProjetoDetailResponseDTO> obter(@PathVariable Long id) {
+    public ResponseEntity<ProjetoDetailResponseDTO> obter(@PathVariable UUID id) {
         return projetoService.findByIdDetail(id)
             .map(ResponseEntity::ok)
             .orElse(ResponseEntity.notFound().build());
@@ -104,7 +107,7 @@ public class ProjetoController {
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Atualizar projeto", description = "Atualiza os dados de um projeto existente")
     public ResponseEntity<Projeto> atualizar(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestBody Projeto projeto) {
         try {
             Projeto atualizado = projetoService.update(id, projeto);
@@ -120,7 +123,7 @@ public class ProjetoController {
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Deletar projeto", description = "Remove um projeto do sistema")
-    public ResponseEntity<Void> deletar(@PathVariable Long id) {
+    public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         projetoService.delete(id);
         return ResponseEntity.noContent().build();
     }

@@ -7,10 +7,11 @@ import org.springframework.stereotype.Repository;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Repository
-public interface CandidaturaRepository extends JpaRepository<Candidatura, Long> {
-    Optional<Candidatura> findByProjetoIdAndUsuarioId(Long projetoId, Long usuarioId);
-    List<Candidatura> findByProjetoId(Long projetoId);
+public interface CandidaturaRepository extends JpaRepository<Candidatura, UUID> {
+    Optional<Candidatura> findByProjetoIdAndUsuarioId(UUID projetoId, UUID usuarioId);
+    List<Candidatura> findByProjetoId(UUID projetoId);
     List<Candidatura> findByStatus(StatusCandidatura status);
 }

@@ -23,7 +23,7 @@ public class RecomendacaoService {
      * Obter recomendações de colaboradores para um projeto
      * Usa Índice de Similaridade de Jaccard
      */
-    public List<Map<String, Object>> obterRecomendacoes(Long projetoId, int limit) {
+    public List<Map<String, Object>> obterRecomendacoes(UUID projetoId, int limit) {
         Projeto projeto = projetoRepository.findById(projetoId)
             .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
 

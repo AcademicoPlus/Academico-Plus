@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class UsuarioHabilidadeService {
     /**
      * Adicionar habilidade a um usuário
      */
-    public UsuarioHabilidade adicionarHabilidade(Long usuarioId, Long habilidadeId, NivelHabilidade nivel) {
+    public UsuarioHabilidade adicionarHabilidade(UUID usuarioId, UUID habilidadeId, NivelHabilidade nivel) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -59,7 +60,7 @@ public class UsuarioHabilidadeService {
     /**
      * Remover habilidade de um usuário
      */
-    public void removerHabilidade(Long usuarioId, Long habilidadeId) {
+    public void removerHabilidade(UUID usuarioId, UUID habilidadeId) {
         UsuarioHabilidade usuarioHabilidade = usuarioHabilidadeRepository
             .findByUsuarioIdAndHabilidadeId(usuarioId, habilidadeId)
             .orElseThrow(() -> new RuntimeException("Habilidade não encontrada para este usuário"));
@@ -70,7 +71,7 @@ public class UsuarioHabilidadeService {
     /**
      * Listar habilidades de um usuário
      */
-    public List<UsuarioHabilidade> listarHabilidades(Long usuarioId) {
+    public List<UsuarioHabilidade> listarHabilidades(UUID usuarioId) {
         Usuario usuario = usuarioRepository.findById(usuarioId)
             .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
 
@@ -80,14 +81,14 @@ public class UsuarioHabilidadeService {
     /**
      * Obter uma habilidade específica de um usuário
      */
-    public Optional<UsuarioHabilidade> obterHabilidade(Long usuarioId, Long habilidadeId) {
+    public Optional<UsuarioHabilidade> obterHabilidade(UUID usuarioId, UUID habilidadeId) {
         return usuarioHabilidadeRepository.findByUsuarioIdAndHabilidadeId(usuarioId, habilidadeId);
     }
 
     /**
      * Atualizar nível de uma habilidade
      */
-    public UsuarioHabilidade atualizarNivel(Long usuarioId, Long habilidadeId, NivelHabilidade novoNivel) {
+    public UsuarioHabilidade atualizarNivel(UUID usuarioId, UUID habilidadeId, NivelHabilidade novoNivel) {
         UsuarioHabilidade usuarioHabilidade = usuarioHabilidadeRepository
             .findByUsuarioIdAndHabilidadeId(usuarioId, habilidadeId)
             .orElseThrow(() -> new RuntimeException("Habilidade não encontrada para este usuário"));

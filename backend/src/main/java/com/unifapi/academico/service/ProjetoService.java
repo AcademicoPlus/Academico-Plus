@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -26,7 +27,7 @@ public class ProjetoService {
     /**
      * Buscar projeto por ID com detalhes
      */
-    public Optional<ProjetoDetailResponseDTO> findByIdDetail(Long id) {
+    public Optional<ProjetoDetailResponseDTO> findByIdDetail(UUID id) {
         return projetoRepository.findById(id)
             .map(this::converterParaDetalhe);  // ← USE UM MÉTODO AUXILIAR
     }
@@ -86,7 +87,7 @@ public class ProjetoService {
     /**
      * Listar projetos por criador
      */
-    public List<Projeto> findByCriador(Long criadorId) {
+    public List<Projeto> findByCriador(UUID criadorId) {
         return projetoRepository.findByCriadorId(criadorId);
     }
 
@@ -110,7 +111,7 @@ public class ProjetoService {
     /**
      * Atualizar projeto
      */
-    public Projeto update(Long id, Projeto projetoAtualizado) {
+    public Projeto update(UUID id, Projeto projetoAtualizado) {
         return projetoRepository.findById(id)
             .map(projeto -> {
                 projeto.setTitulo(projetoAtualizado.getTitulo());
@@ -125,14 +126,14 @@ public class ProjetoService {
     /**
      * Deletar projeto
      */
-    public void delete(Long id) {
+    public void delete(UUID id) {
         projetoRepository.deleteById(id);
     }
 
     /**
      * Decrementar vagas
      */
-    public void decrementarVagas(Long projetoId) {
+    public void decrementarVagas(UUID projetoId) {
         projetoRepository.findById(projetoId)
             .ifPresent(projeto -> {
                 if (projeto.getVagasPreenchidas() < projeto.getVagas()) {

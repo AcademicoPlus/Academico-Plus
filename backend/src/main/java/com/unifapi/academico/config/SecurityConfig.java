@@ -49,6 +49,8 @@ public class SecurityConfig {
                                 "/auth/login",
                                 "/auth/signup",
                                 "/auth/health",
+                                "/auth/refresh",
+                                "/auth/me",
                                 "/metrics",
                                 "/swagger-ui.html",
                                 "/swagger-ui/**",

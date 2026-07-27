@@ -7,6 +7,7 @@ import com.unifapi.academico.domain.model.Usuario;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.domain.enums.TipoUsuario;
 import com.unifapi.academico.repository.ProjetoRepository;
+import com.unifapi.academico.repository.RefreshTokenRepository; // 1. Import adicionado
 import com.unifapi.academico.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -34,6 +35,9 @@ class ProjetoControllerTest extends BaseTest {
     private ProjetoRepository projetoRepository;
 
     @Autowired
+    private RefreshTokenRepository refreshTokenRepository; // 2. Repository injetado
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     private Usuario criador;
@@ -42,8 +46,10 @@ class ProjetoControllerTest extends BaseTest {
 
     @BeforeEach
     void setup() throws Exception {
-        usuarioRepository.deleteAll();
+        // 3. Limpeza na ordem correta das dependências (filhos -> pai)
+        refreshTokenRepository.deleteAll();
         projetoRepository.deleteAll();
+        usuarioRepository.deleteAll();
 
         criador = Usuario.builder()
                 .email("carlos@unifapi.edu.br")
@@ -93,7 +99,7 @@ class ProjetoControllerTest extends BaseTest {
         mockMvc.perform(get("/projetos/" + projeto.getId())
                 .header("Authorization", "Bearer " + token))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(projeto.getId()))
+                .andExpect(jsonPath("$.id").value(projeto.getId().toString()))
                 .andExpect(jsonPath("$.titulo").value("Sistema de Gestão"));
     }
 

@@ -9,7 +9,7 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class CreateCandidaturaRequestDTO {
+public class CriarCandidaturaDTO {
     
     @NotBlank(message = "Mensagem de candidatura é obrigatória")
     @Size(min = 10, max = 1000, message = "Mensagem deve ter entre 10 e 1000 caracteres")

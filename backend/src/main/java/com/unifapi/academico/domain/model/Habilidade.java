@@ -10,6 +10,7 @@ import lombok.NoArgsConstructor;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 @Data
 @NoArgsConstructor
@@ -23,8 +24,8 @@ import java.util.Set;
 public class Habilidade {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.UUID)
+    private UUID id;
 
     @NotBlank(message = "Nome da habilidade é obrigatório")
     @Column(unique = true, nullable = false, length = 100)
@@ -60,7 +61,4 @@ public class Habilidade {
     @Builder.Default
     private Set<ProjetoHabilidade> projetos = new HashSet<>();
 
-    @OneToMany(mappedBy = "habilidade", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @Builder.Default
-    private Set<EndossoProfessor> endossos = new HashSet<>();
 }

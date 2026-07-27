@@ -22,11 +22,11 @@ import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
-
 
 @ExtendWith(MockitoExtension.class)
 @DisplayName("ProjetoService")
@@ -44,7 +44,7 @@ class ProjetoServiceTest {
     @BeforeEach
     void setup() {
         criadorTeste = Usuario.builder()
-            .id(1L)
+            .id(UUID.randomUUID())
             .email("carlos@unifapi.edu.br")
             .nome("Carlos Eduardo")
             .tipo(TipoUsuario.ALUNO)
@@ -52,7 +52,7 @@ class ProjetoServiceTest {
             .build();
 
         projetoTeste = Projeto.builder()
-            .id(1L)
+            .id(UUID.randomUUID())
             .titulo("Sistema de Gestão de Biblioteca")
             .descricao("Desenvolver um sistema web para gerenciar bibliotecas universitárias com funcionalidades de empréstimo e devolução")
             .status(StatusProjeto.ABERTO)
@@ -99,11 +99,12 @@ class ProjetoServiceTest {
     @DisplayName("Deve encontrar projeto por ID com detalhes")
     void deveEncontrarProjetoPorId() {
         // Arrange
-        when(projetoRepository.findById(1L))
+        UUID id = projetoTeste.getId();
+        when(projetoRepository.findById(id))
             .thenReturn(Optional.of(projetoTeste));
 
         // Act
-        Optional<ProjetoDetailResponseDTO> resultado = projetoService.findByIdDetail(1L);
+        Optional<ProjetoDetailResponseDTO> resultado = projetoService.findByIdDetail(id);
 
         // Assert
         assertThat(resultado)
@@ -111,26 +112,27 @@ class ProjetoServiceTest {
         
         assertThat(resultado.get())
             .extracting("id", "titulo")
-            .contains(1L, "Sistema de Gestão de Biblioteca");
+            .contains(id, "Sistema de Gestão de Biblioteca");
 
-        verify(projetoRepository).findById(1L);
+        verify(projetoRepository).findById(id);
     }
 
     @Test
     @DisplayName("Deve retornar vazio quando projeto não existe")
     void deveRetornarVazioProjetoInexistente() {
         // Arrange
-        when(projetoRepository.findById(999L))
+        UUID idInexistente = UUID.randomUUID();
+        when(projetoRepository.findById(idInexistente))
             .thenReturn(Optional.empty());
 
         // Act
-        Optional<ProjetoDetailResponseDTO> resultado = projetoService.findByIdDetail(999L);
+        Optional<ProjetoDetailResponseDTO> resultado = projetoService.findByIdDetail(idInexistente);
 
         // Assert
         assertThat(resultado)
             .isEmpty();
 
-        verify(projetoRepository).findById(999L);
+        verify(projetoRepository).findById(idInexistente);
     }
 
     @Test
@@ -172,8 +174,9 @@ class ProjetoServiceTest {
     @DisplayName("Deve atualizar projeto")
     void deveAtualizarProjeto() {
         // Arrange
+        UUID id = projetoTeste.getId();
         Projeto projetoAtualizado = Projeto.builder()
-            .id(1L)
+            .id(id)
             .titulo("Novo Titulo")
             .descricao("Nova descrição com mais de 20 caracteres para validação")
             .status(StatusProjeto.EM_ANDAMENTO)
@@ -182,14 +185,14 @@ class ProjetoServiceTest {
             .criador(criadorTeste)
             .build();
 
-        when(projetoRepository.findById(1L))
+        when(projetoRepository.findById(id))
             .thenReturn(Optional.of(projetoTeste));
         
         when(projetoRepository.save(any(Projeto.class)))
             .thenReturn(projetoAtualizado);
 
         // Act
-        Projeto resultado = projetoService.update(1L, projetoAtualizado);
+        Projeto resultado = projetoService.update(id, projetoAtualizado);
 
         // Assert
         assertThat(resultado)
@@ -197,7 +200,7 @@ class ProjetoServiceTest {
             .extracting("titulo", "status", "vagas")
             .contains("Novo Titulo", StatusProjeto.EM_ANDAMENTO, 5);
 
-        verify(projetoRepository).findById(1L);
+        verify(projetoRepository).findById(id);
         verify(projetoRepository).save(any(Projeto.class));
     }
 
@@ -205,11 +208,12 @@ class ProjetoServiceTest {
     @DisplayName("Deve falhar ao atualizar projeto inexistente")
     void devefalharAtualizarProjetoInexistente() {
         // Arrange
-        when(projetoRepository.findById(999L))
+        UUID idInexistente = UUID.randomUUID();
+        when(projetoRepository.findById(idInexistente))
             .thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> projetoService.update(999L, projetoTeste))
+        assertThatThrownBy(() -> projetoService.update(idInexistente, projetoTeste))
             .isInstanceOf(RuntimeException.class)
             .hasMessage("Projeto não encontrado");
     }
@@ -218,24 +222,26 @@ class ProjetoServiceTest {
     @DisplayName("Deve deletar projeto")
     void deveDeletarProjeto() {
         // Arrange
-        doNothing().when(projetoRepository).deleteById(1L);
+        UUID id = projetoTeste.getId();
+        doNothing().when(projetoRepository).deleteById(id);
 
         // Act
-        projetoService.delete(1L);
+        projetoService.delete(id);
 
         // Assert
-        verify(projetoRepository).deleteById(1L);
+        verify(projetoRepository).deleteById(id);
     }
 
     @Test
     @DisplayName("Deve listar projetos por criador")
     void deveListarProjetosPorCriador() {
         // Arrange
-        when(projetoRepository.findByCriadorId(1L))
+        UUID criadorId = criadorTeste.getId();
+        when(projetoRepository.findByCriadorId(criadorId))
             .thenReturn(Arrays.asList(projetoTeste));
 
         // Act
-        var resultado = projetoService.findByCriador(1L);
+        var resultado = projetoService.findByCriador(criadorId);
 
         // Assert
         assertThat(resultado)
@@ -243,7 +249,7 @@ class ProjetoServiceTest {
             .hasSize(1)
             .contains(projetoTeste);
 
-        verify(projetoRepository).findByCriadorId(1L);
+        verify(projetoRepository).findByCriadorId(criadorId);
     }
 
     @Test
@@ -279,23 +285,24 @@ class ProjetoServiceTest {
     @DisplayName("Deve decrementar vagas ao aceitar candidato")
     void deveDecrementarVagas() {
         // Arrange
+        UUID id = projetoTeste.getId();
         projetoTeste.setVagasPreenchidas(0);
         projetoTeste.setVagas(3);
 
-        when(projetoRepository.findById(1L))
+        when(projetoRepository.findById(id))
             .thenReturn(Optional.of(projetoTeste));
         
         when(projetoRepository.save(any(Projeto.class)))
             .thenReturn(projetoTeste);
 
         // Act
-        projetoService.decrementarVagas(1L);
+        projetoService.decrementarVagas(id);
 
         // Assert
         assertThat(projetoTeste.getVagasPreenchidas())
             .isEqualTo(1);
 
-        verify(projetoRepository).findById(1L);
+        verify(projetoRepository).findById(id);
         verify(projetoRepository).save(any(Projeto.class));
     }
 
@@ -303,20 +310,21 @@ class ProjetoServiceTest {
     @DisplayName("Não deve decrementar vagas se todas preenchidas")
     void naoDeveDecrementarVagasSeTodasPreenchidas() {
         // Arrange
+        UUID id = projetoTeste.getId();
         projetoTeste.setVagasPreenchidas(3);
         projetoTeste.setVagas(3);
 
-        when(projetoRepository.findById(1L))
+        when(projetoRepository.findById(id))
             .thenReturn(Optional.of(projetoTeste));
 
         // Act
-        projetoService.decrementarVagas(1L);
+        projetoService.decrementarVagas(id);
 
         // Assert
         assertThat(projetoTeste.getVagasPreenchidas())
             .isEqualTo(3);
 
-        verify(projetoRepository).findById(1L);
+        verify(projetoRepository).findById(id);
         verify(projetoRepository, never()).save(any(Projeto.class));
     }
 }

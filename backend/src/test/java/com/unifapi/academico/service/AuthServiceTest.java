@@ -1,7 +1,10 @@
 package com.unifapi.academico.service;
 
-import com.unifapi.academico.domain.model.Usuario;
+import com.unifapi.academico.api.dto.response.AuthResponseDTO;
+import com.unifapi.academico.api.dto.response.UserDTO;
 import com.unifapi.academico.domain.enums.TipoUsuario;
+import com.unifapi.academico.domain.model.RefreshToken;
+import com.unifapi.academico.domain.model.Usuario;
 import com.unifapi.academico.repository.UsuarioRepository;
 import com.unifapi.academico.util.JwtUtil;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,8 +16,8 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
@@ -33,21 +36,32 @@ class AuthServiceTest {
     @Mock
     private JwtUtil jwtUtil;
 
+    @Mock
+    private RefreshTokenService refreshTokenService;
+
     @InjectMocks
     private AuthService authService;
 
     private Usuario usuarioTeste;
 
+    private RefreshToken refreshTokenTeste;
+
     @BeforeEach
     void setup() {
         usuarioTeste = Usuario.builder()
-            .id(1L)
-            .email("teste@unifapi.edu.br")
-            .nome("Teste User")
-            .senhaHash("hashedPassword")
-            .ativo(true)
-            .tipo(TipoUsuario.ALUNO)
-            .build();
+                .id(UUID.randomUUID())
+                .email("teste@unifapi.edu.br")
+                .nome("Teste User")
+                .senhaHash("hashedPassword")
+                .ativo(true)
+                .tipo(TipoUsuario.ALUNO)
+                .build();
+
+        refreshTokenTeste = RefreshToken.builder()
+                .id(UUID.randomUUID())
+                .token("refresh_token_valido")
+                .usuario(usuarioTeste)
+                .build();
     }
 
     @Test
@@ -58,33 +72,33 @@ class AuthServiceTest {
         String senha = "password123";
 
         when(usuarioRepository.findByEmail(email))
-            .thenReturn(Optional.of(usuarioTeste));
-        
+                .thenReturn(Optional.of(usuarioTeste));
+
         when(passwordEncoder.matches(senha, usuarioTeste.getSenhaHash()))
-            .thenReturn(true);
-        
+                .thenReturn(true);
+
         when(jwtUtil.generateToken(any(), any()))
-            .thenReturn("token_valido");
+                .thenReturn("token_valido");
+
+        when(refreshTokenService.createRefreshToken(any()))
+                .thenReturn(refreshTokenTeste);
 
         // Act
-        Map<String, Object> resultado = authService.login(email, senha);
+        AuthResponseDTO resultado = authService.login(email, senha);
 
         // Assert
-        assertThat(resultado)
-            .isNotNull()
-            .containsKeys("id", "email", "token", "expiresIn");
-        
-        assertThat(resultado)
-            .extracting("email")
-            .isEqualTo(email);
-        
-        assertThat(resultado)
-            .extracting("token")
-            .isEqualTo("token_valido");
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(usuarioTeste.getId()); // Atualizado de 1L para UUID
+        assertThat(resultado.getEmail()).isEqualTo(email);
+        assertThat(resultado.getNome()).isEqualTo("Teste User");
+        assertThat(resultado.getTipo()).isEqualTo(TipoUsuario.ALUNO);
+        assertThat(resultado.getToken()).isEqualTo("token_valido");
+        assertThat(resultado.getExpiresIn()).isEqualTo(86400000L);
 
         verify(usuarioRepository).findByEmail(email);
         verify(passwordEncoder).matches(senha, usuarioTeste.getSenhaHash());
         verify(jwtUtil).generateToken(any(), any());
+        verify(refreshTokenService).createRefreshToken(any());
     }
 
     @Test
@@ -95,12 +109,12 @@ class AuthServiceTest {
         String senha = "password123";
 
         when(usuarioRepository.findByEmail(email))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         // Act & Assert
         assertThatThrownBy(() -> authService.login(email, senha))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Usuário não encontrado");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Usuário não encontrado");
     }
 
     @Test
@@ -111,15 +125,15 @@ class AuthServiceTest {
         String senha = "senhaErrada";
 
         when(usuarioRepository.findByEmail(email))
-            .thenReturn(Optional.of(usuarioTeste));
-        
+                .thenReturn(Optional.of(usuarioTeste));
+
         when(passwordEncoder.matches(senha, usuarioTeste.getSenhaHash()))
-            .thenReturn(false);
+                .thenReturn(false);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.login(email, senha))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Senha incorreta");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Senha incorreta");
     }
 
     @Test
@@ -131,15 +145,15 @@ class AuthServiceTest {
         String senha = "password123";
 
         when(usuarioRepository.findByEmail(email))
-            .thenReturn(Optional.of(usuarioTeste));
-        
+                .thenReturn(Optional.of(usuarioTeste));
+
         when(passwordEncoder.matches(senha, usuarioTeste.getSenhaHash()))
-            .thenReturn(true);
+                .thenReturn(true);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.login(email, senha))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Usuário inativo");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Usuário inativo");
     }
 
     @Test
@@ -164,12 +178,14 @@ class AuthServiceTest {
             .thenReturn("token_novo");
 
         // Act
-        Map<String, Object> resultado = authService.signup(email, nome, curso, senha);
+        AuthResponseDTO resultado = authService.signup(email, nome, curso, senha);
 
         // Assert
-        assertThat(resultado)
-            .isNotNull()
-            .containsKeys("id", "email", "nome", "token");
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(usuarioTeste.getId());
+        assertThat(resultado.getEmail()).isEqualTo(usuarioTeste.getEmail());
+        assertThat(resultado.getNome()).isEqualTo(usuarioTeste.getNome());
+        assertThat(resultado.getToken()).isEqualTo("token_novo");
 
         verify(usuarioRepository).existsByEmail(email);
         verify(passwordEncoder).encode(senha);
@@ -183,29 +199,53 @@ class AuthServiceTest {
         String email = "existente@unifapi.edu.br";
 
         when(usuarioRepository.existsByEmail(email))
-            .thenReturn(true);
+                .thenReturn(true);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.signup(email, "Nome", "Curso", "password123"))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Email já registrado");
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Email já registrado");
     }
 
     @Test
     @DisplayName("Deve falhar signup com senha muito curta")
-    void deveFalharSignupSenhamuito() {
+    void deveFalharSignupSenhaMuitoCurta() {
         // Arrange
         when(usuarioRepository.existsByEmail(any()))
-            .thenReturn(false);
+                .thenReturn(false);
 
         // Act & Assert
         assertThatThrownBy(() -> authService.signup(
-            "novo@unifapi.edu.br", 
-            "Nome", 
-            "Curso", 
-            "12345"  
-        ))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Senha deve ter no mínimo 8 caracteres");
+                "novo@unifapi.edu.br",
+                "Nome",
+                "Curso",
+                "12345"))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Senha deve ter no mínimo 8 caracteres");
+    }
+
+    @Test
+    @DisplayName("Deve obter perfil (me) com sucesso a partir de token válido")
+    void deveObterPerfilComSucesso() {
+        // Arrange
+        String token = "token_valido";
+        String email = "teste@unifapi.edu.br";
+
+        doNothing().when(jwtUtil).validateToken(token);
+        when(jwtUtil.extractEmail(token)).thenReturn(email);
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuarioTeste));
+
+        // Act
+        UserDTO resultado = authService.me(token);
+
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(resultado.getId()).isEqualTo(usuarioTeste.getId());
+        assertThat(resultado.getEmail()).isEqualTo(usuarioTeste.getEmail());
+        assertThat(resultado.getNome()).isEqualTo(usuarioTeste.getNome());
+
+        verify(jwtUtil).validateToken(token);
+        verify(jwtUtil).extractEmail(token);
+        verify(usuarioRepository).findByEmail(email);
     }
 }

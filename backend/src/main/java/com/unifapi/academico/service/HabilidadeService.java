@@ -10,6 +10,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +22,7 @@ public class HabilidadeService {
     /**
      * Buscar habilidade por ID
      */
-    public Optional<Habilidade> findById(Long id) {
+    public Optional<Habilidade> findById(UUID id) {
         return habilidadeRepository.findById(id);
     }
 
@@ -64,7 +65,7 @@ public class HabilidadeService {
     /**
      * Atualizar habilidade
      */
-    public Habilidade update(Long id, Habilidade habilidadeAtualizada) {
+    public Habilidade update(UUID id, Habilidade habilidadeAtualizada) {
         return habilidadeRepository.findById(id)
             .map(habilidade -> {
                 habilidade.setNome(habilidadeAtualizada.getNome());
@@ -78,14 +79,14 @@ public class HabilidadeService {
     /**
      * Deletar habilidade
      */
-    public void delete(Long id) {
+    public void delete(UUID id) {
         habilidadeRepository.deleteById(id);
     }
 
     /**
      * Incrementar contador de usuários
      */
-    public void incrementarUsuariosCount(Long id) {
+    public void incrementarUsuariosCount(UUID id) {
         habilidadeRepository.findById(id)
             .ifPresent(h -> {
                 h.setUsuariosCount(h.getUsuariosCount() + 1);
@@ -96,7 +97,7 @@ public class HabilidadeService {
     /**
      * Incrementar contador de projetos
      */
-    public void incrementarProjetosCount(Long id) {
+    public void incrementarProjetosCount(UUID id) {
         habilidadeRepository.findById(id)
             .ifPresent(h -> {
                 h.setProjetosCount(h.getProjetosCount() + 1);

@@ -1,5 +1,7 @@
 package com.unifapi.academico.api.dto.request;
 
+import java.util.UUID;
+
 import com.unifapi.academico.domain.enums.NivelHabilidade;
 import jakarta.validation.constraints.NotNull;
 import lombok.*;
@@ -9,10 +11,10 @@ import lombok.*;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class AddHabilidadeRequestDTO {
+public class AdicionarHabilidadeDTO {
     
     @NotNull(message = "ID da habilidade é obrigatório")
-    private Long habilidadeId;
+    private UUID habilidadeId;
     
     @NotNull(message = "Nível é obrigatório")
     private NivelHabilidade nivel;

@@ -1,5 +1,7 @@
 package com.unifapi.academico.api.dto.response;
 
+import java.util.UUID;
+
 import com.unifapi.academico.domain.model.Habilidade;
 import lombok.*;
 
@@ -10,7 +12,7 @@ import lombok.*;
 @Builder
 public class HabilidadeDTO {
     
-    private Long id;
+    private UUID id;
     private String nome;
     private String categoria;
     private String descricao;

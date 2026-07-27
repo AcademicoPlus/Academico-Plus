@@ -5,6 +5,7 @@ import com.unifapi.academico.domain.enums.StatusCandidatura;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -13,10 +14,10 @@ import java.time.LocalDateTime;
 @Builder
 public class CandidaturaDTO {
     
-    private Long id;
-    private Long projetoId;
+    private UUID id;
+    private UUID projetoId;
     private String projetoTitulo;
-    private Long usuarioId;
+    private UUID usuarioId;
     private String usuarioNome;
     private StatusCandidatura status;
     private String mensagem;

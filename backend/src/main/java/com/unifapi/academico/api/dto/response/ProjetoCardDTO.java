@@ -6,6 +6,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -14,7 +15,7 @@ import java.util.List;
 @Builder
 public class ProjetoCardDTO {
     
-    private Long id;
+    private UUID id;
     private String titulo;
     private String descricao;
     private StatusProjeto status;

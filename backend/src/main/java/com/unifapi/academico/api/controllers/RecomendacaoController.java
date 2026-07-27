@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/projetos")
@@ -26,7 +27,7 @@ public class RecomendacaoController {
     @PreAuthorize("isAuthenticated()")
     @Operation (summary = "Obter recomendações de colaboradores", description = "Retorna uma lista de recomendações de colaboradores para o projeto especificado.")
     public ResponseEntity<List<Map<String, Object>>> obterRecomendacoes(
-            @PathVariable Long id,
+            @PathVariable UUID id,
             @RequestParam(defaultValue = "10") int limit) {
         
         try {
