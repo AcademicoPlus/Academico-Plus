@@ -18,6 +18,8 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import javax.naming.AuthenticationException;
+
 @Slf4j
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -95,7 +97,7 @@ public class GlobalExceptionHandler {
         /**
          * Falha de autenticação (Credenciais inválidas no login)
          */
-        @ExceptionHandler(BadCredentialsException.class)
+        @ExceptionHandler({BadCredentialsException.class, AuthenticationException.class})
         public ResponseEntity<ErrorResponseDTO> handleBadCredentials(
                         BadCredentialsException ex,
                         WebRequest request) {
@@ -108,7 +110,7 @@ public class GlobalExceptionHandler {
                                 .path(extractPath(request))
                                 .build();
 
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
         }
 
         /**
