@@ -6,8 +6,9 @@ import com.unifapi.academico.domain.model.Projeto;
 import com.unifapi.academico.domain.model.Usuario;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.domain.enums.TipoUsuario;
+import com.unifapi.academico.repository.HabilidadeRepository; // Novo import
 import com.unifapi.academico.repository.ProjetoRepository;
-import com.unifapi.academico.repository.RefreshTokenRepository; // 1. Import adicionado
+import com.unifapi.academico.repository.RefreshTokenRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -35,7 +36,10 @@ class ProjetoControllerTest extends BaseTest {
     private ProjetoRepository projetoRepository;
 
     @Autowired
-    private RefreshTokenRepository refreshTokenRepository; // 2. Repository injetado
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private HabilidadeRepository habilidadeRepository; // Injetado para limpeza do banco
 
     @Autowired
     private PasswordEncoder passwordEncoder;
@@ -46,9 +50,10 @@ class ProjetoControllerTest extends BaseTest {
 
     @BeforeEach
     void setup() throws Exception {
-        // 3. Limpeza na ordem correta das dependências (filhos -> pai)
+        // Limpeza na ordem correta de dependências (filhos -> pai)
         refreshTokenRepository.deleteAll();
         projetoRepository.deleteAll();
+        habilidadeRepository.deleteAll();
         usuarioRepository.deleteAll();
 
         criador = Usuario.builder()
@@ -63,7 +68,7 @@ class ProjetoControllerTest extends BaseTest {
 
         projeto = Projeto.builder()
                 .titulo("Sistema de Gestão")
-                .descricao("Desenvolver sistema...")
+                .descricao("Desenvolver sistema de gestão acadêmica completo")
                 .status(StatusProjeto.ABERTO)
                 .vagas(3)
                 .vagasPreenchidas(0)
@@ -73,7 +78,7 @@ class ProjetoControllerTest extends BaseTest {
 
         projeto = projetoRepository.save(projeto);
 
-        // Obter token
+        // Obter token JWT
         var loginResponse = mockMvc.perform(post("/auth/login")
                 .contentType("application/json")
                 .content("{\"email\":\"carlos@unifapi.edu.br\",\"senha\":\"password123\"}"))
@@ -106,11 +111,15 @@ class ProjetoControllerTest extends BaseTest {
     @Test
     @DisplayName("Deve criar novo projeto (201 CREATED)")
     void deveCriarNovoProjeto() throws Exception {
-        String novoProjetoJson = "{" +
-                "\"titulo\":\"Novo Projeto\"," +
-                "\"descricao\":\"Descrição do projeto\"," +
-                "\"vagas\":5" +
-                "}";
+        // DTO enviado no formato esperado pelo ProjetoRequestDTO
+        String novoProjetoJson = """
+            {
+                "titulo": "Novo Projeto de Extensão",
+                "descricao": "Descrição detalhada do novo projeto acadêmico para testes",
+                "vagas": 5,
+                "habilidadeIds": []
+            }
+            """;
 
         mockMvc.perform(post("/projetos")
                 .header("Authorization", "Bearer " + token)
@@ -118,18 +127,44 @@ class ProjetoControllerTest extends BaseTest {
                 .content(novoProjetoJson))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.titulo").value("Novo Projeto"));
+                .andExpect(jsonPath("$.titulo").value("Novo Projeto de Extensão"))
+                .andExpect(jsonPath("$.vagas").value(5));
     }
 
     @Test
-    @DisplayName("Deve retornar 403 sem autenticação ao tentar criar projeto")
-    void deveRetornar401SemAutenticacao() throws Exception {
-        String novoProjetoJson = "{\"titulo\":\"Projeto\",\"descricao\":\"Teste\",\"vagas\":3}";
+    @DisplayName("Deve retornar 400 Bad Request ao criar projeto com 0 vagas")
+    void deveRetornar400AoCriarProjetoSemVagas() throws Exception {
+        String projetoInvalidoJson = """
+            {
+                "titulo": "Projeto Sem Vagas",
+                "descricao": "Descrição detalhada do projeto",
+                "vagas": 0,
+                "habilidadeIds": []
+            }
+            """;
+
+        mockMvc.perform(post("/projetos")
+                .header("Authorization", "Bearer " + token)
+                .contentType("application/json")
+                .content(projetoInvalidoJson))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    @DisplayName("Deve retornar 403/401 Forbidden sem autenticação ao tentar criar projeto")
+    void deveRetornar403SemAutenticacao() throws Exception {
+        String novoProjetoJson = """
+            {
+                "titulo": "Projeto",
+                "descricao": "Descrição do teste",
+                "vagas": 3,
+                "habilidadeIds": []
+            }
+            """;
 
         mockMvc.perform(post("/projetos")
                 .contentType("application/json")
                 .content(novoProjetoJson))
                 .andExpect(status().isForbidden());
     }
-
 }

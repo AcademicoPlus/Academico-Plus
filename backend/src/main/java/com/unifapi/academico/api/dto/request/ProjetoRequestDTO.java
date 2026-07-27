@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Positive;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.UUID;
 
 @Getter
 @Setter
@@ -25,4 +27,6 @@ public class ProjetoRequestDTO {
     private Integer vagas;
 
     private LocalDateTime dataFim;
+
+    private List<UUID> habilidadeIds;
 }

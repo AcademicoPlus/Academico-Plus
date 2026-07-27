@@ -50,8 +50,6 @@ public class UsuarioHabilidadeService {
             .usuario(usuario)
             .habilidade(habilidade)
             .nivel(nivel)
-            .endossado(false)
-            .endossosCount(0)
             .build();
 
         return usuarioHabilidadeRepository.save(usuarioHabilidade);

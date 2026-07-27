@@ -3,29 +3,34 @@ package com.unifapi.academico.domain.model;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.Getter;
+import lombok.Setter;
 import com.unifapi.academico.domain.enums.NivelHabilidade;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-@Data
+
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @Entity
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @Table(name = "usuario_habilidades", uniqueConstraints = {
     @UniqueConstraint(columnNames = {"usuario_id", "habilidade_id"})
 }, indexes = {
     @Index(name = "idx_usuario_habilidades_usuario", columnList = "usuario_id"),
-    @Index(name = "idx_usuario_habilidades_habilidade", columnList = "habilidade_id"),
-    @Index(name = "idx_usuario_habilidades_endossado", columnList = "endossado")
+    @Index(name = "idx_usuario_habilidades_habilidade", columnList = "habilidade_id")
 })
 public class UsuarioHabilidade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
+    @EqualsAndHashCode.Include
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -41,16 +46,6 @@ public class UsuarioHabilidade {
     @Builder.Default
     private NivelHabilidade nivel = NivelHabilidade.INICIANTE;
 
-    @Column(nullable = false)
-    @Builder.Default
-    private Boolean endossado = false;
-
-    @Column(name = "endossos_count")
-    @Builder.Default
-    private Integer endossosCount = 0;
-
-    @Column(name = "endossado_por")
-    private String endossadoPor;
 
     @Column(name = "criado_em", nullable = false, updatable = false)
     @Builder.Default

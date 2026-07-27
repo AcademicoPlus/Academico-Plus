@@ -14,7 +14,7 @@ import java.util.UUID;
 @AllArgsConstructor
 @Builder
 public class ProjetoCardDTO {
-    
+
     private UUID id;
     private String titulo;
     private String descricao;
@@ -26,27 +26,32 @@ public class ProjetoCardDTO {
     private List<String> habilidades;
 
     /**
-     * Visão Resumida (Item): Retorna apenas os dados essenciais de um projeto para ser exibido em cards/listas.
+     * Visão Resumida (Item): Retorna apenas os dados essenciais de um projeto para
+     * ser exibido em cards/listas.
      */
     public static ProjetoCardDTO from(Projeto projeto) {
         if (projeto == null) {
             return null;
         }
 
-        List<String> habilidades = projeto.getHabilidadesNecessarias().stream()
-            .map(ph -> ph.getHabilidade().getNome())
-            .toList();
+        
+        List<String> habilidades = (projeto.getHabilidadesNecessarias() == null)
+                ? List.of()
+                : projeto.getHabilidadesNecessarias().stream()
+                        .filter(ph -> ph != null && ph.getHabilidade() != null)
+                        .map(ph -> ph.getHabilidade().getNome())
+                        .toList();
 
         return ProjetoCardDTO.builder()
-            .id(projeto.getId())
-            .titulo(projeto.getTitulo())
-            .descricao(projeto.getDescricao())
-            .status(projeto.getStatus())
-            .vagas(projeto.getVagas())
-            .vagasPreenchidas(projeto.getVagasPreenchidas())
-            .dataFim(projeto.getDataFim())
-            .criador(UserDTO.from(projeto.getCriador()))
-            .habilidades(habilidades)
-            .build();
+                .id(projeto.getId())
+                .titulo(projeto.getTitulo())
+                .descricao(projeto.getDescricao())
+                .status(projeto.getStatus())
+                .vagas(projeto.getVagas())
+                .vagasPreenchidas(projeto.getVagasPreenchidas())
+                .dataFim(projeto.getDataFim())
+                .criador(UserDTO.from(projeto.getCriador())) // Garanta que UserDTO.from trata null
+                .habilidades(habilidades)
+                .build();
     }
 }

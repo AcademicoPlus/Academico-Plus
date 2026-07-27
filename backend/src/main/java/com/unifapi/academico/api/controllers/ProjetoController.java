@@ -1,30 +1,24 @@
 package com.unifapi.academico.api.controllers;
 
-import com.unifapi.academico.domain.model.Projeto;
-import com.unifapi.academico.domain.model.Usuario;
-import com.unifapi.academico.repository.UsuarioRepository;
+import com.unifapi.academico.api.dto.request.ProjetoRequestDTO;
+import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
+import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
+import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import com.unifapi.academico.domain.enums.StatusProjeto;
+import com.unifapi.academico.domain.model.Projeto;
 import com.unifapi.academico.service.ProjetoService;
-
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-
-import com.unifapi.academico.api.dto.request.ProjetoRequestDTO;
-import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
-import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
-import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import lombok.RequiredArgsConstructor;
-
-import org.springframework.security.core.Authentication;
-
-import java.util.UUID;
-
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/projetos")
@@ -34,10 +28,8 @@ public class ProjetoController {
 
     private final ProjetoService projetoService;
 
-    private final UsuarioRepository usuarioRepository;
-
     /**
-     * GET /api/projetos - Listar com filtros
+     * GET /projetos - Listar com filtros
      */
     @GetMapping
     @PreAuthorize("isAuthenticated()")
@@ -45,67 +37,54 @@ public class ProjetoController {
     public ResponseEntity<ProjetoPageResponseDTO> listar(
             @RequestParam(required = false) StatusProjeto status,
             @ParameterObject Pageable pageable) {
-        
+
         ProjetoPageResponseDTO response;
-        
+
         if (status != null) {
             response = projetoService.findByStatusWithDetails(status, pageable);
         } else {
             response = projetoService.findAllWithDetails(pageable);
         }
-        
+
         return ResponseEntity.ok(response);
     }
 
     /**
-     * GET /api/projetos/{id} - Detalhes
+     * GET /projetos/{id} - Detalhes
      */
     @GetMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    @Operation (summary = "Obter detalhes do projeto", description = "Retorna os detalhes de um projeto específico pelo seu ID")
+    @Operation(summary = "Obter detalhes do projeto", description = "Retorna os detalhes de um projeto específico pelo seu ID")
     public ResponseEntity<ProjetoDetailResponseDTO> obter(@PathVariable UUID id) {
         return projetoService.findByIdDetail(id)
-            .map(ResponseEntity::ok)
-            .orElse(ResponseEntity.notFound().build());
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
     }
 
     /**
-     * POST /api/projetos - Criar
+     * POST /projetos - Criar
      */
     @PostMapping
     @PreAuthorize("isAuthenticated()")
-    @Operation (summary = "Criar novo projeto", description = "Cria um novo projeto no sistema")
-    public ResponseEntity<ProjetoCardDTO> criar (
-        @RequestBody @Valid ProjetoRequestDTO dto,
-        Authentication authentication) {
+    @Operation(summary = "Criar novo projeto", description = "Cria um novo projeto no sistema")
+    public ResponseEntity<ProjetoCardDTO> criar(
+            @RequestBody @Valid ProjetoRequestDTO dto,
+            Authentication authentication) {
 
-            String email = authentication.getName();
-            Usuario criador = usuarioRepository.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("Usuário não encontrado"));
-            
-            Projeto projeto = Projeto.builder()
-            .titulo(dto.getTitulo())
-            .descricao(dto.getDescricao())
-            .vagas(dto.getVagas())
-            .dataFim(dto.getDataFim())
-            .criador(criador)
-            .status(StatusProjeto.ABERTO)
-            .vagasPreenchidas(0)
-            .ativo(true)
-            .build();
-
-        // 3. Salva e retorna o DTO de resposta
-        Projeto criado = projetoService.create(projeto);
-        return ResponseEntity.status(HttpStatus.CREATED).body(ProjetoCardDTO.from(criado));
+        // Toda a busca de usuário e vinculo de habilidades é feita dentro do service
+        if (authentication == null || !authentication.isAuthenticated()) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).build();
+        }
+        ProjetoCardDTO response = projetoService.criarProjeto(dto, authentication.getName());
+        return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }
-    
 
     /**
-     * PUT /api/projetos/{id} - Atualizar
+     * PUT /projetos/{id} - Atualizar
      */
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    @Operation (summary = "Atualizar projeto", description = "Atualiza os dados de um projeto existente")
+    @Operation(summary = "Atualizar projeto", description = "Atualiza os dados de um projeto existente")
     public ResponseEntity<Projeto> atualizar(
             @PathVariable UUID id,
             @RequestBody Projeto projeto) {
@@ -118,11 +97,11 @@ public class ProjetoController {
     }
 
     /**
-     * DELETE /api/projetos/{id} - Deletar
+     * DELETE /projetos/{id} - Deletar
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
-    @Operation (summary = "Deletar projeto", description = "Remove um projeto do sistema")
+    @Operation(summary = "Deletar projeto", description = "Remove um projeto do sistema")
     public ResponseEntity<Void> deletar(@PathVariable UUID id) {
         projetoService.delete(id);
         return ResponseEntity.noContent().build();

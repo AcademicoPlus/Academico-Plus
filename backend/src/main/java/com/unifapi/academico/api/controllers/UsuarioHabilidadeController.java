@@ -40,9 +40,7 @@ public class UsuarioHabilidadeController {
                     "id", uh.getId(),
                     "habilidadeId", (Object) uh.getHabilidade().getId(),
                     "habilidadeNome", uh.getHabilidade().getNome(),
-                    "nivel", uh.getNivel().toString(),
-                    "endossado", uh.getEndossado(),
-                    "endossosCount", uh.getEndossosCount()
+                    "nivel", uh.getNivel().toString()
                 ))
                 .toList();
             
@@ -69,9 +67,7 @@ public class UsuarioHabilidadeController {
                 "id", usuarioHabilidade.getId(),
                 "habilidadeId", usuarioHabilidade.getHabilidade().getId(),
                 "habilidadeNome", usuarioHabilidade.getHabilidade().getNome(),
-                "nivel", usuarioHabilidade.getNivel().toString(),
-                "endossado", usuarioHabilidade.getEndossado(),
-                "endossosCount", usuarioHabilidade.getEndossosCount()
+                "nivel", usuarioHabilidade.getNivel().toString()
             ));
         } catch (RuntimeException e) {
             return ResponseEntity.notFound().build();
