@@ -1,8 +1,9 @@
 package com.unifapi.academico.api.dto.request;
 
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
-import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -20,10 +21,11 @@ public class ProjetoRequestDTO {
     private String titulo;
 
     @NotBlank(message = "A descrição é obrigatória")
+    @Size(min = 20, message = "Descrição deve ter no mínimo 20 caracteres")
     private String descricao;
 
     @NotNull(message = "O número de vagas é obrigatório")
-    @Positive(message = "As vagas devem ser maiores que zero")
+    @Min(value = 1, message = "O projeto deve ter no mínimo 1 vaga")
     private Integer vagas;
 
     private LocalDateTime dataFim;

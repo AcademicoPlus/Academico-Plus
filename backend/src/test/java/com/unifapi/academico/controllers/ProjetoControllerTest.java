@@ -113,13 +113,13 @@ class ProjetoControllerTest extends BaseTest {
     void deveCriarNovoProjeto() throws Exception {
         // DTO enviado no formato esperado pelo ProjetoRequestDTO
         String novoProjetoJson = """
-            {
-                "titulo": "Novo Projeto de Extensão",
-                "descricao": "Descrição detalhada do novo projeto acadêmico para testes",
-                "vagas": 5,
-                "habilidadeIds": []
-            }
-            """;
+                {
+                    "titulo": "Novo Projeto de Extensão",
+                    "descricao": "Descrição detalhada do novo projeto acadêmico para testes",
+                    "vagas": 5,
+                    "habilidadeIds": []
+                }
+                """;
 
         mockMvc.perform(post("/projetos")
                 .header("Authorization", "Bearer " + token)
@@ -135,13 +135,13 @@ class ProjetoControllerTest extends BaseTest {
     @DisplayName("Deve retornar 400 Bad Request ao criar projeto com 0 vagas")
     void deveRetornar400AoCriarProjetoSemVagas() throws Exception {
         String projetoInvalidoJson = """
-            {
-                "titulo": "Projeto Sem Vagas",
-                "descricao": "Descrição detalhada do projeto",
-                "vagas": 0,
-                "habilidadeIds": []
-            }
-            """;
+                {
+                    "titulo": "Projeto Sem Vagas",
+                    "descricao": "Descrição detalhada do projeto",
+                    "vagas": 0,
+                    "habilidadeIds": []
+                }
+                """;
 
         mockMvc.perform(post("/projetos")
                 .header("Authorization", "Bearer " + token)
@@ -151,20 +151,22 @@ class ProjetoControllerTest extends BaseTest {
     }
 
     @Test
-    @DisplayName("Deve retornar 403/401 Forbidden sem autenticação ao tentar criar projeto")
+    @DisplayName("Deve retornar 401/403 sem autenticação ao tentar criar projeto")
     void deveRetornar403SemAutenticacao() throws Exception {
+        // JSON com dados válidos para não falhar na validação do DTO (@Valid)
         String novoProjetoJson = """
-            {
-                "titulo": "Projeto",
-                "descricao": "Descrição do teste",
-                "vagas": 3,
-                "habilidadeIds": []
-            }
-            """;
+                {
+                    "titulo": "Projeto de Extensão Acadêmica",
+                    "descricao": "Descrição detalhada do projeto com mais de vinte caracteres para passar no @Valid",
+                    "vagas": 3,
+                    "habilidadeIds": []
+                }
+                """;
 
         mockMvc.perform(post("/projetos")
                 .contentType("application/json")
                 .content(novoProjetoJson))
                 .andExpect(status().isForbidden());
+                                                       
     }
 }

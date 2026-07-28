@@ -1,5 +1,6 @@
 package com.unifapi.academico.api.dto.response;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.unifapi.academico.domain.enums.TipoUsuario;
 import com.unifapi.academico.domain.model.Usuario;
 
@@ -12,6 +13,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
+
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class UserDTO {
 
     private UUID id;

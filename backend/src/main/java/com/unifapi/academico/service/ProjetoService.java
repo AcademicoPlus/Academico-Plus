@@ -5,14 +5,18 @@ import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
 import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
 import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import com.unifapi.academico.api.dto.response.UserDTO;
+import com.unifapi.academico.api.mapper.ProjetoMapper;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.domain.model.Habilidade;
 import com.unifapi.academico.domain.model.Projeto;
 import com.unifapi.academico.domain.model.ProjetoHabilidade;
 import com.unifapi.academico.domain.model.Usuario;
+import com.unifapi.academico.exception.AccessDeniedException;
 import com.unifapi.academico.repository.HabilidadeRepository;
 import com.unifapi.academico.repository.ProjetoRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
+
+import jakarta.persistence.EntityNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -33,6 +37,7 @@ public class ProjetoService {
     private final ProjetoRepository projetoRepository;
     private final UsuarioRepository usuarioRepository;
     private final HabilidadeRepository habilidadeRepository;
+    private final ProjetoMapper mapper;
 
     /**
      * Criar novo projeto vinculado ao usuário e habilidades
@@ -44,30 +49,30 @@ public class ProjetoService {
 
         // 1. Busca o criador pelo e-mail do token
         Usuario criador = usuarioRepository.findByEmail(emailCriador)
-            .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + emailCriador));
+                .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + emailCriador));
 
         // 2. Monta a entidade Projeto
         Projeto projeto = Projeto.builder()
-            .titulo(dto.getTitulo())
-            .descricao(dto.getDescricao())
-            .vagas(dto.getVagas())
-            .vagasPreenchidas(0)
-            .dataFim(dto.getDataFim())
-            .status(StatusProjeto.ABERTO)
-            .ativo(true)
-            .criador(criador)
-            .build();
+                .titulo(dto.getTitulo())
+                .descricao(dto.getDescricao())
+                .vagas(dto.getVagas())
+                .vagasPreenchidas(0)
+                .dataFim(dto.getDataFim())
+                .status(StatusProjeto.ABERTO)
+                .ativo(true)
+                .criador(criador)
+                .build();
 
         // 3. Associa as habilidades recebidas
         if (dto.getHabilidadeIds() != null && !dto.getHabilidadeIds().isEmpty()) {
             List<Habilidade> habilidades = habilidadeRepository.findAllById(dto.getHabilidadeIds());
 
             Set<ProjetoHabilidade> vinculos = habilidades.stream()
-                .map(h -> ProjetoHabilidade.builder()
-                    .projeto(projeto)
-                    .habilidade(h)
-                    .build())
-                .collect(Collectors.toSet());
+                    .map(h -> ProjetoHabilidade.builder()
+                            .projeto(projeto)
+                            .habilidade(h)
+                            .build())
+                    .collect(Collectors.toSet());
 
             projeto.setHabilidadesNecessarias(vinculos);
         }
@@ -83,45 +88,46 @@ public class ProjetoService {
     @Transactional(readOnly = true)
     public Optional<ProjetoDetailResponseDTO> findByIdDetail(UUID id) {
         return projetoRepository.findById(id)
-            .map(this::converterParaDetalhe);
+                .map(this::converterParaDetalhe);
     }
 
     /**
-     * Converter Projeto para ProjetoDetailResponseDTO (Com verificações de segurança para nulos)
+     * Converter Projeto para ProjetoDetailResponseDTO (Com verificações de
+     * segurança para nulos)
      */
     private ProjetoDetailResponseDTO converterParaDetalhe(Projeto projeto) {
         UserDTO criadorDTO = (projeto.getCriador() != null) ? UserDTO.from(projeto.getCriador()) : null;
 
-        List<String> habilidades = (projeto.getHabilidadesNecessarias() == null) 
-            ? List.of() 
-            : projeto.getHabilidadesNecessarias().stream()
-                .filter(ph -> ph != null && ph.getHabilidade() != null)
-                .map(ph -> ph.getHabilidade().getNome())
-                .toList();
+        List<String> habilidades = (projeto.getHabilidadesNecessarias() == null)
+                ? List.of()
+                : projeto.getHabilidadesNecessarias().stream()
+                        .filter(ph -> ph != null && ph.getHabilidade() != null)
+                        .map(ph -> ph.getHabilidade().getNome())
+                        .toList();
 
-        List<UserDTO> membrosList = (projeto.getMembros() == null) 
-            ? List.of() 
-            : projeto.getMembros().stream()
-                .filter(pm -> pm != null && pm.getUsuario() != null)
-                .map(pm -> UserDTO.from(pm.getUsuario()))
-                .toList();
+        List<UserDTO> membrosList = (projeto.getMembros() == null)
+                ? List.of()
+                : projeto.getMembros().stream()
+                        .filter(pm -> pm != null && pm.getUsuario() != null)
+                        .map(pm -> UserDTO.from(pm.getUsuario()))
+                        .toList();
 
         int totalCandidatos = (projeto.getCandidaturas() == null) ? 0 : projeto.getCandidaturas().size();
 
         return ProjetoDetailResponseDTO.builder()
-            .id(projeto.getId())
-            .titulo(projeto.getTitulo())
-            .descricao(projeto.getDescricao())
-            .status(projeto.getStatus())
-            .vagas(projeto.getVagas())
-            .vagasPreenchidas(projeto.getVagasPreenchidas())
-            .dataFim(projeto.getDataFim())
-            .criadoEm(projeto.getCriadoEm())
-            .criador(criadorDTO)
-            .habilidadesNecessarias(habilidades)
-            .membros(membrosList)
-            .totalCandidatos(totalCandidatos)
-            .build();
+                .id(projeto.getId())
+                .titulo(projeto.getTitulo())
+                .descricao(projeto.getDescricao())
+                .status(projeto.getStatus())
+                .vagas(projeto.getVagas())
+                .vagasPreenchidas(projeto.getVagasPreenchidas())
+                .dataFim(projeto.getDataFim())
+                .criadoEm(projeto.getCriadoEm())
+                .criador(criadorDTO)
+                .habilidadesNecessarias(habilidades)
+                .membros(membrosList)
+                .totalCandidatos(totalCandidatos)
+                .build();
     }
 
     /**
@@ -131,8 +137,8 @@ public class ProjetoService {
     public ProjetoPageResponseDTO findByStatusWithDetails(StatusProjeto status, Pageable pageable) {
         Page<Projeto> page = projetoRepository.findByStatus(status, pageable);
         List<ProjetoCardDTO> dados = page.getContent().stream()
-            .map(ProjetoCardDTO::from)
-            .toList();
+                .map(ProjetoCardDTO::from)
+                .toList();
         return ProjetoPageResponseDTO.from(page, dados);
     }
 
@@ -143,8 +149,8 @@ public class ProjetoService {
     public ProjetoPageResponseDTO findAllWithDetails(Pageable pageable) {
         Page<Projeto> page = projetoRepository.findByAtivoTrue(pageable);
         List<ProjetoCardDTO> dados = page.getContent().stream()
-            .map(ProjetoCardDTO::from)
-            .toList();
+                .map(ProjetoCardDTO::from)
+                .toList();
         return ProjetoPageResponseDTO.from(page, dados);
     }
 
@@ -159,16 +165,55 @@ public class ProjetoService {
     /**
      * Atualizar projeto
      */
-    public Projeto update(UUID id, Projeto projetoAtualizado) {
-        return projetoRepository.findById(id)
-            .map(projeto -> {
-                projeto.setTitulo(projetoAtualizado.getTitulo());
-                projeto.setDescricao(projetoAtualizado.getDescricao());
-                projeto.setStatus(projetoAtualizado.getStatus());
-                projeto.setVagas(projetoAtualizado.getVagas());
-                return projetoRepository.save(projeto);
-            })
-            .orElseThrow(() -> new RuntimeException("Projeto não encontrado"));
+    @Transactional
+    public ProjetoCardDTO atualizarProjeto(UUID id, ProjetoRequestDTO dto, String emailUsuarioLogado) {
+        // 1. Busca o projeto existente
+        Projeto projeto = projetoRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Projeto não encontrado com o ID: " + id));
+
+        // 2. Valida se o usuário logado é o criador do projeto
+        if (!projeto.getCriador().getEmail().equals(emailUsuarioLogado)) {
+            throw new AccessDeniedException("Você não tem permissão para alterar este projeto.");
+        }
+
+        // 3. Atualiza os dados básicos
+        projeto.setTitulo(dto.getTitulo());
+        projeto.setDescricao(dto.getDescricao());
+        projeto.setVagas(dto.getVagas());
+        projeto.setDataFim(dto.getDataFim());
+
+        // 4. Atualiza as habilidades (se informado no DTO)
+        // 4. Atualiza as habilidades (se informado no DTO)
+        if (dto.getHabilidadeIds() != null) {
+            // A) Limpa a coleção atual
+            projeto.getHabilidadesNecessarias().clear();
+
+            // B) FORÇA O HIBERNATE A EXECUTAR OS DELETES NO BANCO AGORA
+            projetoRepository.saveAndFlush(projeto);
+
+            if (!dto.getHabilidadeIds().isEmpty()) {
+                // C) Remove IDs duplicados caso o frontend envie repetido
+                List<UUID> idsUnicos = dto.getHabilidadeIds().stream()
+                        .distinct()
+                        .collect(Collectors.toList());
+
+                List<Habilidade> habilidades = habilidadeRepository.findAllById(idsUnicos);
+
+                Set<ProjetoHabilidade> novosVinculos = habilidades.stream()
+                        .map(h -> ProjetoHabilidade.builder()
+                                .projeto(projeto)
+                                .habilidade(h)
+                                .obrigatoria(true)
+                                .build())
+                        .collect(Collectors.toSet());
+
+                projeto.getHabilidadesNecessarias().addAll(novosVinculos);
+            }
+        }
+
+        // C) Salva as novas alterações
+        Projeto salvo = projetoRepository.saveAndFlush(projeto);
+        return mapper.toCardDTO(salvo);
     }
 
     /**
@@ -183,11 +228,11 @@ public class ProjetoService {
      */
     public void decrementarVagas(UUID projetoId) {
         projetoRepository.findById(projetoId)
-            .ifPresent(projeto -> {
-                if (projeto.getVagasPreenchidas() < projeto.getVagas()) {
-                    projeto.setVagasPreenchidas(projeto.getVagasPreenchidas() + 1);
-                    projetoRepository.save(projeto);
-                }
-            });
+                .ifPresent(projeto -> {
+                    if (projeto.getVagasPreenchidas() < projeto.getVagas()) {
+                        projeto.setVagasPreenchidas(projeto.getVagasPreenchidas() + 1);
+                        projetoRepository.save(projeto);
+                    }
+                });
     }
 }

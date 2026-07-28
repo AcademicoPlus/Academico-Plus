@@ -4,6 +4,7 @@ import com.unifapi.academico.api.dto.request.ProjetoRequestDTO;
 import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
 import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
 import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
+import com.unifapi.academico.api.mapper.ProjetoMapper;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.domain.enums.TipoUsuario;
 import com.unifapi.academico.domain.model.Projeto;
@@ -21,6 +22,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
+import com.unifapi.academico.exception.AccessDeniedException;
 
 import java.time.LocalDateTime;
 import java.util.Arrays;
@@ -41,10 +43,13 @@ class ProjetoServiceTest {
     private ProjetoRepository projetoRepository;
 
     @Mock
-    private UsuarioRepository usuarioRepository; // <-- NOVO MOCK
+    private UsuarioRepository usuarioRepository;
 
     @Mock
-    private HabilidadeRepository habilidadeRepository; // <-- NOVO MOCK
+    private ProjetoMapper mapper;
+
+    @Mock
+    private HabilidadeRepository habilidadeRepository;
 
     @InjectMocks
     private ProjetoService projetoService;
@@ -56,48 +61,47 @@ class ProjetoServiceTest {
     @BeforeEach
     void setup() {
         criadorTeste = Usuario.builder()
-            .id(UUID.randomUUID())
-            .email("carlos@unifapi.edu.br")
-            .nome("Carlos Eduardo")
-            .tipo(TipoUsuario.ALUNO)
-            .ativo(true)
-            .build();
+                .id(UUID.randomUUID())
+                .email("carlos@unifapi.edu.br")
+                .nome("Carlos Eduardo")
+                .tipo(TipoUsuario.ALUNO)
+                .ativo(true)
+                .build();
 
         projetoTeste = Projeto.builder()
-            .id(UUID.randomUUID())
-            .titulo("Sistema de Gestão de Biblioteca")
-            .descricao("Desenvolver um sistema web para gerenciar bibliotecas universitárias")
-            .status(StatusProjeto.ABERTO)
-            .vagas(3)  
-            .vagasPreenchidas(0)  
-            .criador(criadorTeste)
-            .ativo(true)
-            .habilidadesNecessarias(new HashSet<>())
-            .membros(new HashSet<>())
-            .candidaturas(new HashSet<>())
-            .criadoEm(LocalDateTime.now())
-            .atualizadoEm(LocalDateTime.now())
-            .build();
+                .id(UUID.randomUUID())
+                .titulo("Sistema de Gestão de Biblioteca")
+                .descricao("Desenvolver um sistema web para gerenciar bibliotecas universitárias")
+                .status(StatusProjeto.ABERTO)
+                .vagas(3)
+                .vagasPreenchidas(0)
+                .criador(criadorTeste)
+                .ativo(true)
+                .habilidadesNecessarias(new HashSet<>())
+                .membros(new HashSet<>())
+                .candidaturas(new HashSet<>())
+                .criadoEm(LocalDateTime.now())
+                .atualizadoEm(LocalDateTime.now())
+                .build();
 
         projetoRequestDTO = ProjetoRequestDTO.builder()
-            .titulo("Sistema de Gestão de Biblioteca")
-            .descricao("Desenvolver um sistema web para gerenciar bibliotecas universitárias")
-            .vagas(3)
-            .habilidadeIds(List.of())
-            .build();
+                .titulo("Sistema de Gestão de Biblioteca")
+                .descricao("Desenvolver um sistema web para gerenciar bibliotecas universitárias")
+                .vagas(3)
+                .habilidadeIds(List.of())
+                .build();
     }
 
     @Test
     @DisplayName("Deve listar projetos ativos com paginação")
     void deveListarProjetosComPaginacao() {
         Page<Projeto> pageProjetos = new PageImpl<>(
-            Arrays.asList(projetoTeste),
-            Pageable.ofSize(10),
-            1
-        );
+                Arrays.asList(projetoTeste),
+                Pageable.ofSize(10),
+                1);
 
         when(projetoRepository.findByAtivoTrue(any(Pageable.class)))
-            .thenReturn(pageProjetos);
+                .thenReturn(pageProjetos);
 
         ProjetoPageResponseDTO resultado = projetoService.findAllWithDetails(Pageable.ofSize(10));
 
@@ -112,14 +116,14 @@ class ProjetoServiceTest {
     void deveEncontrarProjetoPorId() {
         UUID id = projetoTeste.getId();
         when(projetoRepository.findById(id))
-            .thenReturn(Optional.of(projetoTeste));
+                .thenReturn(Optional.of(projetoTeste));
 
         Optional<ProjetoDetailResponseDTO> resultado = projetoService.findByIdDetail(id);
 
         assertThat(resultado).isPresent();
         assertThat(resultado.get())
-            .extracting("id", "titulo")
-            .contains(id, "Sistema de Gestão de Biblioteca");
+                .extracting("id", "titulo")
+                .contains(id, "Sistema de Gestão de Biblioteca");
 
         verify(projetoRepository).findById(id);
     }
@@ -129,7 +133,7 @@ class ProjetoServiceTest {
     void deveRetornarVazioProjetoInexistente() {
         UUID idInexistente = UUID.randomUUID();
         when(projetoRepository.findById(idInexistente))
-            .thenReturn(Optional.empty());
+                .thenReturn(Optional.empty());
 
         Optional<ProjetoDetailResponseDTO> resultado = projetoService.findByIdDetail(idInexistente);
 
@@ -142,10 +146,10 @@ class ProjetoServiceTest {
     void deveCriarProjetoComSucesso() {
         // Arrange
         when(usuarioRepository.findByEmail("carlos@unifapi.edu.br"))
-            .thenReturn(Optional.of(criadorTeste));
+                .thenReturn(Optional.of(criadorTeste));
 
         when(projetoRepository.save(any(Projeto.class)))
-            .thenReturn(projetoTeste);
+                .thenReturn(projetoTeste);
 
         // Act
         ProjetoCardDTO resultado = projetoService.criarProjeto(projetoRequestDTO, "carlos@unifapi.edu.br");
@@ -167,48 +171,87 @@ class ProjetoServiceTest {
 
         // Act & Assert
         assertThatThrownBy(() -> projetoService.criarProjeto(projetoRequestDTO, "carlos@unifapi.edu.br"))
-            .isInstanceOf(IllegalArgumentException.class)
-            .hasMessage("O projeto deve ter no mínimo 1 vaga.");
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("O projeto deve ter no mínimo 1 vaga.");
 
         verify(projetoRepository, never()).save(any(Projeto.class));
     }
 
     @Test
-    @DisplayName("Deve atualizar projeto")
-    void deveAtualizarProjeto() {
+    @DisplayName("Deve atualizar projeto com sucesso quando for o criador")
+    void deveAtualizarProjetoComSucesso() {
+        // Arrange
         UUID id = projetoTeste.getId();
-        Projeto projetoAtualizado = Projeto.builder()
-            .id(id)
-            .titulo("Novo Titulo")
-            .descricao("Nova descrição com mais de 20 caracteres para validação")
-            .status(StatusProjeto.EM_ANDAMENTO)
-            .vagas(5)
-            .vagasPreenchidas(0)
-            .criador(criadorTeste)
-            .build();
+
+        ProjetoRequestDTO dtoAtualizacao = ProjetoRequestDTO.builder()
+                .titulo("Sistema de Gestão de Biblioteca V2")
+                .descricao("Descrição atualizada do sistema com mais de 20 caracteres para validação")
+                .vagas(5)
+                .habilidadeIds(List.of())
+                .build();
+
+        // 1. DTO de retorno mockado para o mapper não retornar null
+        ProjetoCardDTO cardDTOEsperado = new ProjetoCardDTO();
+        cardDTOEsperado.setId(id);
+        cardDTOEsperado.setTitulo("Sistema de Gestão de Biblioteca V2");
 
         when(projetoRepository.findById(id)).thenReturn(Optional.of(projetoTeste));
-        when(projetoRepository.save(any(Projeto.class))).thenReturn(projetoAtualizado);
 
-        Projeto resultado = projetoService.update(id, projetoAtualizado);
+        // 2. Mock do saveAndFlush em vez do save
+        when(projetoRepository.saveAndFlush(any(Projeto.class))).thenReturn(projetoTeste);
 
-        assertThat(resultado).isNotNull()
-            .extracting("titulo", "status", "vagas")
-            .contains("Novo Titulo", StatusProjeto.EM_ANDAMENTO, 5);
+        // 3. Mock do Mapper (garanta que a variável na classe de teste se chama
+        // 'mapper' ou 'projetoMapper')
+        when(mapper.toCardDTO(any(Projeto.class))).thenReturn(cardDTOEsperado);
+
+        // Act
+        ProjetoCardDTO resultado = projetoService.atualizarProjeto(id, dtoAtualizacao, "carlos@unifapi.edu.br");
+
+        // Assert
+        assertThat(resultado).isNotNull();
+        assertThat(projetoTeste.getTitulo()).isEqualTo("Sistema de Gestão de Biblioteca V2");
+        assertThat(projetoTeste.getVagas()).isEqualTo(5);
 
         verify(projetoRepository).findById(id);
-        verify(projetoRepository).save(any(Projeto.class));
+        // 4. Verificação com saveAndFlush (atLeastOnce para cobrir as chamadas do
+        // saveAndFlush)
+        verify(projetoRepository, atLeastOnce()).saveAndFlush(any(Projeto.class));
+        verify(mapper).toCardDTO(any(Projeto.class));
+    }
+
+    @Test
+    @DisplayName("Deve falhar ao atualizar projeto quando o usuário não for o criador")
+    void deveFalharAtualizarProjetoSemPermissao() {
+        // Arrange
+        UUID id = projetoTeste.getId();
+        String emailOutroUsuario = "outro.professor@unifapi.edu.br";
+
+        when(projetoRepository.findById(id)).thenReturn(Optional.of(projetoTeste));
+
+        // Act & Assert
+        assertThatThrownBy(() -> projetoService.atualizarProjeto(id, projetoRequestDTO, emailOutroUsuario))
+                .isInstanceOf(AccessDeniedException.class)
+                .hasMessage("Você não tem permissão para alterar este projeto.");
+
+        verify(projetoRepository).findById(id);
+        verify(projetoRepository, never()).save(any(Projeto.class));
     }
 
     @Test
     @DisplayName("Deve falhar ao atualizar projeto inexistente")
     void deveFalharAtualizarProjetoInexistente() {
+        // Arrange
         UUID idInexistente = UUID.randomUUID();
         when(projetoRepository.findById(idInexistente)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> projetoService.update(idInexistente, projetoTeste))
-            .isInstanceOf(RuntimeException.class)
-            .hasMessage("Projeto não encontrado");
+        // Act & Assert
+        assertThatThrownBy(
+                () -> projetoService.atualizarProjeto(idInexistente, projetoRequestDTO, "carlos@unifapi.edu.br"))
+                .isInstanceOf(jakarta.persistence.EntityNotFoundException.class)
+                .hasMessageContaining("Projeto não encontrado");
+
+        verify(projetoRepository).findById(idInexistente);
+        verify(projetoRepository, never()).save(any(Projeto.class));
     }
 
     @Test
@@ -227,7 +270,7 @@ class ProjetoServiceTest {
     void deveListarProjetosPorCriador() {
         UUID criadorId = criadorTeste.getId();
         when(projetoRepository.findByCriadorId(criadorId))
-            .thenReturn(Arrays.asList(projetoTeste));
+                .thenReturn(Arrays.asList(projetoTeste));
 
         var resultado = projetoService.findByCriador(criadorId);
 
@@ -239,18 +282,16 @@ class ProjetoServiceTest {
     @DisplayName("Deve listar projetos por status com paginação")
     void deveListarProjetosPorStatus() {
         Page<Projeto> pageProjetos = new PageImpl<>(
-            Arrays.asList(projetoTeste),
-            Pageable.ofSize(10),
-            1
-        );
+                Arrays.asList(projetoTeste),
+                Pageable.ofSize(10),
+                1);
 
         when(projetoRepository.findByStatus(StatusProjeto.ABERTO, Pageable.ofSize(10)))
-            .thenReturn(pageProjetos);
+                .thenReturn(pageProjetos);
 
         ProjetoPageResponseDTO resultado = projetoService.findByStatusWithDetails(
-            StatusProjeto.ABERTO, 
-            Pageable.ofSize(10)
-        );
+                StatusProjeto.ABERTO,
+                Pageable.ofSize(10));
 
         assertThat(resultado).isNotNull();
         assertThat(resultado.getDados()).isNotEmpty();

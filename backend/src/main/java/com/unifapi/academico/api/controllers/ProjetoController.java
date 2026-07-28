@@ -5,7 +5,6 @@ import com.unifapi.academico.api.dto.response.ProjetoCardDTO;
 import com.unifapi.academico.api.dto.response.ProjetoDetailResponseDTO;
 import com.unifapi.academico.api.dto.response.ProjetoPageResponseDTO;
 import com.unifapi.academico.domain.enums.StatusProjeto;
-import com.unifapi.academico.domain.model.Projeto;
 import com.unifapi.academico.service.ProjetoService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
@@ -85,16 +84,14 @@ public class ProjetoController {
     @PutMapping("/{id}")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Atualizar projeto", description = "Atualiza os dados de um projeto existente")
-    public ResponseEntity<Projeto> atualizar(
-            @PathVariable UUID id,
-            @RequestBody Projeto projeto) {
-        try {
-            Projeto atualizado = projetoService.update(id, projeto);
-            return ResponseEntity.ok(atualizado);
-        } catch (RuntimeException e) {
-            return ResponseEntity.notFound().build();
-        }
-    }
+    public ResponseEntity<ProjetoCardDTO> atualizar(
+        @PathVariable UUID id,
+        @RequestBody @Valid ProjetoRequestDTO dto,
+        Authentication authentication) {
+    
+    ProjetoCardDTO projetoAtualizado = projetoService.atualizarProjeto(id, dto, authentication.getName());
+    return ResponseEntity.ok(projetoAtualizado);
+}
 
     /**
      * DELETE /projetos/{id} - Deletar
