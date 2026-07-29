@@ -2,6 +2,7 @@ package com.unifapi.academico.service;
 
 import com.unifapi.academico.api.dto.response.AuthResponseDTO;
 import com.unifapi.academico.api.dto.response.UserDTO;
+import com.unifapi.academico.config.TokenBlacklistService; // 👈 1. Import da Blacklist
 import com.unifapi.academico.domain.enums.TipoUsuario;
 import com.unifapi.academico.domain.model.RefreshToken;
 import com.unifapi.academico.domain.model.Usuario;
@@ -30,12 +31,12 @@ public class AuthService {
     private final JwtUtil jwtUtil;
     private final RefreshTokenService refreshTokenService;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final TokenBlacklistService tokenBlacklistService; // 👈 2. Injeção da Blacklist
 
     /**
      * Login - Autenticar usuário
      */
     public AuthResponseDTO login(String email, String senha) {
-        // Lança BadCredentialsException tanto se não achar o e-mail quanto se a senha falhar
         Usuario usuario = usuarioRepository.findByEmail(email)
                 .orElseThrow(() -> new BadCredentialsException("Usuário não encontrado"));
 
@@ -83,10 +84,18 @@ public class AuthService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Refresh Token inválido ou não encontrado"));
     }
 
-    // Método de Logout (Revoga o Refresh Token)
+    /**
+     * Logout - Revoga o Refresh Token e invalida o Access Token JWT na Blacklist
+     */
     @Transactional
-    public void logout(UUID usuarioId) {
+    public void logout(UUID usuarioId, String token) { // 👈 3. Recebe também o token JWT
+        // Apaga o RefreshToken do banco
         refreshTokenService.deleteByUsuarioId(usuarioId);
+        
+        // Adiciona o Access Token atual na blacklist para não ser mais aceito
+        if (token != null) {
+            tokenBlacklistService.blackListToken(token);
+        }
     }
 
     /**
@@ -143,7 +152,7 @@ public class AuthService {
      */
     private String gerarToken(Usuario usuario) {
         Map<String, Object> claims = new HashMap<>();
-        claims.put("tipo", usuario.getTipo().toString());
+        claims.put("tipo", usuario.getTipo().toString()); // <--- "ADMIN", "ALUNO", "PROFESSOR"
         claims.put("id", usuario.getId().toString());
         return jwtUtil.generateToken(usuario.getEmail(), claims);
     }

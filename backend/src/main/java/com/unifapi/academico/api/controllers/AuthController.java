@@ -3,7 +3,7 @@ package com.unifapi.academico.api.controllers;
 import com.unifapi.academico.api.dto.request.LoginRequestDTO;
 import com.unifapi.academico.api.dto.request.RefreshTokenRequestDTO;
 import com.unifapi.academico.api.dto.request.RegistrarUsuarioDTO;
-import com.unifapi.academico.api.dto.response.AuthResponseDTO; // DTO fortemente tipado contendo { token, user }
+import com.unifapi.academico.api.dto.response.AuthResponseDTO; 
 import com.unifapi.academico.api.dto.response.UserDTO;
 import com.unifapi.academico.service.AuthService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -15,7 +15,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
-import java.util.UUID;
+import java.util.UUID; 
 
 @RestController
 @RequestMapping("/auth")
@@ -23,7 +23,7 @@ import java.util.UUID;
 @CrossOrigin(origins = "*")
 public class AuthController {
 
-    private final AuthService authService;
+    private final AuthService authService; 
 
     @PostMapping("/login")
     @Operation(summary = "Fazer login", description = "Autentica o usuário e retorna um token JWT")
@@ -39,10 +39,13 @@ public class AuthController {
         return ResponseEntity.ok(response);
     }
 
-    @PostMapping("/logout/{userId}")
-    @Operation(summary = "Fazer logout", description = "Invalida o Refresh Token do usuário")
-    public ResponseEntity<Void> logout(@PathVariable UUID userId) {
-        authService.logout(userId);
+    @PostMapping("/logout/{usuarioId}")
+    @Operation(summary = "Fazer logout", description = "Invalida o Refresh Token no banco e adiciona o Access Token na blacklist")
+    public ResponseEntity<Void> logout(
+            @PathVariable UUID usuarioId, 
+            @RequestHeader(value = "Authorization", required = false) String token) {
+        
+        authService.logout(usuarioId, token); 
         return ResponseEntity.noContent().build();
     }
 
@@ -60,7 +63,7 @@ public class AuthController {
     @GetMapping("/me")
     @PreAuthorize("isAuthenticated()")
     @Operation(summary = "Obter dados do usuário autenticado", description = "Retorna os dados do usuário autenticado com base no token JWT fornecido")
-    public ResponseEntity<UserDTO> me(@RequestHeader("Authorization") String token) {
+    public ResponseEntity<UserDTO> me(@RequestHeader(value = "Authorization") String token) {
         String jwtToken = token.replace("Bearer ", "");
         UserDTO user = authService.me(jwtToken);
         return ResponseEntity.ok(user);

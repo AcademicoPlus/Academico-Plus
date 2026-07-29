@@ -9,7 +9,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.GrantedAuthority; // 👈 1. IMPORT NOVO
+import org.springframework.security.core.authority.SimpleGrantedAuthority; // 👈 2. IMPORT NOVO
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
@@ -18,6 +21,7 @@ import org.springframework.web.servlet.HandlerExceptionResolver;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.List;
 
 @Component
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
@@ -26,48 +30,58 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String jwtSecret;
 
     private final HandlerExceptionResolver resolver;
+    private final TokenBlacklistService tokenBlacklistService; 
 
-    // Injetamos o HandlerExceptionResolver para repassar erros de JWT ao GlobalExceptionHandler
-    public JwtAuthenticationFilter(@Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver) {
+    public JwtAuthenticationFilter(
+            @Qualifier("handlerExceptionResolver") HandlerExceptionResolver resolver,
+            TokenBlacklistService tokenBlacklistService) { 
         this.resolver = resolver;
+        this.tokenBlacklistService = tokenBlacklistService;
     }
 
     @Override
     protected void doFilterInternal(HttpServletRequest request, 
-                                   HttpServletResponse response, 
-                                   FilterChain filterChain) 
+                                    HttpServletResponse response, 
+                                    FilterChain filterChain) 
             throws ServletException, IOException {
         
         String token = extractToken(request);
 
         if (token != null) {
             try {
-                // Se o token estiver expirado ou for inválido, o parseToken lança uma exceção aqui
+                if (tokenBlacklistService.isBlacklisted(token)) {
+                    throw new BadCredentialsException("Token inválido ou sessão encerrada.");
+                }
+
                 Claims claims = parseToken(token);
                 
+                // 🔴 ALTERAÇÃO AQUI: Extrai a claim "tipo" (ou "role") colocada no token durante o login
+                String tipo = claims.get("tipo", String.class); // ex: "ADMIN", "ALUNO", "PROFESSOR"
+                
+                List<GrantedAuthority> authorities = new ArrayList<>();
+                if (tipo != null) {
+                    // O Spring Security exige o prefixo "ROLE_" para conferir com @PreAuthorize("hasRole('ADMIN')")
+                    authorities.add(new SimpleGrantedAuthority("ROLE_" + tipo.toUpperCase()));
+                }
+
                 UsernamePasswordAuthenticationToken authentication = 
                     new UsernamePasswordAuthenticationToken(
                         claims.getSubject(),  // email/username
                         null,
-                        new ArrayList<>()     // authorities/roles
+                        authorities           // 👈 PASSAMOS AS AUTHORITIES AQUI (Em vez de new ArrayList<>())
                     );
                 
                 SecurityContextHolder.getContext().setAuthentication(authentication);
 
             } catch (Exception ex) {
-                // Repassa a exceção (ExpiredJwtException, MalformedJwtException, etc.) para o RestControllerAdvice
                 resolver.resolveException(request, response, null, ex);
-                return; // Interrompe a requisição aqui para não rodar o restaste da cadeia de filtros
+                return;
             }
         }
         
-        // Se não há token no header, deixa passar para o Spring Security responder com 401 via EntryPoint
         filterChain.doFilter(request, response);
     }
 
-    /**
-     * Extrai o token do header Authorization ("Bearer <token>")
-     */
     private String extractToken(HttpServletRequest request) {
         String authHeader = request.getHeader("Authorization");
         
@@ -78,10 +92,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return null;
     }
 
-    /**
-     * Valida e extrai os claims do token.
-     * Lança exceções do JJWT se o token for inválido, adulterado ou expirado.
-     */
     private Claims parseToken(String token) {
         return Jwts.parser()
             .verifyWith(Keys.hmacShaKeyFor(jwtSecret.getBytes(StandardCharsets.UTF_8)))

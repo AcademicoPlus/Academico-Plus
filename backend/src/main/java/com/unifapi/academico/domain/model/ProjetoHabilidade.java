@@ -27,15 +27,16 @@ public class ProjetoHabilidade {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
     private UUID id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "projeto_id", nullable = false)
+    @EqualsAndHashCode.Include
     private Projeto projeto;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "habilidade_id", nullable = false)
+    @EqualsAndHashCode.Include 
     private Habilidade habilidade;
 
     @Column(nullable = false)

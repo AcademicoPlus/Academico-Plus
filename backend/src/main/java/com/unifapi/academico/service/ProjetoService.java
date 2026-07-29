@@ -23,6 +23,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -41,6 +42,10 @@ public class ProjetoService {
 
     /**
      * Criar novo projeto vinculado ao usuário e habilidades
+     * ✅ FIX: Usa variáveis diferentes para evitar erro de escopo
+     */
+    /**
+     * Criar novo projeto vinculado ao usuário e habilidades
      */
     public ProjetoCardDTO criarProjeto(ProjetoRequestDTO dto, String emailCriador) {
         if (dto.getVagas() != null && dto.getVagas() < 1) {
@@ -51,8 +56,8 @@ public class ProjetoService {
         Usuario criador = usuarioRepository.findByEmail(emailCriador)
                 .orElseThrow(() -> new RuntimeException("Usuário não encontrado: " + emailCriador));
 
-        // 2. Monta a entidade Projeto
-        Projeto projeto = Projeto.builder()
+        // 2. Cria a entidade Projeto SEM habilidades
+        Projeto projetoNovo = Projeto.builder()
                 .titulo(dto.getTitulo())
                 .descricao(dto.getDescricao())
                 .vagas(dto.getVagas())
@@ -61,24 +66,35 @@ public class ProjetoService {
                 .status(StatusProjeto.ABERTO)
                 .ativo(true)
                 .criador(criador)
+                .habilidadesNecessarias(new HashSet<>())
                 .build();
 
-        // 3. Associa as habilidades recebidas
-        if (dto.getHabilidadeIds() != null && !dto.getHabilidadeIds().isEmpty()) {
-            List<Habilidade> habilidades = habilidadeRepository.findAllById(dto.getHabilidadeIds());
+        // 3. SALVA PRIMEIRO (gera o ID do projeto)
+        Projeto projetoSalvo = projetoRepository.saveAndFlush(projetoNovo);
 
+        // 4. Associa as habilidades com o projeto salvo
+        if (dto.getHabilidadeIds() != null && !dto.getHabilidadeIds().isEmpty()) {
+            List<UUID> idsUnicos = dto.getHabilidadeIds().stream()
+                    .distinct()
+                    .toList();
+
+            List<Habilidade> habilidades = habilidadeRepository.findAllById(idsUnicos);
+
+            // Cria vinculos com Projeto já persistido
             Set<ProjetoHabilidade> vinculos = habilidades.stream()
                     .map(h -> ProjetoHabilidade.builder()
-                            .projeto(projeto)
+                            .projeto(projetoSalvo) // ✅ projetoSalvo é 'effectively final' agora
                             .habilidade(h)
                             .build())
                     .collect(Collectors.toSet());
 
-            projeto.setHabilidadesNecessarias(vinculos);
+            // Adiciona à coleção do objeto persistido
+            projetoSalvo.getHabilidadesNecessarias().addAll(vinculos);
+
+            // ✅ Salva novamente SEM reatribuir a variável projetoSalvo
+            projetoRepository.saveAndFlush(projetoSalvo);
         }
 
-        // 4. Salva no banco e retorna o CardDTO montado
-        Projeto projetoSalvo = projetoRepository.save(projeto);
         return ProjetoCardDTO.from(projetoSalvo);
     }
 
@@ -92,8 +108,7 @@ public class ProjetoService {
     }
 
     /**
-     * Converter Projeto para ProjetoDetailResponseDTO (Com verificações de
-     * segurança para nulos)
+     * Converter Projeto para ProjetoDetailResponseDTO
      */
     private ProjetoDetailResponseDTO converterParaDetalhe(Projeto projeto) {
         UserDTO criadorDTO = (projeto.getCriador() != null) ? UserDTO.from(projeto.getCriador()) : null;
@@ -183,19 +198,19 @@ public class ProjetoService {
         projeto.setDataFim(dto.getDataFim());
 
         // 4. Atualiza as habilidades (se informado no DTO)
-        // 4. Atualiza as habilidades (se informado no DTO)
         if (dto.getHabilidadeIds() != null) {
             // A) Limpa a coleção atual
             projeto.getHabilidadesNecessarias().clear();
 
-            // B) FORÇA O HIBERNATE A EXECUTAR OS DELETES NO BANCO AGORA
+            // B) FORÇA O HIBERNATE A EXECUTAR OS DELETES
             projetoRepository.saveAndFlush(projeto);
 
+            // C) Se não vazio, associa novas
             if (!dto.getHabilidadeIds().isEmpty()) {
-                // C) Remove IDs duplicados caso o frontend envie repetido
+                // Remove IDs duplicados
                 List<UUID> idsUnicos = dto.getHabilidadeIds().stream()
                         .distinct()
-                        .collect(Collectors.toList());
+                        .toList();
 
                 List<Habilidade> habilidades = habilidadeRepository.findAllById(idsUnicos);
 
@@ -211,7 +226,7 @@ public class ProjetoService {
             }
         }
 
-        // C) Salva as novas alterações
+        // D) Salva as novas alterações
         Projeto salvo = projetoRepository.saveAndFlush(projeto);
         return mapper.toCardDTO(salvo);
     }

@@ -25,7 +25,7 @@ public class UserController {
     private final UserService userService;
     
     @GetMapping("/type/{type}")
-    @Operation(summary = "Listar usuários por tipo", description = "Retorna usuários filtrados por tipo (STUDENT ou PROFESSOR)")
+    @Operation(summary = "Listar usuários por tipo", description = "Retorna usuários filtrados por tipo (ALUNO ou PROFESSOR)")
     public ResponseEntity<List<UserDTO>> getUsersByType(@PathVariable TipoUsuario type) { // O Spring converte String para Enum automaticamente
         List<UserDTO> users = userService.getUsersByType(type);
         return ResponseEntity.ok(users);

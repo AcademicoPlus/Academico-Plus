@@ -2,7 +2,7 @@ package com.unifapi.academico.domain.enums;
 
 public enum TipoUsuario {
     ALUNO("Aluno"),
-    STUDENT("Aluno"),
+    ADMIN("ADMIN"),
     PROFESSOR("Professor");
     
     private final String label;
