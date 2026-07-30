@@ -1,68 +1,137 @@
 export default function Login() {
   return (
-    <div className="flex flex-col md:flex-row min-h-screen w-full font-sans">
+    // Fundo geral cinza super claro para o card branco destacar
+    <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       
-      {/* Lado Esquerdo (Fundo Azul) - Oculto no celular (hidden), aparece no PC (md:flex) */}
-      <div className="hidden md:flex w-full md:w-1/2 bg-blue-950 text-white flex-col justify-center p-12 lg:p-24">
-        <h2 className="text-4xl lg:text-5xl font-bold max-w-lg mb-6 leading-tight">
-          O curador digital da sua jornada acadêmica.
-        </h2>
-        <p className="text-blue-200 text-lg max-w-md leading-relaxed">
-          Organize, colabore e descubra. Um ambiente focado, projetado para afastar distrações e elevar o seu processo de pesquisa.
-        </p>
+      {/* Lado Esquerdo (Roxo/Azul Vibrante) - Oculto no celular */}
+      <div className="hidden lg:flex w-1/2 bg-[#5E4EE8] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
+        
+        {/* Efeito de círculos concêntricos sutis no fundo */}
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border-[30px] border-white/5 rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] border-[30px] border-white/5 rounded-full pointer-events-none"></div>
+        
+        <div className="relative z-10 text-white max-w-lg">
+          {/* Logo A+ */}
+          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold mb-10 shadow-sm backdrop-blur-sm">
+            A+
+          </div>
+          
+          <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
+            Conecte-se com projetos multidisciplinares
+          </h1>
+          
+          <p className="text-[#C7C2FF] text-lg mb-16 leading-relaxed max-w-md">
+            Crie projetos, recrute colaboradores por habilidades e faça parte de algo maior com colegas de outros cursos.
+          </p>
+          
+          {/* Estatísticas */}
+          <div className="flex gap-10">
+            <div>
+              <h3 className="text-3xl font-bold">120+</h3>
+              <p className="text-[#C7C2FF] text-sm mt-1">Projetos ativos</p>
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold">850+</h3>
+              <p className="text-[#C7C2FF] text-sm mt-1">Estudantes</p>
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold">45+</h3>
+              <p className="text-[#C7C2FF] text-sm mt-1">Professores</p>
+            </div>
+          </div>
+        </div>
       </div>
 
-      {/* Lado Direito (Fundo Branco com o Formulário) */}
-      <div className="w-full md:w-1/2 bg-white flex flex-col items-center justify-center p-6 md:p-8">
-        
-        {/* Container interno para alinhar tudo bonitinho */}
-        <div className="w-full max-w-sm flex flex-col items-center">
+      {/* Lado Direito (Formulário) */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
+        <div className="w-full max-w-md">
           
-          {/* Logo Academico+ simulada */}
-          <div className="mb-12 flex items-center gap-2">
-            <span className="text-3xl">⚲</span> {/* Ícone que lembra o Compasso do Figma */}
-            <span className="text-2xl font-bold text-gray-900 tracking-tight">Academico +</span>
+          {/* Cabeçalho do Formulário */}
+          <div className="flex justify-between items-start mb-6 px-2">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Bem-vindo de volta</h2>
+              <p className="text-gray-500 mt-1">Entre na sua conta institucional</p>
+            </div>
+            {/* Botão de Tema Escuro (Lua) */}
+            <button className="p-2.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
+              </svg>
+            </button>
           </div>
 
-          {/* Títulos proporcionais */}
-          <h1 className="text-2xl font-semibold text-gray-900 mb-2 text-center">
-            Login Institucional
-          </h1>
-          <p className="text-sm text-gray-500 mb-8 text-center">
-            Acesse seu ambiente acadêmico curado.
-          </p>
+          {/* Card Branco */}
+          <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
+            
+            <form className="flex flex-col gap-5">
+              {/* Campo E-mail */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">E-mail institucional</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    {/* Ícone de Envelope */}
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <input 
+                    type="email" 
+                    placeholder="ana.silva@academico.edu.br" 
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#5E4EE8] focus:ring-2 focus:ring-[#5E4EE8]/20 outline-none transition-all text-gray-700"
+                  />
+                </div>
+              </div>
 
-          {/* Botões Modernizados */}
-          <button className="bg-blue-700 hover:bg-blue-800 text-white font-medium py-3 px-4 rounded-lg w-full mb-6 transition-all shadow-sm">
-            Entrar com E-mail Acadêmico
-          </button>
+              {/* Campo Senha */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Senha</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    {/* Ícone de Cadeado */}
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                    </svg>
+                  </div>
+                  <input 
+                    type="password" 
+                    defaultValue="........"
+                    className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#5E4EE8] focus:ring-2 focus:ring-[#5E4EE8]/20 outline-none transition-all text-gray-700 font-mono tracking-widest"
+                  />
+                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
+                    {/* Ícone de Olho */}
+                    <svg className="h-5 w-5 text-gray-400 hover:text-gray-600 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                    </svg>
+                  </div>
+                </div>
+              </div>
 
-          <div className="flex items-center w-full mb-6">
-            <div className="flex-grow border-t border-gray-200"></div>
-            <span className="px-4 text-gray-400 text-xs font-medium uppercase tracking-wider">OU</span>
-            <div className="flex-grow border-t border-gray-200"></div>
-          </div>
+              {/* Lembrar-me e Esqueci a Senha */}
+              <div className="flex items-center justify-between mt-1 mb-2">
+                <label className="flex items-center cursor-pointer">
+                  <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-[#5E4EE8] border-gray-300 focus:ring-[#5E4EE8]" />
+                  <span className="ml-2 text-sm text-gray-500">Lembrar-me</span>
+                </label>
+                <a href="#" className="text-sm text-[#5E4EE8] hover:underline font-medium">Esqueci a senha</a>
+              </div>
 
-          <button className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium py-3 px-4 rounded-lg w-full transition-all shadow-sm flex justify-center items-center gap-2">
-            {/* Ícone SVG do Google desenhado via código */}
-            <svg className="w-5 h-5" viewBox="0 0 24 24">
-              <path fill="currentColor" d="M21.35,11.1H12.18V13.83H18.69C18.36,17.64 15.19,19.27 12.19,19.27C8.36,19.27 5,16.25 5,12C5,7.9 8.2,4.73 12.2,4.73C15.29,4.73 17.1,6.7 17.1,6.7L19,4.72C19,4.72 16.56,2 12.1,2C6.42,2 2.03,6.8 2.03,12C2.03,17.05 6.16,22 12.25,22C17.6,22 21.5,18.33 21.5,12.91C21.5,11.76 21.35,11.1 21.35,11.1V11.1Z" />
-            </svg>
-            Acessar via Google Workspace
-          </button>
+              {/* Botão Entrar */}
+              <button type="button" className="w-full bg-[#5E4EE8] hover:bg-[#4d3fd4] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#5E4EE8]/20">
+                Entrar na plataforma
+              </button>
+            </form>
 
-          {/* Links de Rodapé */}
-          <div className="mt-8 flex flex-col items-center text-center">
-            <a href="#" className="text-sm text-gray-600 hover:text-blue-700 hover:underline mb-8 transition-colors">
-              Problemas para acessar?
-            </a>
-            <p className="text-xs text-gray-400">
-              Ao entrar, você concorda com nossos{' '}
-              <a href="#" className="font-medium text-gray-500 hover:underline">Termos</a> e{' '}
-              <a href="#" className="font-medium text-gray-500 hover:underline">Privacidade</a>
+            <p className="text-center text-sm text-gray-500 mt-6">
+              Não tem conta? <a href="#" className="text-[#5E4EE8] font-semibold hover:underline">Cadastre-se</a>
             </p>
           </div>
-
+          
+          {/* Rodapé */}
+          <p className="text-center text-xs text-gray-400 mt-10">
+            UNIFAPI - Sistema Acadêmico Integrado
+          </p>
+          
         </div>
       </div>
     </div>
