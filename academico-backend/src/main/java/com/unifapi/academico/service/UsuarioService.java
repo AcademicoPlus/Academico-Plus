@@ -8,6 +8,7 @@ import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
 import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaRequest;
+import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaResponse;
 import com.unifapi.academico.exception.RecursoNaoEncontradoException;
 import com.unifapi.academico.exception.RegraDeNegocioException;
 import com.unifapi.academico.repository.CursoRepository;
@@ -16,6 +17,8 @@ import com.unifapi.academico.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -71,10 +74,24 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
+    @PreAuthorize("hasRole('ADMIN')")
     public List<UsuarioResumoResponse> listarTodos() {
         return usuarioRepository.findAll().stream()
                 .map(UsuarioResumoResponse::fromEntity)
                 .toList();
+    }
+
+    @Transactional(readOnly = true)
+    public Page<UsuarioResumoResponse> buscarPerfisPublicos(String busca, UUID idCurso, Pageable pageable) {
+        Specification<Usuario> spec = Specification
+                .where(UsuarioRepository.somenteAtivos())
+                .and(UsuarioRepository.semAdmin())
+                .and(UsuarioRepository.comCurso(idCurso))
+                .and(UsuarioRepository.comBuscaTextual(busca))
+                .and(UsuarioRepository.comFetchRelacoes());
+
+        return usuarioRepository.findAll(spec, pageable)
+                .map(UsuarioResumoResponse::fromEntity);
     }
 
     @Transactional(readOnly = true)
@@ -100,17 +117,17 @@ public class UsuarioService {
             usuario.setNome(request.nome().trim());
         }
 
-        usuario.setPeriodo(request.periodo());
-        usuario.setBio(request.bio());
-        usuario.setFotoUrl(request.fotoUrl());
-        usuario.setLinkedinUrl(request.linkedinUrl());
-        usuario.setGithubUrl(request.githubUrl());
+        if (request.periodo() != null) usuario.setPeriodo(request.periodo());
+        if (request.bio() != null) usuario.setBio(request.bio());
+        if (request.fotoUrl() != null) usuario.setFotoUrl(request.fotoUrl());
+        if (request.linkedinUrl() != null) usuario.setLinkedinUrl(request.linkedinUrl());
+        if (request.githubUrl() != null) usuario.setGithubUrl(request.githubUrl());
 
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
 
     @Transactional
-    public void atualizarSenha(UUID idUsuario, UsuarioUpdateSenhaRequest request) {
+    public UsuarioUpdateSenhaResponse atualizarSenha(UUID idUsuario, UsuarioUpdateSenhaRequest request) {
         Usuario usuario = buscarUsuarioPorId(idUsuario);
 
         if (!passwordEncoder.matches(request.senhaAtual(), usuario.getSenhaHash())) {
@@ -122,6 +139,8 @@ public class UsuarioService {
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(request.novaSenha()));
+
+        return UsuarioUpdateSenhaResponse.sucesso();
     }
 
     @Transactional
@@ -140,14 +159,22 @@ public class UsuarioService {
         Usuario usuario = buscarUsuarioPorId(idParaDeletar);
 
         if (usuario.getId().equals(idUsuarioLogado)) {
-            throw new RegraDeNegocioException("Você não pode excluir sua própria conta.");
+            throw new RegraDeNegocioException("Você não pode inativar sua própria conta.");
         }
 
         if (usuario.getNivelAcesso() != null && "ADMIN".equalsIgnoreCase(usuario.getNivelAcesso().getNome())) {
-            throw new RegraDeNegocioException("Não é permitido excluir administradores.");
+            throw new RegraDeNegocioException("Não é permitido inativar administradores.");
         }
 
-        usuarioRepository.delete(usuario);
+        // Soft delete real
+        usuario.setAtivo(false);
+    }
+
+
+    @Transactional
+    public void reativarUsuario(UUID idParaReativar) {
+        Usuario usuario = buscarUsuarioPorId(idParaReativar);
+        usuario.setAtivo(true);
     }
 
     // ============================================

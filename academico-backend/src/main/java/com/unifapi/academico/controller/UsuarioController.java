@@ -5,13 +5,17 @@ import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
 import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaRequest;
+import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaResponse;
 import com.unifapi.academico.service.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -27,14 +31,13 @@ import java.util.UUID;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
-    // Injecte um serviço de upload (S3, Cloudinary ou armazenamento local) se houver
-    // private final StorageService storageService;
 
-    /**
-     * Retorna os dados do perfil do usuário atualmente autenticado.
-     */
+    // ============================================
+    // PERFIL DO USUÁRIO LOGADO (/me)
+    // ============================================
+
     @GetMapping("/me")
-    @Operation (summary = "Obter dados do usuário autenticado", description = "Retorna os dados do usuário autenticado")
+    @Operation(summary = "Obter dados do usuário autenticado", description = "Retorna os dados do perfil do usuário logado")
     public ResponseEntity<UsuarioPerfilResponse> obterMeuPerfil(
             @AuthenticationPrincipal Usuario usuarioLogado
     ) {
@@ -42,29 +45,9 @@ public class UsuarioController {
         return ResponseEntity.ok(perfil);
     }
 
-    @GetMapping("/listar-todos")
-    @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista de todos os usuários")
-    public ResponseEntity<List<UsuarioResumoResponse>> listarUsuarios() {
-        List<UsuarioResumoResponse> usuarios = usuarioService.listarTodos();
-        return ResponseEntity.ok(usuarios);
-    }
-
-    /**
-     * Retorna os dados do perfil de qualquer usuário por ID.
-     */
-    @GetMapping("/{id}")
-    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID")
-    public ResponseEntity<UsuarioPerfilResponse> obterPorId(@PathVariable UUID id) {
-        UsuarioPerfilResponse perfil = usuarioService.obterPorId(id);
-        return ResponseEntity.ok(perfil);
-    }
-
-    /**
-     * Atualiza os dados básicos do perfil do usuário logado.
-     */
-    @PutMapping("/atualizar-perfil")
-    @Operation(summary = "Atualizar usuário", description = "Atualiza dados de um usuário existente")
-    public ResponseEntity<UsuarioPerfilResponse> atualizarPerfil(
+    @PutMapping("/me")
+    @Operation(summary = "Atualizar perfil do usuário logado", description = "Atualiza os dados cadastrais do próprio usuário autenticado")
+    public ResponseEntity<UsuarioPerfilResponse> atualizarMeuPerfil(
             @AuthenticationPrincipal Usuario usuarioLogado,
             @Valid @RequestBody UsuarioUpdatePerfilRequest request
     ) {
@@ -72,35 +55,56 @@ public class UsuarioController {
         return ResponseEntity.ok(perfilAtualizado);
     }
 
-    /**
-     * Altera a senha do usuário logado.
-     */
     @PatchMapping("/me/senha")
     @Operation(summary = "Alterar senha do usuário", description = "Altera a senha do usuário logado")
-    public ResponseEntity<Void> alterarSenha(
+    public ResponseEntity<UsuarioUpdateSenhaResponse> alterarSenha(
             @AuthenticationPrincipal Usuario usuarioLogado,
             @Valid @RequestBody UsuarioUpdateSenhaRequest request
     ) {
-        usuarioService.atualizarSenha(usuarioLogado.getId(), request);
-        return ResponseEntity.noContent().build();
+        UsuarioUpdateSenhaResponse response = usuarioService.atualizarSenha(usuarioLogado.getId(), request);
+        return ResponseEntity.ok(response);
     }
 
-    /**
-     * Recebe um arquivo de imagem (MultipartFile), salva no armazenamento e atualiza a foto do perfil.
-     */
     @PostMapping(value = "/me/foto", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
     @Operation(summary = "Upload de foto de perfil", description = "Recebe um arquivo de imagem e atualiza a foto do perfil do usuário logado")
     public ResponseEntity<UsuarioPerfilResponse> uploadFoto(
             @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestParam("foto") MultipartFile arquivo
     ) {
-        // Exemplo com serviço de upload local/cloud:
-        // String urlFoto = storageService.salvar(arquivo);
-        
-        // Simulação com URL gerada/recebida:
         String urlFoto = "https://storage.unifapi.edu.br/fotos/" + arquivo.getOriginalFilename();
-
         UsuarioPerfilResponse perfilAtualizado = usuarioService.atualizarFoto(usuarioLogado.getId(), urlFoto);
         return ResponseEntity.ok(perfilAtualizado);
+    }
+
+    // ============================================
+    // CONSULTAS E ADMINISTRAÇÃO
+    // ============================================
+
+    @GetMapping
+    @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista completa de usuários")
+    public ResponseEntity<List<UsuarioResumoResponse>> listarUsuarios() {
+        List<UsuarioResumoResponse> usuarios = usuarioService.listarTodos();
+        return ResponseEntity.ok(usuarios);
+    }
+
+    @GetMapping("/explorar")
+    @Operation(
+        summary = "Explorar perfis de alunos e professores", 
+        description = "Retorna uma lista paginada de usuários ativos, ignorando perfis administradores."
+    )
+    public ResponseEntity<Page<UsuarioResumoResponse>> explorarPerfis(
+            @RequestParam(name = "busca", required = false) String busca,
+            @RequestParam(name = "idCurso", required = false) UUID idCurso,
+            @ParameterObject @PageableDefault(size = 12, sort = "nome") Pageable pageable
+    ) {
+        Page<UsuarioResumoResponse> perfis = usuarioService.buscarPerfisPublicos(busca, idCurso, pageable);
+        return ResponseEntity.ok(perfis);
+    }
+
+    @GetMapping("/{id}")
+    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID")
+    public ResponseEntity<UsuarioPerfilResponse> obterPorId(@PathVariable UUID id) {
+        UsuarioPerfilResponse perfil = usuarioService.obterPorId(id);
+        return ResponseEntity.ok(perfil);
     }
 }
