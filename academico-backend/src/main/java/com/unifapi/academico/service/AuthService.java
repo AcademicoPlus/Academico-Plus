@@ -85,21 +85,24 @@ public class AuthService {
         Curso curso = cursoRepository.findById(request.idCurso())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + request.idCurso()));
 
-        NivelAcesso nivel = nivelAcessoRepository.findById(request.idNivel())
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Nível de acesso informado não foi encontrado."));
-
+        NivelAcesso nivelAcesso = nivelAcessoRepository.findByNome("ALUNO")
+            .orElseThrow(() -> new RecursoNaoEncontradoException("Nível de acesso padrão não encontrado."));
         Usuario usuario = Usuario.builder()
                 .nome(request.nome())
                 .email(emailNorm)
                 .senhaHash(passwordEncoder.encode(request.senha()))
                 .curso(curso)
                 .periodo(request.periodo())
-                .nivelAcesso(nivel)      
+                .nivelAcesso(nivelAcesso)
                 .ativo(true)
                 .build();
 
         usuarioRepository.save(usuario);
         return new CadastroResponse(true, "Cadastro realizado com sucesso.");
+    }
+
+    public MensagemResponse logout(){
+        return new MensagemResponse(true, "Logout realizado com sucesso.");
     }
 
     // ============================================

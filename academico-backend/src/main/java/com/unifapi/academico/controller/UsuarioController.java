@@ -1,6 +1,7 @@
 package com.unifapi.academico.controller;
 
 import com.unifapi.academico.domain.models.Usuario;
+import com.unifapi.academico.dto.auth.MensagemResponse;
 import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
@@ -18,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -43,6 +45,12 @@ public class UsuarioController {
     ) {
         UsuarioPerfilResponse perfil = usuarioService.obterPorId(usuarioLogado.getId());
         return ResponseEntity.ok(perfil);
+    }
+
+    @PostMapping("/logout")
+    @Operation(summary = "Logout do usuário", description = "Revoga o token JWT do usuário logado")
+    public ResponseEntity<MensagemResponse> logout(@RequestHeader("Authorization") String token) {
+        return ResponseEntity.ok(usuarioService.logout(token));
     }
 
     @PutMapping("/me")
@@ -79,6 +87,17 @@ public class UsuarioController {
     // ============================================
     // CONSULTAS E ADMINISTRAÇÃO
     // ============================================
+
+    @PatchMapping("/{id}/nivel-acesso")
+    @PreAuthorize("hasRole('ADMIN')")
+    @Operation(summary = "Alterar nível de acesso (Admin)", description = "Permite que um administrador promova um usuário a PROFESSOR ou ADMIN")
+    public ResponseEntity<UsuarioPerfilResponse> alterarNivelAcesso(
+            @PathVariable UUID id,
+            @RequestParam UUID idNivel
+    ) {
+        UsuarioPerfilResponse usuarioAtualizado = usuarioService.alterarNivelAcesso(id, idNivel);
+        return ResponseEntity.ok(usuarioAtualizado);
+    }
 
     @GetMapping
     @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista completa de usuários")

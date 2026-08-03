@@ -10,6 +10,8 @@ import org.springframework.stereotype.Component;
 import javax.crypto.SecretKey;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.UUID;
@@ -19,7 +21,7 @@ public class JwtTokenProvider {
 
     private final SecretKey secretKey;
     private final long accessTokenExpirationMinutes;
-    private final long resetTokenExpirationMinutes = 15; // 15 min fixos para reset de senha
+    private final long resetTokenExpirationMinutes = 15;
 
     public JwtTokenProvider(
             @Value("${app.security.jwt.secret:sua_chave_secreta_super_segura_com_no_minimo_32_caracteres_123}") String secret,
@@ -29,7 +31,6 @@ public class JwtTokenProvider {
         this.accessTokenExpirationMinutes = expirationMinutes;
     }
 
-    // Equivale a create_access_token() do FastAPI
     public String gerarTokenAcesso(UUID userId, String role) {
         Instant agora = Instant.now();
         Instant expiracao = agora.plus(accessTokenExpirationMinutes, ChronoUnit.MINUTES);
@@ -79,6 +80,15 @@ public class JwtTokenProvider {
     public String obterRoleDoToken(String token) {
         Claims claims = extrairClaims(token);
         return claims.get("role", String.class);
+    }
+
+    // Método responsável por extrair a data de expiração do JWT
+    public LocalDateTime obterDataExpiracaoDoToken(String token) {
+        Claims claims = extrairClaims(token);
+        Date expiration = claims.getExpiration();
+        return expiration.toInstant()
+                .atZone(ZoneId.systemDefault())
+                .toLocalDateTime();
     }
 
     private Claims extrairClaims(String token) {

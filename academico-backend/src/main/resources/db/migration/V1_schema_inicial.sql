@@ -15,6 +15,14 @@ CREATE TABLE niveis_acesso (
     criado_em TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
+
+
+CREATE TABLE tokens_revogados (
+    token VARCHAR(1000) NOT NULL PRIMARY KEY,
+    data_revogacao TIMESTAMP NOT NULL,
+    data_expiracao TIMESTAMP NOT NULL
+);
+
 -- Insere os níveis padrões necessários para o sistema
 INSERT INTO niveis_acesso (id, nome, descricao) VALUES 
     (gen_random_uuid(), 'ALUNO', 'Estudante da instituição'),

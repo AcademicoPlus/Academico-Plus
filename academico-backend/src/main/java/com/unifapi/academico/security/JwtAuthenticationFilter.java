@@ -1,6 +1,7 @@
 package com.unifapi.academico.security;
 
 import com.unifapi.academico.domain.models.Usuario;
+import com.unifapi.academico.repository.TokenRevogadoRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
@@ -8,6 +9,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -25,6 +27,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     private final JwtTokenProvider jwtTokenProvider;
     private final UsuarioRepository usuarioRepository;
+    private final TokenRevogadoRepository tokenRevogadoRepository;
 
     @Override
     protected void doFilterInternal(
@@ -42,17 +45,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
         String token = authHeader.substring(7);
 
+        
+        if (tokenRevogadoRepository.existsByToken(token)) {
+            response.setStatus(HttpStatus.UNAUTHORIZED.value());
+            response.setContentType("application/json");
+            response.getWriter().write("{\"erro\": \"Sessão encerrada. Faça login novamente.\"}");
+            return;
+        }
+
         if (jwtTokenProvider.validarToken(token, "ACCESS")) {
             UUID userId = jwtTokenProvider.obterSubjectDoToken(token);
             String roleDoToken = jwtTokenProvider.obterRoleDoToken(token);
 
-            // Busca no banco e valida estado (assim como no get_current_user do FastAPI)
             Usuario usuario = usuarioRepository.findByIdWithNivelAcesso(userId).orElse(null);
 
             if (usuario != null && Boolean.TRUE.equals(usuario.getAtivo())) {
                 String roleAtual = usuario.getNivelAcesso().getNome();
 
-                // Garante que o token é invalidado caso o perfil de acesso tenha mudado no banco
                 if (roleAtual.equals(roleDoToken)) {
                     var authority = new SimpleGrantedAuthority("ROLE_" + roleAtual.toUpperCase());
                     var authToken = new UsernamePasswordAuthenticationToken(

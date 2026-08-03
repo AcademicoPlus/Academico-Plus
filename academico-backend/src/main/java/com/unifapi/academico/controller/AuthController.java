@@ -40,6 +40,7 @@ public class AuthController {
     public ResponseEntity<CadastroResponse> cadastro(@Valid @RequestBody CadastroRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.cadastrar(request));
     }
+    
 
     @PostMapping("/reset-senha/solicitar")
     @Operation(summary = "Solicitar redefinição de senha", description = "Solicita a redefinição de senha para o e-mail fornecido")

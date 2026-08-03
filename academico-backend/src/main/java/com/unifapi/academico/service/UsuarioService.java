@@ -2,8 +2,9 @@ package com.unifapi.academico.service;
 
 import com.unifapi.academico.domain.models.Curso;
 import com.unifapi.academico.domain.models.NivelAcesso;
+import com.unifapi.academico.domain.models.TokenRevogado;
 import com.unifapi.academico.domain.models.Usuario;
-import com.unifapi.academico.dto.auth.CadastroRequest;
+import com.unifapi.academico.dto.auth.MensagemResponse;
 import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
@@ -13,7 +14,10 @@ import com.unifapi.academico.exception.RecursoNaoEncontradoException;
 import com.unifapi.academico.exception.RegraDeNegocioException;
 import com.unifapi.academico.repository.CursoRepository;
 import com.unifapi.academico.repository.NivelAcessoRepository;
+import com.unifapi.academico.repository.TokenRevogadoRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
+import com.unifapi.academico.security.JwtTokenProvider;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -23,6 +27,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -34,36 +39,22 @@ public class UsuarioService {
     private final CursoRepository cursoRepository;
     private final NivelAcessoRepository nivelAcessoRepository;
     private final PasswordEncoder passwordEncoder;
+    private final TokenRevogadoRepository tokenRevogadoRepository;
+    private final JwtTokenProvider jwtTokenProvider;
 
     // ============================================
     // CADASTRO E BUSCA
     // ============================================
-
     @Transactional
-    public UsuarioPerfilResponse criarUsuario(CadastroRequest request) {
-        String emailNorm = request.email().trim().toLowerCase();
+    public UsuarioPerfilResponse alterarNivelAcesso(UUID idUsuario, UUID idNovoNivel) {
+        Usuario usuario = usuarioRepository.findById(idUsuario)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
 
-        if (usuarioRepository.existsByEmail(emailNorm)) {
-            throw new RegraDeNegocioException("E-mail '" + emailNorm + "' já está cadastrado.");
-        }
+        NivelAcesso novoNivel = nivelAcessoRepository.findById(idNovoNivel)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Nível de acesso não encontrado."));
 
-        NivelAcesso nivel = request.idNivel() != null 
-                ? resolverNivelAcesso(request.idNivel())
-                : resolverNivelAcessoPorNome("ALUNO");
+        usuario.setNivelAcesso(novoNivel);
 
-        Curso curso = request.idCurso() != null ? resolverCurso(request.idCurso()) : null;
-
-        Usuario usuario = Usuario.builder()
-                .email(emailNorm)
-                .nome(request.nome().trim())
-                .nivelAcesso(nivel)
-                .curso(curso)
-                .periodo(request.periodo())
-                .senhaHash(passwordEncoder.encode(request.senha()))
-                .ativo(true)
-                .build();
-
-        usuario = usuarioRepository.save(usuario);
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
 
@@ -100,6 +91,26 @@ public class UsuarioService {
                 .map(UsuarioPerfilResponse::fromEntity);
     }
 
+    @Transactional
+    public MensagemResponse logout(String authorizationHeader) {
+        if (authorizationHeader != null && authorizationHeader.startsWith("Bearer ")) {
+            String token = authorizationHeader.substring(7);
+
+            if (!tokenRevogadoRepository.existsByToken(token)) {
+                // Extrai a data de expiração contida nas claims do JWT
+                LocalDateTime dataExpiracao = jwtTokenProvider.obterDataExpiracaoDoToken(token);
+
+                TokenRevogado tokenRevogado = new TokenRevogado(
+                        token,
+                        LocalDateTime.now(),
+                        dataExpiracao
+                );
+                tokenRevogadoRepository.save(tokenRevogado);
+            }
+        }
+        return new MensagemResponse(true, "Logout realizado com sucesso.");
+    }
+
     // ============================================
     // ATUALIZAÇÃO DE PERFIL
     // ============================================
@@ -117,11 +128,16 @@ public class UsuarioService {
             usuario.setNome(request.nome().trim());
         }
 
-        if (request.periodo() != null) usuario.setPeriodo(request.periodo());
-        if (request.bio() != null) usuario.setBio(request.bio());
-        if (request.fotoUrl() != null) usuario.setFotoUrl(request.fotoUrl());
-        if (request.linkedinUrl() != null) usuario.setLinkedinUrl(request.linkedinUrl());
-        if (request.githubUrl() != null) usuario.setGithubUrl(request.githubUrl());
+        if (request.periodo() != null)
+            usuario.setPeriodo(request.periodo());
+        if (request.bio() != null)
+            usuario.setBio(request.bio());
+        if (request.fotoUrl() != null)
+            usuario.setFotoUrl(request.fotoUrl());
+        if (request.linkedinUrl() != null)
+            usuario.setLinkedinUrl(request.linkedinUrl());
+        if (request.githubUrl() != null)
+            usuario.setGithubUrl(request.githubUrl());
 
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
@@ -170,7 +186,6 @@ public class UsuarioService {
         usuario.setAtivo(false);
     }
 
-
     @Transactional
     public void reativarUsuario(UUID idParaReativar) {
         Usuario usuario = buscarUsuarioPorId(idParaReativar);
@@ -184,16 +199,6 @@ public class UsuarioService {
     private Usuario buscarUsuarioPorId(UUID id) {
         return usuarioRepository.findById(id)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado com o ID: " + id));
-    }
-
-    private NivelAcesso resolverNivelAcesso(UUID idNivel) {
-        return nivelAcessoRepository.findById(idNivel)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Nível de acesso não encontrado com o ID: " + idNivel));
-    }
-
-    private NivelAcesso resolverNivelAcessoPorNome(String nome) {
-        return nivelAcessoRepository.findByNome(nome)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Nível de acesso '" + nome + "' não está configurado no banco."));
     }
 
     private Curso resolverCurso(UUID idCurso) {

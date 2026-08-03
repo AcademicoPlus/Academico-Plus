@@ -20,8 +20,6 @@ public record CadastroRequest(
 
     Integer periodo,
 
-    @NotNull(message = "Nivel de acesso é obrigatorio")
-    UUID idNivel,
 
     @NotNull(message = "A área/curso é obrigatória.")
     UUID idCurso,
