@@ -101,6 +101,7 @@ public class UsuarioController {
 
     @GetMapping
     @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista completa de usuários")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UsuarioResumoResponse>> listarUsuarios() {
         List<UsuarioResumoResponse> usuarios = usuarioService.listarTodos();
         return ResponseEntity.ok(usuarios);
