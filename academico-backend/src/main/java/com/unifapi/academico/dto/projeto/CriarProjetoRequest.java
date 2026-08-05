@@ -1,5 +1,7 @@
 package com.unifapi.academico.dto.projeto;
 
+import com.unifapi.academico.dto.habilidade.VincularHabilidadeRequest;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Future;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -7,6 +9,7 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public record CriarProjetoRequest(
 
@@ -23,6 +26,10 @@ public record CriarProjetoRequest(
         Integer vagas,
 
         @Future(message = "Data de fim deve ser uma data futura")
-        LocalDateTime dataFim
+        LocalDateTime dataFim,
+
+        /** Opcional: já cria o projeto com as habilidades necessárias vinculadas. */
+        @Valid
+        List<VincularHabilidadeRequest> habilidades
 ) {
 }

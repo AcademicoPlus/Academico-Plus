@@ -21,6 +21,10 @@ public record AtualizarProjetoRequest(
         @Min(value = 1, message = "Deve ter no mínimo 1 vaga")
         Integer vagas,
 
+        /**
+         * Não usa @Future: um projeto em andamento pode ser editado mantendo
+         * a data original já cadastrada. A validação de coerência fica no service.
+         */
         LocalDateTime dataFim
 ) {
 }
