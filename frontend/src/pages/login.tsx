@@ -24,7 +24,23 @@ export default function Login() {
             Crie projetos, recrute colaboradores por habilidades e faça parte de algo maior com colegas de outros cursos.
           </p>
           
-         
+          {/* Estatísticas */}
+          <div className="flex gap-10">
+            <div>
+              <h3 className="text-3xl font-bold">120+</h3>
+              <p className="text-[#a7ccfd] text-sm mt-1">Projetos ativos</p>
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold">850+</h3>
+              <p className="text-[#a7ccfd] text-sm mt-1">Estudantes</p>
+            </div>
+            <div>
+              <h3 className="text-3xl font-bold">45+</h3>
+              <p className="text-[#a7ccfd] text-sm mt-1">Professores</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Lado Direito (Formulário) */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
@@ -101,7 +117,7 @@ export default function Login() {
               </div>
 
               {/* Botão Entrar */}
-              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#4281c9] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#5E4EE8]/20">
+              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#1472dd] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#5E4EE8]/20">
                 Entrar na plataforma
               </button>
             </form>
