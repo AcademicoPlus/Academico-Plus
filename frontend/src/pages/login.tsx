@@ -4,7 +4,7 @@ export default function Login() {
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       
       {/* Lado Esquerdo (Roxo/Azul Vibrante) - Oculto no celular */}
-      <div className="hidden lg:flex w-1/2 bg-[#5E4EE8] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
+      <div className="hidden lg:flex w-1/2 bg-[#1472dd] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
         
         {/* Efeito de círculos concêntricos sutis no fundo */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border-[30px] border-white/5 rounded-full pointer-events-none"></div>
@@ -20,27 +20,11 @@ export default function Login() {
             Conecte-se com projetos multidisciplinares
           </h1>
           
-          <p className="text-[#C7C2FF] text-lg mb-16 leading-relaxed max-w-md">
+          <p className="text-[#a7ccfd] text-lg mb-16 leading-relaxed max-w-md">
             Crie projetos, recrute colaboradores por habilidades e faça parte de algo maior com colegas de outros cursos.
           </p>
           
-          {/* Estatísticas */}
-          <div className="flex gap-10">
-            <div>
-              <h3 className="text-3xl font-bold">120+</h3>
-              <p className="text-[#C7C2FF] text-sm mt-1">Projetos ativos</p>
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold">850+</h3>
-              <p className="text-[#C7C2FF] text-sm mt-1">Estudantes</p>
-            </div>
-            <div>
-              <h3 className="text-3xl font-bold">45+</h3>
-              <p className="text-[#C7C2FF] text-sm mt-1">Professores</p>
-            </div>
-          </div>
-        </div>
-      </div>
+         
 
       {/* Lado Direito (Formulário) */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
@@ -113,17 +97,17 @@ export default function Login() {
                   <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-[#5E4EE8] border-gray-300 focus:ring-[#5E4EE8]" />
                   <span className="ml-2 text-sm text-gray-500">Lembrar-me</span>
                 </label>
-                <a href="#" className="text-sm text-[#5E4EE8] hover:underline font-medium">Esqueci a senha</a>
+                <a href="#" className="text-sm text-[#1472dd] hover:underline font-medium">Esqueci a senha</a>
               </div>
 
               {/* Botão Entrar */}
-              <button type="button" className="w-full bg-[#5E4EE8] hover:bg-[#4d3fd4] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#5E4EE8]/20">
+              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#4281c9] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#5E4EE8]/20">
                 Entrar na plataforma
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Não tem conta? <a href="#" className="text-[#5E4EE8] font-semibold hover:underline">Cadastre-se</a>
+              Não tem conta? <a href="#" className="text-[#1472dd] font-semibold hover:underline">Cadastre-se</a>
             </p>
           </div>
           
