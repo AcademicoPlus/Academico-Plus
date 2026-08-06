@@ -20,20 +20,20 @@ import java.util.UUID;
 public class JwtTokenProvider {
 
     private final SecretKey secretKey;
-    private final long accessTokenExpirationMinutes;
+    private final long accessTokenExpirationMillis;
     private final long resetTokenExpirationMinutes = 15;
 
     public JwtTokenProvider(
-            @Value("${app.security.jwt.secret:sua_chave_secreta_super_segura_com_no_minimo_32_caracteres_123}") String secret,
-            @Value("${app.security.jwt.expiration-minutes:1440}") long expirationMinutes
+            @Value("${jwt.secret}") String secret,
+            @Value("${jwt.expiration}") long expirationMillis
     ) {
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
-        this.accessTokenExpirationMinutes = expirationMinutes;
+        this.accessTokenExpirationMillis = expirationMillis;
     }
 
     public String gerarTokenAcesso(UUID userId, String role) {
         Instant agora = Instant.now();
-        Instant expiracao = agora.plus(accessTokenExpirationMinutes, ChronoUnit.MINUTES);
+        Instant expiracao = agora.plusMillis(accessTokenExpirationMillis);
 
         return Jwts.builder()
                 .subject(userId.toString())

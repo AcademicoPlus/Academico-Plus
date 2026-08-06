@@ -109,6 +109,10 @@ public class AuthService {
     // RECUPERAÇÃO DE SENHA (OTP)
     // ============================================
 
+    /**
+     * Retorna sempre a mesma mensagem de sucesso, exista ou não o e-mail —
+     * caso contrário, o endpoint vira um oráculo de enumeração de usuários.
+     */
     @Transactional
     public MensagemResponse solicitarResetSenha(String email) {
         if (email == null || email.isBlank()) {
@@ -116,9 +120,12 @@ public class AuthService {
         }
 
         String emailNorm = email.trim().toLowerCase();
+        String mensagemGenerica = "Se este e-mail estiver cadastrado, um código de verificação foi enviado.";
 
-        Usuario usuario = usuarioRepository.findByEmail(emailNorm)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado para o e-mail informado."));
+        Usuario usuario = usuarioRepository.findByEmail(emailNorm).orElse(null);
+        if (usuario == null) {
+            return new MensagemResponse(true, mensagemGenerica);
+        }
 
         String otp = String.format("%06d", SECURE_RANDOM.nextInt(1_000_000));
         usuario.setCodigoRecuperacao(passwordEncoder.encode(otp));
@@ -127,12 +134,13 @@ public class AuthService {
 
         boolean enviado = emailService.enviarCodigoVerificacao(usuario.getEmail(), otp);
         if (!enviado) {
-            throw new RegraDeNegocioException("Não foi possível enviar o e-mail de recuperação. Verifique o provedor.");
+            throw new RegraDeNegocioException("Não foi possível enviar o e-mail de recuperação. Tente novamente mais tarde.");
         }
 
-        return new MensagemResponse(true, "Código de verificação enviado para o e-mail informado.");
+        return new MensagemResponse(true, mensagemGenerica);
     }
 
+    /** Só expõe a versão mascarada do e-mail: o valor completo nunca deve voltar na resposta. */
     @Transactional(readOnly = true)
     public ResetPreviewResponse previewResetTarget(String email) {
         String emailNorm = email.trim().toLowerCase();
@@ -141,7 +149,7 @@ public class AuthService {
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhum usuário encontrado para este e-mail."));
 
         return new ResetPreviewResponse(true, "Usuário encontrado para recuperação.",
-                usuario.getEmail(), mascararEmail(usuario.getEmail()));
+                mascararEmail(usuario.getEmail()));
     }
 
     @Transactional

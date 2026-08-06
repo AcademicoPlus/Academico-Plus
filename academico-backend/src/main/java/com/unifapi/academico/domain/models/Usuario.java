@@ -2,6 +2,7 @@ package com.unifapi.academico.domain.models;
 
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
@@ -95,7 +96,9 @@ public class Usuario {
     @JoinColumn(name = "curso_id")
     private Curso curso;
 
+    /** BatchSize evita N+1 caso este campo um dia seja lido a partir de uma listagem paginada. */
     @OneToMany(mappedBy = "usuario", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
     @Builder.Default
     private Set<UsuarioHabilidade> habilidades = new HashSet<>();
 

@@ -233,11 +233,16 @@ public class ProjetoService {
                     .orElseThrow(() -> new RecursoNaoEncontradoException(
                             "Habilidade não encontrada: " + pedido.habilidadeId()));
 
-            projetoHabilidadeRepository.save(ProjetoHabilidade.builder()
+            ProjetoHabilidade vinculo = projetoHabilidadeRepository.save(ProjetoHabilidade.builder()
                     .projeto(projeto)
                     .habilidade(habilidade)
                     .obrigatoria(Boolean.TRUE.equals(pedido.obrigatoria()))
                     .build());
+
+            // O projeto já está gerenciado nesta transação: sem isso, o findDetalhePorId
+            // logo abaixo reaproveita esta mesma instância (1º nível de cache) com a
+            // coleção ainda vazia, em vez de refletir o vínculo recém-persistido.
+            projeto.getHabilidadesNecessarias().add(vinculo);
         }
 
         habilidadeIds.forEach(habilidadeService::recalcularContadores);

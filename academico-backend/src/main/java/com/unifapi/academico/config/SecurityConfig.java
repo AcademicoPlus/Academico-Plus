@@ -4,6 +4,7 @@ import com.unifapi.academico.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -30,6 +31,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll() // Endpoints públicos de login, cadastro e reset
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // Cursos precisam ficar visíveis antes do login: alimenta o dropdown da tela de cadastro
+                        .requestMatchers(HttpMethod.GET, "/cursos/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

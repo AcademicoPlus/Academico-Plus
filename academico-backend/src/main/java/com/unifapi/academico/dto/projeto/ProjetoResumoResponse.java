@@ -11,8 +11,10 @@ import java.util.List;
 import java.util.UUID;
 
 /**
- * Payload de listagem. Não toca nas coleções LAZY do projeto (membros,
- * candidaturas, habilidades), o que evita N+1 ao paginar.
+ * Payload de listagem, moldado para o card de projeto do frontend.
+ * Não toca nas coleções LAZY do projeto (membros, candidaturas), o que evita
+ * N+1 ao paginar — habilidadesNecessarias é a exceção, carregada via
+ * ProjetoRepository.buscarAtivos com EntityGraph.
  */
 public record ProjetoResumoResponse(
         UUID id,
@@ -20,17 +22,12 @@ public record ProjetoResumoResponse(
         String titulo,
         String descricao,
         StatusProjeto status,
+        List<ProjetoHabilidadeResponse> habilidadesNecessarias,
         Integer vagas,
         Integer vagasPreenchidas,
-        int vagasDisponiveis,
-        boolean aceitandoCandidaturas,
-        List<ProjetoHabilidadeResponse> habilidadesNecessarias,
-        LocalDateTime dataFim,
-        LocalDateTime criadoEm
+        LocalDateTime dataFim
 ) {
     public static ProjetoResumoResponse fromEntity(Projeto projeto) {
-        int vagas = projeto.getVagas() != null ? projeto.getVagas() : 0;
-        int preenchidas = projeto.getVagasPreenchidas() != null ? projeto.getVagasPreenchidas() : 0;
         List<ProjetoHabilidadeResponse> habilidades = projeto.getHabilidadesNecessarias() == null
                 ? List.of()
                 : projeto.getHabilidadesNecessarias().stream()
@@ -47,13 +44,10 @@ public record ProjetoResumoResponse(
                 projeto.getTitulo(),
                 projeto.getDescricao(),
                 projeto.getStatus(),
+                habilidades,
                 projeto.getVagas(),
                 projeto.getVagasPreenchidas(),
-                Math.max(0, vagas - preenchidas),
-                projeto.podeAceitarCandidato(),
-                habilidades,
-                projeto.getDataFim(),
-                projeto.getCriadoEm()
+                projeto.getDataFim()
         );
     }
 }

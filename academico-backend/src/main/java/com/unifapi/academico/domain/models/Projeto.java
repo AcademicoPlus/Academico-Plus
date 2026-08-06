@@ -8,6 +8,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import com.unifapi.academico.domain.enums.StatusProjeto;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDateTime;
 import java.util.HashSet;
@@ -80,7 +81,14 @@ public class Projeto {
     // RELACIONAMENTOS
     // ============================================
 
+    /**
+     * BatchSize evita N+1 nas listagens paginadas: como é uma coleção @OneToMany,
+     * não pode entrar no @EntityGraph de queries com LIMIT/OFFSET (Hibernate
+     * paginaria em memória). Com batching, o lazy load de várias entidades da
+     * mesma página vira poucas queries "IN (...)" em vez de uma por projeto.
+     */
     @OneToMany(mappedBy = "projeto", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
+    @BatchSize(size = 20)
     @Builder.Default
     private Set<ProjetoHabilidade> habilidadesNecessarias = new HashSet<>();
 

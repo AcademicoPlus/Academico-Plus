@@ -79,8 +79,7 @@ public class UsuarioController {
             @AuthenticationPrincipal Usuario usuarioLogado,
             @RequestParam("foto") MultipartFile arquivo
     ) {
-        String urlFoto = "https://storage.unifapi.edu.br/fotos/" + arquivo.getOriginalFilename();
-        UsuarioPerfilResponse perfilAtualizado = usuarioService.atualizarFoto(usuarioLogado.getId(), urlFoto);
+        UsuarioPerfilResponse perfilAtualizado = usuarioService.atualizarFoto(usuarioLogado.getId(), arquivo);
         return ResponseEntity.ok(perfilAtualizado);
     }
 

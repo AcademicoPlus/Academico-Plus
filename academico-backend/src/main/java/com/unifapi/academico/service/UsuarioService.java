@@ -26,6 +26,7 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -41,6 +42,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final JwtTokenProvider jwtTokenProvider;
+    private final StorageService storageService;
 
     // ============================================
     // CADASTRO E BUSCA
@@ -159,10 +161,18 @@ public class UsuarioService {
         return UsuarioUpdateSenhaResponse.sucesso();
     }
 
+    /** Salva a nova foto em disco e remove a anterior, se existir. */
     @Transactional
-    public UsuarioPerfilResponse atualizarFoto(UUID idUsuario, String fotoUrl) {
+    public UsuarioPerfilResponse atualizarFoto(UUID idUsuario, MultipartFile arquivo) {
         Usuario usuario = buscarUsuarioPorId(idUsuario);
-        usuario.setFotoUrl(fotoUrl);
+
+        String fotoAntiga = usuario.getFotoUrl();
+        usuario.setFotoUrl(storageService.salvar(arquivo));
+
+        if (fotoAntiga != null && !fotoAntiga.isBlank()) {
+            storageService.deletar(fotoAntiga);
+        }
+
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
 
