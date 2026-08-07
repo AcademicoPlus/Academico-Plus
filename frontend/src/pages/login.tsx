@@ -1,4 +1,43 @@
+// Tela de login conectada ao backend: guarda os campos em estado, envia
+// para POST /auth/login e, se der certo, salva o token JWT e redireciona
+// para o feed. Erros do backend (ex.: credenciais inválidas) são mostrados
+// acima do botão de entrar.
+import { useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { login } from '../services/authService';
+import { ApiError } from '../services/apiClient';
+import { salvarToken } from '../utils/auth';
+
 export default function Login() {
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErro(null);
+    setCarregando(true);
+
+    try {
+      const resposta = await login({ email, senha });
+      salvarToken(resposta.token);
+      navigate('/feed');
+    } catch (erroCapturado) {
+      // ApiError vem do apiClient com a mensagem que o backend retornou
+      // (ex.: "Email ou senha inválidos"); qualquer outro erro é de rede/CORS.
+      const mensagem =
+        erroCapturado instanceof ApiError
+          ? erroCapturado.message
+          : 'Não foi possível conectar ao servidor. Tente novamente.';
+      setErro(mensagem);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   return (
     // Fundo geral cinza super claro para o card branco destacar
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
@@ -63,7 +102,14 @@ export default function Login() {
           {/* Card Branco */}
           <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
             
-            <form className="flex flex-col gap-5">
+            <form className="flex flex-col gap-5" onSubmit={handleSubmit}>
+              {/* Mensagem de erro vinda do backend (credenciais inválidas, etc.) */}
+              {erro && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+                  {erro}
+                </div>
+              )}
+
               {/* Campo E-mail */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">E-mail institucional</label>
@@ -74,9 +120,12 @@ export default function Login() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
-                  <input 
-                    type="email" 
-                    placeholder="ana.silva@academico.edu.br" 
+                  <input
+                    type="email"
+                    placeholder="ana.silva@academico.edu.br"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
                   />
                 </div>
@@ -92,9 +141,11 @@ export default function Login() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                     </svg>
                   </div>
-                  <input 
-                    type="password" 
-                    defaultValue="........"
+                  <input
+                    type="password"
+                    value={senha}
+                    onChange={(e) => setSenha(e.target.value)}
+                    required
                     className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700 font-mono tracking-widest"
                   />
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
@@ -117,13 +168,17 @@ export default function Login() {
               </div>
 
               {/* Botão Entrar */}
-              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#105db8] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#1472dd]/20">
-                Entrar na plataforma
+              <button
+                type="submit"
+                disabled={carregando}
+                className="w-full bg-[#1472dd] hover:bg-[#105db8] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#1472dd]/20"
+              >
+                {carregando ? 'Entrando...' : 'Entrar na plataforma'}
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Não tem conta? <a href="#" className="text-[#1472dd] font-semibold hover:underline">Cadastre-se</a>
+              Não tem conta? <Link to="/cadastro" className="text-[#1472dd] font-semibold hover:underline">Cadastre-se</Link>
             </p>
           </div>
           

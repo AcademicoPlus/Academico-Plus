@@ -5,6 +5,8 @@ import Login from './pages/login'
 import Cadastro from './pages/cadastro'
 import Feed from './pages/feedprojetos'
 import Projeto from './pages/projetodetalhes'
+// Guard que só deixa passar quem tem um token JWT salvo (ver rotaprotegida.tsx)
+import RotaProtegida from './routes/rotaprotegida'
 
 export default function App() {
   return (
@@ -12,12 +14,16 @@ export default function App() {
       <Routes>
         {/* Se a pessoa acessar a raiz do site, joga ela pro login */}
         <Route path="/" element={<Navigate to="/login" />} />
-        
-        {/* Aqui estão os endereços de cada tela */}
+
+        {/* Rotas públicas: não exigem login */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
-        <Route path="/feed" element={<Feed />} />
-        <Route path="/projeto" element={<Projeto />} />
+
+        {/* Rotas privadas: RotaProtegida redireciona para /login sem token */}
+        <Route element={<RotaProtegida />}>
+          <Route path="/feed" element={<Feed />} />
+          <Route path="/projeto" element={<Projeto />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   )

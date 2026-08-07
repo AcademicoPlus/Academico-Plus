@@ -1,4 +1,71 @@
+// Tela de cadastro conectada ao backend: busca a lista real de cursos em
+// GET /cursos para preencher o <select> (o backend espera um UUID em
+// "idCurso", então não dá pra usar os valores fixos como "administracao"),
+// valida a confirmação de senha no próprio frontend e envia o restante para
+// POST /auth/cadastro.
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { cadastrar } from '../services/authService';
+import { ApiError } from '../services/apiClient';
+import { listarCursos, type Curso } from '../services/cursoService';
+
 export default function Cadastro() {
+  const navigate = useNavigate();
+
+  const [nome, setNome] = useState('');
+  const [email, setEmail] = useState('');
+  const [idCurso, setIdCurso] = useState('');
+  // Campo livre, opcional no CadastroRequest do backend (sem @NotNull) — por
+  // isso fica como string aqui e só vira número (ou undefined) no submit.
+  const [periodo, setPeriodo] = useState('');
+  const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
+
+  const [cursos, setCursos] = useState<Curso[]>([]);
+  const [carregandoCursos, setCarregandoCursos] = useState(true);
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  // Carrega os cursos uma vez, assim que a tela abre, para popular o dropdown.
+  useEffect(() => {
+    listarCursos()
+      .then(setCursos)
+      .catch(() => setErro('Não foi possível carregar a lista de cursos.'))
+      .finally(() => setCarregandoCursos(false));
+  }, []);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErro(null);
+
+    if (senha !== confirmarSenha) {
+      setErro('As senhas não coincidem.');
+      return;
+    }
+
+    setCarregando(true);
+    try {
+      await cadastrar({
+        nome,
+        email,
+        idCurso,
+        senha,
+        periodo: periodo ? Number(periodo) : undefined,
+      });
+      // Backend só cadastra, não faz login automático, então mandamos o
+      // usuário para a tela de login para entrar com a conta recém-criada.
+      navigate('/login');
+    } catch (erroCapturado) {
+      const mensagem =
+        erroCapturado instanceof ApiError
+          ? erroCapturado.message
+          : 'Não foi possível conectar ao servidor. Tente novamente.';
+      setErro(mensagem);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       
@@ -46,8 +113,15 @@ export default function Cadastro() {
           {/* Card Branco */}
           <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
             
-            <form className="flex flex-col gap-4">
-              
+            <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+
+              {/* Mensagem de erro vinda do backend ou da validação de senha */}
+              {erro && (
+                <div className="bg-red-50 border border-red-200 text-red-600 text-sm rounded-xl px-4 py-3">
+                  {erro}
+                </div>
+              )}
+
               {/* Campo Nome Completo */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Nome Completo</label>
@@ -57,9 +131,12 @@ export default function Cadastro() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                   </div>
-                  <input 
-                    type="text" 
-                    placeholder="Luana..." 
+                  <input
+                    type="text"
+                    placeholder="Luana..."
+                    value={nome}
+                    onChange={(e) => setNome(e.target.value)}
+                    required
                     className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
                   />
                 </div>
@@ -74,15 +151,19 @@ export default function Cadastro() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
-                  <input 
-                    type="email" 
-                    placeholder="luana@academico.edu.br" 
+                  <input
+                    type="email"
+                    placeholder="luana@academico.edu.br"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
                     className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
                   />
                 </div>
               </div>
 
-              {/* Campo Curso (Dropdown atualizado) */}
+              {/* Campo Curso: opções vêm de GET /cursos (não são mais fixas),
+                  o value de cada option é o UUID que o backend espera em idCurso */}
               <div>
                 <label className="block text-sm font-medium text-gray-900 mb-2">Curso</label>
                 <div className="relative">
@@ -92,21 +173,22 @@ export default function Cadastro() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
                     </svg>
                   </div>
-                  
-                  <select 
-                    defaultValue=""
-                    className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700 appearance-none cursor-pointer"
+
+                  <select
+                    value={idCurso}
+                    onChange={(e) => setIdCurso(e.target.value)}
+                    disabled={carregandoCursos}
+                    required
+                    className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700 appearance-none cursor-pointer disabled:cursor-not-allowed"
                   >
-                    <option value="" disabled hidden>Selecione o seu curso</option>
-                    <option value="administracao">Administração</option>
-                    <option value="arquitetura">Arquitetura e Urbanismo</option>
-                    <option value="ciencia_computacao">Ciência da Computação</option>
-                    <option value="design">Design Gráfico</option>
-                    <option value="direito">Direito</option>
-                    <option value="enfermagem">Enfermagem</option>
-                    <option value="engenharia_software">Engenharia de Software</option>
-                    <option value="odontologia">Odontologia</option>
-                    <option value="psicologia">Psicologia</option>
+                    <option value="" disabled hidden>
+                      {carregandoCursos ? 'Carregando cursos...' : 'Selecione o seu curso'}
+                    </option>
+                    {cursos.map((curso) => (
+                      <option key={curso.id} value={curso.id}>
+                        {curso.nome}
+                      </option>
+                    ))}
                   </select>
 
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -114,6 +196,27 @@ export default function Cadastro() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                   </div>
+                </div>
+              </div>
+
+              {/* Campo Período: opcional no backend, por isso sem "required" */}
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-2">Período (opcional)</label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                    </svg>
+                  </div>
+                  <input
+                    type="number"
+                    min={1}
+                    max={20}
+                    placeholder="Ex: 3"
+                    value={periodo}
+                    onChange={(e) => setPeriodo(e.target.value)}
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
+                  />
                 </div>
               </div>
 
@@ -127,9 +230,13 @@ export default function Cadastro() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                       </svg>
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       placeholder="••••••••"
+                      value={senha}
+                      onChange={(e) => setSenha(e.target.value)}
+                      minLength={8}
+                      required
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
                     />
                   </div>
@@ -143,9 +250,13 @@ export default function Cadastro() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                       </svg>
                     </div>
-                    <input 
-                      type="password" 
+                    <input
+                      type="password"
                       placeholder="••••••••"
+                      value={confirmarSenha}
+                      onChange={(e) => setConfirmarSenha(e.target.value)}
+                      minLength={8}
+                      required
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
                     />
                   </div>
@@ -153,13 +264,17 @@ export default function Cadastro() {
               </div>
 
               {/* Botão Criar Conta */}
-              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#105db8] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#1472dd]/20 mt-4">
-                Criar Conta
+              <button
+                type="submit"
+                disabled={carregando}
+                className="w-full bg-[#1472dd] hover:bg-[#105db8] disabled:opacity-60 disabled:cursor-not-allowed text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#1472dd]/20 mt-4"
+              >
+                {carregando ? 'Criando conta...' : 'Criar Conta'}
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Já tem uma conta? <a href="#" className="text-[#1472dd] font-semibold hover:underline">Fazer login</a>
+              Já tem uma conta? <Link to="/login" className="text-[#1472dd] font-semibold hover:underline">Fazer login</Link>
             </p>
           </div>
           
