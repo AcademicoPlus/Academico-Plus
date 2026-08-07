@@ -2,21 +2,20 @@
 **Plataforma Digital para Fomento à Colaboração Interdisciplinar e Networking Acadêmico**
 
 [![Status](https://img.shields.io/badge/Status-Development-yellow)]()
-[![License](https://img.shields.io/badge/License-MIT-blue)]()
-[![Java](https://img.shields.io/badge/Java-17+-green)]()
-[![Node](https://img.shields.io/badge/Node-18+-blue)]()
+[![Java](https://img.shields.io/badge/Java-21-green)]()
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.5-brightgreen)]()
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14+-blue)]()
 
 ---
 
 ## 📋 Visão Geral
 
-O **Academico+** é uma plataforma web (MVP) desenvolvida para mapear competências e centralizar oportunidades acadêmicas dentro de uma mesma instituição. O sistema funciona por meio de:
+O **Academico+** é uma plataforma web (MVP) desenvolvida para mapear competências e centralizar oportunidades acadêmicas dentro de uma mesma instituição. O sistema se propõe a oferecer:
 
 - **Perfis profissionais** baseados em tags de habilidades
-- **Mural de projetos** com filtros inteligentes
-- **Sistema de endosso** onde professores validam competências
-- **Algoritmo de recomendação** para sugerir colaboradores compatíveis
+- **Mural de projetos** com busca e filtros
+- **Sistema de avaliação** entre colegas que colaboraram no mesmo projeto
+- **Recomendação** de projetos e colaboradores por compatibilidade de habilidades
 
 ### 🎯 Objetivos
 
@@ -25,10 +24,10 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
 
 #### Objetivos Específicos
 - Implementar sistema de perfis baseado em habilidades (tags)
-- Criar mural de oportunidades com filtros inteligentes
-- Desenvolver mecanismo de validação de competências por professores
+- Criar mural de oportunidades com busca e filtros
+- Implementar um mecanismo de reputação entre colaboradores de projetos
 - Projetar interface intuitiva e responsiva
-- Implementar algoritmo de recomendação usando Índice de Similaridade de Jaccard
+- Implementar recomendação de projetos/colaboradores por compatibilidade de habilidades
 - Avaliar usabilidade através de testes com usuários
 
 ---
@@ -37,24 +36,23 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                     Frontend (Next.js)                      │
-│              React Components + TypeScript                  │
+│                  Frontend (React + Vite)                    │
+│                     TypeScript                               │
 └────────────────────────┬────────────────────────────────────┘
                          │ HTTP/REST
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │                  Backend (Spring Boot)                      │
-│         Java + Spring Framework + JWT Auth                  │
+│         Java + Spring Security + JWT Auth                   │
 │  - Controllers (REST APIs)                                  │
 │  - Services (Business Logic)                                │
-│  - Repositories (Data Access)                               │
-│  - Recommendation Engine (Jaccard Similarity)               │
+│  - Repositories (Data Access)                                │
+│  - Recomendação por compatibilidade de habilidades           │
 └────────────────────────┬────────────────────────────────────┘
                          │ JDBC
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
 │              Database (PostgreSQL)                          │
-│         Relational Database + Persistence Layer             │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -62,46 +60,27 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
 
 ## 🛠️ Stack Técnico
 
-| Camada | Tecnologia | Versão |
+| Camada | Tecnologia | Situação |
 |--------|-----------|--------|
-| **Frontend** | Next.js + TypeScript | 14.x |
-| **Backend** | Java + Spring Boot | 3.x |
-| **Database** | PostgreSQL | 14+ |
-| **Auth** | JWT (JSON Web Tokens) | - |
-| **Deployment** | Railway (PaaS) | - |
-| **Version Control** | Git + GitHub | - |
+| **Backend** | Java 21 + Spring Boot 3.5, Spring Security, JWT, Spring Data JPA | Em desenvolvimento ativo — ver [academico-backend/README.md](./academico-backend/README.md) |
+| **Frontend** | React 19 + TypeScript + Vite | Projeto inicializado, sem telas implementadas ainda |
+| **Database** | PostgreSQL 14+ | Schema mantido por `ddl-auto=update` (ver observação no README do backend) |
+| **Auth** | JWT (JSON Web Tokens), sem refresh token | Em uso |
 
 ---
 
 ## 📁 Estrutura do Projeto
 
 ```
-academico-plus/
-├── backend/                    # API Java/Spring Boot
+Academico-Plus/
+├── academico-backend/     # API Java/Spring Boot (ver README próprio)
 │   ├── src/
-│   ├── pom.xml
-│   └── Dockerfile
-├── frontend/                   # Next.js App
-│   ├── app/
-│   ├── components/
-│   ├── package.json
-│   └── Dockerfile
-├── database/                   # Schemas e Scripts SQL
-│   ├── migrations/
-│   ├── schema.sql
-│   └── seed-data.sql
-├── docs/                       # Documentação
-│   ├── ARCHITECTURE.md
-│   ├── API.md
-│   ├── DATABASE.md
-│   └── SETUP.md
-├── infra/                      # Configurações de Deploy
-│   ├── docker-compose.yml
-│   └── railway.yml
-├── .github/                    # GitHub Actions
-│   └── workflows/
+│   ├── docker-compose.yml # Postgres + pgAdmin para dev local
+│   └── pom.xml
+├── frontend/               # React + Vite (ainda no template inicial)
+│   ├── src/
+│   └── package.json
 ├── .gitignore
-├── docker-compose.yml
 └── README.md
 ```
 
@@ -109,79 +88,56 @@ academico-plus/
 
 ## 🚀 Quick Start
 
-### Pré-requisitos
-- Docker & Docker Compose
-- Git
-- (Opcional) Java 17+, Node.js 18+, PostgreSQL 14+
+### Backend
 
-### Instalação Rápida (Docker)
+Veja o passo a passo completo em **[academico-backend/README.md](./academico-backend/README.md)** — configuração do `.env`, `docker-compose up -d` para o Postgres local, e `./mvnw spring-boot:run`.
+
+### Frontend
+
+Ainda é o template padrão do Vite (sem telas da aplicação). Para rodar o que existe:
 
 ```bash
-# 1. Clone o repositório
-git clone https://github.com/seu-usuario/academico-plus.git
-cd academico-plus
-
-# 2. Crie arquivo .env (copiar de .env.example)
-cp .env.example .env
-
-# 3. Inicie os containers
-docker-compose up -d
-
-# 4. Acesse a aplicação
-# Frontend: http://localhost:3000
-# API: http://localhost:8080
-# pgAdmin: http://localhost:5050
+cd frontend
+npm install
+npm run dev
 ```
 
-### Instalação Manual
-
-Veja [SETUP.md](./docs/SETUP.md) para instruções detalhadas.
-
 ---
 
-## 📚 Documentação
+## 🔑 Funcionalidades
 
-- **[ARCHITECTURE.md](./docs/ARCHITECTURE.md)** - Design da arquitetura
-- **[DATABASE.md](./docs/DATABASE.md)** - Schema e relacionamentos
-- **[API.md](./docs/API.md)** - Documentação da API REST
-- **[SETUP.md](./docs/SETUP.md)** - Guia de instalação completo
-- **[DEVELOPMENT.md](./docs/DEVELOPMENT.md)** - Guia para desenvolvedores
+### Fase 1: Autenticação & Perfis
+- [x] Cadastro e login com JWT
+- [x] Perfis com tags de competências (`/usuarios/me/habilidades`)
+- [x] Upload de foto de perfil (salvo em disco local)
 
----
+### Fase 2: Mural & Busca
+- [x] CRUD de projetos, candidaturas e equipe
+- [x] Busca de projetos por texto e status
+- [ ] Filtro de projetos por habilidade específica (hoje existe via recomendação/compatibilidade, não como filtro direto)
 
-## 🔑 Funcionalidades (MVP)
+### Fase 3: Recomendação
+- [x] Ranking de projetos/candidatos por compatibilidade de habilidades — adaptação do Índice de Jaccard (cobertura ponderada dos requisitos, não similaridade simétrica pura; detalhes no README do backend)
+- [x] Sugestão de candidatos para o criador de um projeto
 
-### ✅ Fase 1: Autenticação & Perfis
-- [x] Sistema de cadastro (alunos/professores)
-- [x] Login com JWT
-- [x] Perfis com tags de competências
-- [ ] Upload de foto de perfil
-
-### ✅ Fase 2: Mural & Busca
-- [ ] Mural de oportunidades/projetos
-- [ ] Filtros por área e competência
-- [ ] Busca avançada
-
-### ✅ Fase 3: Recomendação
-- [ ] Algoritmo de Jaccard Similarity
-- [ ] Sugestão automática de colaboradores
-- [ ] Ranking de compatibilidade
-
-### ✅ Fase 4: Endosso & Networking
-- [ ] Sistema de endosso por professores
-- [ ] Validação de competências
+### Fase 4: Reputação & Networking
+- [x] Avaliação entre colegas que participaram do mesmo projeto (nota 1-5 + comentário, após o projeto encerrar)
+- [ ] Endosso de competências por professores (diferente do item acima — não implementado)
 - [ ] Sistema de mensagens
+
+### Frontend
+- [ ] Todas as telas — o projeto React ainda é o template inicial do Vite
 
 ---
 
 ## 🧪 Testes
 
 ```bash
-# Backend - Testes unitários
-cd backend
-mvn test
+# Backend
+cd academico-backend
+./mvnw test
 
-# Frontend - Testes
+# Frontend — ainda sem testes escritos
 cd frontend
 npm test
 ```
@@ -190,16 +146,9 @@ npm test
 
 ## 📊 Banco de Dados
 
-### Tabelas Principais
-- `users` - Usuários (alunos/professores)
-- `competencies` - Competências/Tags
-- `user_competencies` - Mapeamento de habilidades
-- `projects` - Projetos/Oportunidades
-- `project_requirements` - Requisitos dos projetos
-- `endorsements` - Validações por professores
-- `messages` - Sistema de mensagens
+Tabelas atuais (ver `academico-backend/src/main/resources/db/migration` e as entidades JPA para o schema completo):
 
-Veja [DATABASE.md](./docs/DATABASE.md) para schema completo.
+`usuarios`, `niveis_acesso`, `cursos`, `habilidades`, `usuario_habilidades`, `projetos`, `projeto_habilidades`, `projeto_membros`, `candidaturas`, `avaliacoes`, `tokens_revogados`, `projeto_cancelamento_aviso`.
 
 ---
 
@@ -212,20 +161,9 @@ Veja [DATABASE.md](./docs/DATABASE.md) para schema completo.
 
 ---
 
-## 📋 Roadmap
-
-- **v0.1** (Atual) - Setup & Database Design
-- **v0.2** - Backend API Básica
-- **v0.3** - Frontend Inicial
-- **v0.4** - Algoritmo de Recomendação
-- **v0.5** - Testes & Polimento
-- **v1.0** - MVP Completo
-
----
-
 ## 📝 Licença
 
-Este projeto está licenciado sob a Licença MIT - veja [LICENSE](./LICENSE) para detalhes.
+Uso pretendido sob licença MIT — arquivo `LICENSE` ainda não adicionado ao repositório.
 
 ---
 
@@ -239,15 +177,9 @@ Este projeto está licenciado sob a Licença MIT - veja [LICENSE](./LICENSE) par
 
 **Orientador:** Professor(a) Pedro Alex
 
-**Instituição:** Centro Universitário do Piauí (UNIFAPI)  
-**Curso:** Bacharelado em Ciência da Computação  
+**Instituição:** Centro Universitário do Piauí (UNIFAPI)
+**Curso:** Bacharelado em Ciência da Computação
 **Data:** Junho de 2026
-
----
-
-## 📞 Suporte
-
-Para dúvidas ou problemas, abra uma [Issue](https://github.com/seu-usuario/academico-plus/issues).
 
 ---
 
