@@ -36,8 +36,6 @@ export class ApiError extends Error {
 
 type ApiFetchOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
-  // FormData é usada pelo upload de foto de perfil (multipart/form-data);
-  // qualquer outro valor vai como JSON.
   body?: unknown;
   // Algumas rotas (login, cadastro, listagem de cursos) são públicas e não
   // devem enviar o header Authorization mesmo se houver um token antigo salvo.
@@ -48,15 +46,9 @@ export async function apiFetch<TResposta>(
   caminho: string,
   { method = 'GET', body, autenticado = true }: ApiFetchOptions = {},
 ): Promise<TResposta> {
-  const headers: Record<string, string> = {};
-
-  const corpoFormData = body instanceof FormData;
-  // Para FormData o navegador define o Content-Type (multipart/form-data;
-  // boundary=...) sozinho; se a gente fixar "application/json" aqui, o
-  // backend não consegue mais separar os campos do arquivo.
-  if (!corpoFormData) {
-    headers['Content-Type'] = 'application/json';
-  }
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
 
   if (autenticado) {
     const token = obterToken();
@@ -68,7 +60,7 @@ export async function apiFetch<TResposta>(
   const resposta = await fetch(`${BASE_URL}${caminho}`, {
     method,
     headers,
-    body: body === undefined ? undefined : corpoFormData ? (body as FormData) : JSON.stringify(body),
+    body: body !== undefined ? JSON.stringify(body) : undefined,
   });
 
   // 204 No Content não tem corpo para converter em JSON.
@@ -84,32 +76,4 @@ export async function apiFetch<TResposta>(
   }
 
   return dados as TResposta;
-}
-
-// GET /projetos, /candidaturas, /habilidades etc. devolvem uma Page do
-// Spring Data (paginação embutida), não um array puro como /cursos. Só os
-// campos usados pelas telas estão tipados aqui; o restante do JSON
-// (pageable, sort, first, empty...) é ignorado.
-export type PaginaResposta<T> = {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  number: number;
-  size: number;
-  last: boolean;
-};
-
-// Monta a query string a partir de um objeto de filtros/paginação, pulando
-// chaves com valor undefined — evita mandar "?status=undefined" pro backend.
-// Usado pelas rotas de listagem que aceitam filtro opcional (busca, status,
-// categoria, page, size...).
-export function construirQuery(parametros: Record<string, string | number | boolean | undefined>): string {
-  const busca = new URLSearchParams();
-  for (const [chave, valor] of Object.entries(parametros)) {
-    if (valor !== undefined) {
-      busca.set(chave, String(valor));
-    }
-  }
-  const query = busca.toString();
-  return query ? `?${query}` : '';
 }

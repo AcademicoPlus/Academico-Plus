@@ -1,131 +1,115 @@
-// Chamadas para o AuthController do backend (rotas /auth/*).
-// Os tipos abaixo espelham os records Java em academico-backend
-// (dto/auth/LoginRequest, LoginResponse, CadastroRequest, CadastroResponse).
-import { apiFetch } from './apiClient';
+// Client HTTP central do frontend. Toda comunicação com o backend Spring Boot
+// (academico-backend) passa por aqui, para não espalhar `fetch` cru pelas telas
+// e para tratar erros sempre do mesmo jeito (formato do GlobalExceptionHandler
+// do backend: { status, erro, mensagem, path, timestamp, erros? }).
+import { obterToken } from '../utils/auth';
 
-export type LoginRequest = {
-  email: string;
-  senha: string;
-};
+// Vem do .env do frontend (VITE_API_URL). Já inclui o context-path "/api"
+// configurado no backend (SERVER_SERVLET_CONTEXT_PATH).
+const BASE_URL = import.meta.env.VITE_API_URL as string;
 
-export type UsuarioResumo = {
-  id: string;
-  nome: string;
-  curso: string | null;
-  fotoUrl: string | null;
-  permission: string | null;
-  periodo: number | null;
-  notaMedia: number | null;
-  totalAvaliacoes: number | null;
-};
-
-export type LoginResponse = {
-  sucesso: boolean;
-  mensagem: string;
-  token: string;
-  usuario: UsuarioResumo;
-  // Avisos de projetos cancelados exibidos ao usuário após o login;
-  // não é usado pelo formulário de login em si, então fica tipado de forma solta.
-  avisosCancelamento: unknown[];
-};
-
-export type CadastroRequest = {
-  email: string;
-  nome: string;
-  periodo?: number;
-  idCurso: string;
-  senha: string;
-  aceitouTermos: boolean;
-};
-
-export type CadastroResponse = {
-  sucesso: boolean;
+type ErroCampo = {
+  campo: string;
   mensagem: string;
 };
 
-// Espelha MensagemResponse (dto/auth) — retorno genérico usado por várias
-// rotas de escrita que não precisam devolver um recurso (logout, exclusão,
-// desvincular, etc.), aqui e em outros services.
-export type MensagemResponse = {
-  sucesso: boolean;
+type ErroResposta = {
+  status: number;
+  erro: string;
   mensagem: string;
+  path: string;
+  erros?: ErroCampo[];
 };
 
-export function login(dados: LoginRequest): Promise<LoginResponse> {
-  // autenticado: false porque essa rota é pública (permitAll no SecurityConfig)
-  // e ainda não existe token nesse momento.
-  return apiFetch<LoginResponse>('/auth/login', {
-    method: 'POST',
-    body: dados,
-    autenticado: false,
-  });
+// Erro lançado quando o backend responde com status >= 400, já com a
+// mensagem pronta para mostrar ao usuário (ex.: "Email ou senha inválidos").
+export class ApiError extends Error {
+  status: number;
+  erros?: ErroCampo[];
+
+  constructor(status: number, mensagem: string, erros?: ErroCampo[]) {
+    super(mensagem);
+    this.status = status;
+    this.erros = erros;
+  }
 }
 
-export function cadastrar(dados: CadastroRequest): Promise<CadastroResponse> {
-  return apiFetch<CadastroResponse>('/auth/cadastro', {
-    method: 'POST',
-    body: dados,
-    autenticado: false,
-  });
-}
-
-// ============================================
-// REDEFINIÇÃO DE SENHA (fluxo em 3 passos, todos públicos)
-// ============================================
-
-// Passo 1: dispara o e-mail com o código OTP para o endereço informado.
-// Sempre responde sucesso (mesmo se o e-mail não existir), pra não revelar
-// quais e-mails estão cadastrados na base.
-export function solicitarResetSenha(email: string): Promise<MensagemResponse> {
-  return apiFetch<MensagemResponse>('/auth/reset-senha/solicitar', {
-    method: 'POST',
-    body: { email },
-    autenticado: false,
-  });
-}
-
-export type ResetPreviewResponse = {
-  sucesso: boolean;
-  mensagem: string;
-  // Versão mascarada do e-mail (ex.: "a***@academico.edu.br"), pra
-  // confirmar pro usuário que o código foi pro endereço certo sem expor o
-  // e-mail completo.
-  emailPreview: string;
+type ApiFetchOptions = {
+  method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
+  // FormData é usada pelo upload de foto de perfil (multipart/form-data);
+  // qualquer outro valor vai como JSON.
+  body?: unknown;
+  // Algumas rotas (login, cadastro, listagem de cursos) são públicas e não
+  // devem enviar o header Authorization mesmo se houver um token antigo salvo.
+  autenticado?: boolean;
 };
 
-export function previewResetSenha(email: string): Promise<ResetPreviewResponse> {
-  return apiFetch<ResetPreviewResponse>('/auth/reset-senha/preview', {
-    method: 'POST',
-    body: { email },
-    autenticado: false,
+export async function apiFetch<TResposta>(
+  caminho: string,
+  { method = 'GET', body, autenticado = true }: ApiFetchOptions = {},
+): Promise<TResposta> {
+  const headers: Record<string, string> = {};
+
+  const corpoFormData = body instanceof FormData;
+  // Para FormData o navegador define o Content-Type (multipart/form-data;
+  // boundary=...) sozinho; se a gente fixar "application/json" aqui, o
+  // backend não consegue mais separar os campos do arquivo.
+  if (!corpoFormData) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  if (autenticado) {
+    const token = obterToken();
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+  }
+
+  const resposta = await fetch(`${BASE_URL}${caminho}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : corpoFormData ? (body as FormData) : JSON.stringify(body),
   });
+
+  // 204 No Content não tem corpo para converter em JSON.
+  const dados = resposta.status === 204 ? null : await resposta.json();
+
+  if (!resposta.ok) {
+    const erro = dados as ErroResposta;
+    throw new ApiError(
+      resposta.status,
+      erro?.mensagem ?? 'Não foi possível completar a requisição.',
+      erro?.erros,
+    );
+  }
+
+  return dados as TResposta;
 }
 
-export type ResetValidarResponse = {
-  sucesso: boolean;
-  // Token de curta duração, usado só no passo 3 (redefinir) — evita que o
-  // código OTP em si precise ser reenviado.
-  tokenRedefinicao: string;
+// GET /projetos, /candidaturas, /habilidades etc. devolvem uma Page do
+// Spring Data (paginação embutida), não um array puro como /cursos. Só os
+// campos usados pelas telas estão tipados aqui; o restante do JSON
+// (pageable, sort, first, empty...) é ignorado.
+export type PaginaResposta<T> = {
+  content: T[];
+  totalElements: number;
+  totalPages: number;
+  number: number;
+  size: number;
+  last: boolean;
 };
 
-// Passo 2: valida o código OTP recebido por e-mail e troca ele por um
-// token de redefinição.
-export function validarCodigoReset(email: string, codigo: string): Promise<ResetValidarResponse> {
-  return apiFetch<ResetValidarResponse>('/auth/reset-senha/validar', {
-    method: 'POST',
-    body: { email, codigo },
-    autenticado: false,
-  });
-}
-
-// Passo 3: troca a senha usando o tokenRedefinicao obtido no passo 2.
-export function redefinirSenha(
-  tokenRedefinicao: string,
-  novaSenha: string,
-): Promise<MensagemResponse> {
-  return apiFetch<MensagemResponse>('/auth/reset-senha/redefinir', {
-    method: 'POST',
-    body: { tokenRedefinicao, novaSenha },
-    autenticado: false,
-  });
+// Monta a query string a partir de um objeto de filtros/paginação, pulando
+// chaves com valor undefined — evita mandar "?status=undefined" pro backend.
+// Usado pelas rotas de listagem que aceitam filtro opcional (busca, status,
+// categoria, page, size...).
+export function construirQuery(parametros: Record<string, string | number | boolean | undefined>): string {
+  const busca = new URLSearchParams();
+  for (const [chave, valor] of Object.entries(parametros)) {
+    if (valor !== undefined) {
+      busca.set(chave, String(valor));
+    }
+  }
+  const query = busca.toString();
+  return query ? `?${query}` : '';
 }

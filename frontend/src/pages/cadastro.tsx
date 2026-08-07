@@ -11,7 +11,6 @@ export default function Cadastro() {
   const [periodo, setPeriodo] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
-  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [carregandoCursos, setCarregandoCursos] = useState(true);
@@ -43,7 +42,6 @@ export default function Cadastro() {
         idCurso,
         senha,
         periodo: periodo ? Number(periodo) : undefined,
-        aceitouTermos,
       });
       // Backend só cadastra, não faz login automático, então mandamos o
       // usuário para a tela de login para entrar com a conta recém-criada.
@@ -159,6 +157,14 @@ export default function Cadastro() {
                         {curso.nome}
                       </option>
                     ))}
+                    <option value="" disabled hidden>
+                      {carregandoCursos ? 'Carregando cursos...' : 'Selecione o seu curso'}
+                    </option>
+                    {cursos.map((curso) => (
+                      <option key={curso.id} value={curso.id}>
+                        {curso.nome}
+                      </option>
+                    ))}
                   </select>
 
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -180,6 +186,8 @@ export default function Cadastro() {
                     </div>
                     <input
                       type="password"
+                    <input
+                      type="password"
                       placeholder="••••••••"
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                     />
@@ -194,6 +202,8 @@ export default function Cadastro() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                       </svg>
                     </div>
+                    <input
+                      type="password"
                     <input
                       type="password"
                       placeholder="••••••••"
