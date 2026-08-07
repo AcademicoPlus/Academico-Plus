@@ -3,12 +3,12 @@ export default function Login() {
     // Fundo geral cinza super claro para o card branco destacar
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       
-      {/* Lado Esquerdo (Roxo/Azul Vibrante) - Oculto no celular */}
-      <div className="hidden lg:flex w-1/2 bg-[#5E4EE8] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
+      {/* Lado Esquerdo (Azul Vibrante) - Oculto no celular */}
+      <div className="hidden lg:flex w-1/2 bg-[#1472dd] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
         
         {/* Efeito de círculos concêntricos sutis no fundo */}
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] border-[30px] border-white/5 rounded-full pointer-events-none"></div>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] h-[550px] border-[30px] border-white/5 rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 border-30 border-white/5 rounded-full pointer-events-none"></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-137.5 h-137.5 border-30 border-white/5 rounded-full pointer-events-none"></div>
         
         <div className="relative z-10 text-white max-w-lg">
           {/* Logo A+ */}
@@ -20,7 +20,7 @@ export default function Login() {
             Conecte-se com projetos multidisciplinares
           </h1>
           
-          <p className="text-[#C7C2FF] text-lg mb-16 leading-relaxed max-w-md">
+          <p className="text-[#a7ccfd] text-lg mb-16 leading-relaxed max-w-md">
             Crie projetos, recrute colaboradores por habilidades e faça parte de algo maior com colegas de outros cursos.
           </p>
           
@@ -28,15 +28,15 @@ export default function Login() {
           <div className="flex gap-10">
             <div>
               <h3 className="text-3xl font-bold">120+</h3>
-              <p className="text-[#C7C2FF] text-sm mt-1">Projetos ativos</p>
+              <p className="text-[#a7ccfd] text-sm mt-1">Projetos ativos</p>
             </div>
             <div>
               <h3 className="text-3xl font-bold">850+</h3>
-              <p className="text-[#C7C2FF] text-sm mt-1">Estudantes</p>
+              <p className="text-[#a7ccfd] text-sm mt-1">Estudantes</p>
             </div>
             <div>
               <h3 className="text-3xl font-bold">45+</h3>
-              <p className="text-[#C7C2FF] text-sm mt-1">Professores</p>
+              <p className="text-[#a7ccfd] text-sm mt-1">Professores</p>
             </div>
           </div>
         </div>
@@ -61,7 +61,7 @@ export default function Login() {
           </div>
 
           {/* Card Branco */}
-          <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
+          <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
             
             <form className="flex flex-col gap-5">
               {/* Campo E-mail */}
@@ -77,7 +77,7 @@ export default function Login() {
                   <input 
                     type="email" 
                     placeholder="ana.silva@academico.edu.br" 
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#5E4EE8] focus:ring-2 focus:ring-[#5E4EE8]/20 outline-none transition-all text-gray-700"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
                   />
                 </div>
               </div>
@@ -95,7 +95,7 @@ export default function Login() {
                   <input 
                     type="password" 
                     defaultValue="........"
-                    className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#5E4EE8] focus:ring-2 focus:ring-[#5E4EE8]/20 outline-none transition-all text-gray-700 font-mono tracking-widest"
+                    className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700 font-mono tracking-widest"
                   />
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
                     {/* Ícone de Olho */}
@@ -110,20 +110,20 @@ export default function Login() {
               {/* Lembrar-me e Esqueci a Senha */}
               <div className="flex items-center justify-between mt-1 mb-2">
                 <label className="flex items-center cursor-pointer">
-                  <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-[#5E4EE8] border-gray-300 focus:ring-[#5E4EE8]" />
+                  <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-[#1472dd] border-gray-300 focus:ring-[#1472dd]" />
                   <span className="ml-2 text-sm text-gray-500">Lembrar-me</span>
                 </label>
-                <a href="#" className="text-sm text-[#5E4EE8] hover:underline font-medium">Esqueci a senha</a>
+                <a href="#" className="text-sm text-[#1472dd] hover:underline font-medium">Esqueci a senha</a>
               </div>
 
               {/* Botão Entrar */}
-              <button type="button" className="w-full bg-[#5E4EE8] hover:bg-[#4d3fd4] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#5E4EE8]/20">
+              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#105db8] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#1472dd]/20">
                 Entrar na plataforma
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Não tem conta? <a href="#" className="text-[#5E4EE8] font-semibold hover:underline">Cadastre-se</a>
+              Não tem conta? <a href="#" className="text-[#1472dd] font-semibold hover:underline">Cadastre-se</a>
             </p>
           </div>
           
