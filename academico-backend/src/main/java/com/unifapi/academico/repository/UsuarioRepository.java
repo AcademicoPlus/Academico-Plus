@@ -27,6 +27,15 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID>, JpaSpec
 
     List<Usuario> findByAtivoTrueAndDeletadoEmIsNullAndNivelAcessoNome(String nomePerfil);
 
+    /**
+     * Carrega todos os usuários ativos com as habilidades já inicializadas —
+     * usada pelo RecomendacaoService para ranquear candidatos a um projeto.
+     * @SQLRestriction("ativo = true") na entidade já filtra os inativos.
+     */
+    @EntityGraph(attributePaths = {"habilidades", "habilidades.habilidade"})
+    @Query("SELECT u FROM Usuario u")
+    List<Usuario> findTodosComHabilidades();
+
     // ============================================
     // SPECIFICATIONS PARA FILTROS DINÂMICOS
     // ============================================

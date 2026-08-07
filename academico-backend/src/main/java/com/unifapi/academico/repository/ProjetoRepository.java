@@ -10,11 +10,24 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 @Repository
 public interface ProjetoRepository extends JpaRepository<Projeto, UUID> {
+
+    /**
+     * Carrega todos os projetos elegíveis para recomendação, já com as
+     * habilidades necessárias — usada pelo RecomendacaoService, que percorre
+     * a lista inteira em memória (sem paginação, então o fetch join da
+     * coleção não tem o problema de LIMIT/OFFSET das listagens paginadas).
+     */
+    @EntityGraph(attributePaths = {
+            "criador", "criador.curso", "criador.nivelAcesso",
+            "habilidadesNecessarias", "habilidadesNecessarias.habilidade"
+    })
+    List<Projeto> findByAtivoTrueAndStatus(StatusProjeto status);
 
     // ============================================
     // LISTAGENS

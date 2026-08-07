@@ -62,6 +62,20 @@ public class Usuario {
     private Boolean ativo = true;
 
     // ============================================
+    // REPUTAÇÃO (avaliações recebidas de colaboradores)
+    // ============================================
+
+    /** Null enquanto totalAvaliacoes for 0 — evita confundir "sem avaliação" com nota zero. */
+    @Column(name = "nota_media")
+    private Double notaMedia;
+
+    // columnDefinition inclui DEFAULT 0: sem isso, o ddl-auto=update falha ao tentar
+    // adicionar uma coluna NOT NULL numa tabela usuarios que já tem linhas.
+    @Column(name = "total_avaliacoes", nullable = false, columnDefinition = "integer not null default 0")
+    @Builder.Default
+    private Integer totalAvaliacoes = 0;
+
+    // ============================================
     // CAMPOS DE RECUPERAÇÃO DE SENHA (OTP)
     // ============================================
 

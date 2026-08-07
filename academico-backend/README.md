@@ -49,7 +49,7 @@ API REST em Spring Boot para a plataforma Academico+ — cadastro de usuários, 
 ./mvnw spring-boot:run
 ```
 
-As migrações do Flyway (`src/main/resources/db/migration`) rodam automaticamente na subida, criando o schema e populando os níveis de acesso padrão (`ALUNO`, `PROFESSOR`, `ADMIN`).
+O schema é criado/atualizado automaticamente na subida via `spring.jpa.hibernate.ddl-auto=update` (ver observação sobre o Flyway em "Limitações conhecidas"), incluindo os níveis de acesso padrão (`ALUNO`, `PROFESSOR`, `ADMIN`), inseridos pelo script em `src/main/resources/db/migration`.
 
 Com a configuração padrão, a API fica em `http://localhost:8080/api`.
 
@@ -84,8 +84,28 @@ Login (`POST /auth/login`) retorna um JWT (`Bearer`). Ele carrega o ID do usuár
 | Membros do projeto | `/projetos/{projetoId}/membros` | Equipe do projeto |
 | Habilidades do projeto | `/projetos/{projetoId}/habilidades` | Requisitos de competência do projeto |
 | Candidaturas | `/candidaturas` | Candidatar-se, aceitar/rejeitar, cancelar |
+| Avaliações | `/projetos/{projetoId}/avaliacoes`, `/usuarios/{id}/avaliacoes` | Avaliação entre quem participou do mesmo projeto |
+| Recomendações | `/recomendacoes` | Ranking de projetos/candidatos por compatibilidade de habilidades |
 
 A lista completa de rotas, parâmetros e schemas está no Swagger UI.
+
+## Avaliação de colaboradores
+
+Depois que um projeto chega a um estado final (`CONCLUIDO` ou `CANCELADO`), quem participou dele — criador ou membro — pode avaliar outros participantes: nota de 1 a 5 e comentário opcional, uma avaliação por par por projeto. Não dá para avaliar a si mesmo, nem alguém que não participou, nem repetir a avaliação da mesma pessoa no mesmo projeto.
+
+A nota média (`notaMedia`) e o total (`totalAvaliacoes`) ficam armazenados no perfil do usuário e são recalculados a cada nova avaliação. Como já aparecem em `UsuarioResumoResponse`, esse sinal de confiança surge automaticamente em qualquer lugar que já retorna um usuário resumido — card de projeto, membro da equipe, candidatura.
+
+- `POST /projetos/{projetoId}/avaliacoes`
+- `GET /usuarios/{id}/avaliacoes`
+
+## Recomendação por habilidades
+
+Ranqueia projetos e candidatos por compatibilidade de habilidades. Não é o Índice de Jaccard "puro" (`|interseção| / |união|`): usamos **cobertura ponderada dos requisitos do projeto**, porque o Jaccard simétrico penaliza quem tem habilidades extras não relacionadas ao projeto — o que não faz sentido para responder "esse candidato atende o que eu preciso?". A fórmula: soma dos pesos das habilidades exigidas que a outra parte possui, dividida pela soma de todos os pesos exigidos; habilidades marcadas como obrigatórias pesam o dobro das desejáveis.
+
+- `GET /recomendacoes/projetos?limite=10` — projetos `ABERTO` ranqueados para o usuário logado, a partir das próprias habilidades
+- `GET /recomendacoes/projetos/{projetoId}/candidatos?limite=10` — candidatos ranqueados para o criador do projeto (só ele enxerga)
+
+O cálculo é feito em memória (carrega os candidatos elegíveis e pontua um a um), não em SQL — no volume de dados de uma plataforma acadêmica isso é mais simples e evita repetir o problema de paginar com fetch join de coleção (ver `ProjetoRepository.findByAtivoTrueAndStatus`, que só é seguro por não ser paginado).
 
 ## Estrutura do código
 
@@ -107,5 +127,7 @@ src/main/java/com/unifapi/academico/
 ## Limitações conhecidas / fora do escopo atual
 
 - **Sem refresh token**: avaliado como desnecessário para a duração atual do access token (24h por padrão); reconsiderar se o tempo de expiração for reduzido.
-- **Sem algoritmo de recomendação** (similaridade entre perfis/projetos por habilidade) e **sem sistema de endosso de competências por professores** — ainda não implementados.
+- **Sem endosso de competências por professores** — diferente do sistema de avaliação entre colegas de projeto (esse já existe), não há um fluxo onde um professor valida formalmente uma habilidade de um aluno.
+- **Sem sistema de mensagens** entre usuários.
 - **Upload de foto** salva em disco local (`LocalStorageService`); não há integração com storage externo (S3, etc.).
+- **Flyway não é a fonte real do schema**: o único arquivo de migração (`V1_schema_inicial.sql`) usa uma convenção de nome que o Flyway rejeita (log mostra "não segue a convenção de nome" na subida). Quem efetivamente mantém o schema atualizado é `spring.jpa.hibernate.ddl-auto=update`. Ao adicionar coluna `NOT NULL` em tabela já populada, lembrar de usar `columnDefinition` com `DEFAULT` (ver `Usuario.totalAvaliacoes`), senão o ALTER falha silenciosamente contra um banco com dados.

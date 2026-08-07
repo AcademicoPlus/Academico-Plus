@@ -10,7 +10,9 @@ public record UsuarioResumoResponse(
         String curso,
         String fotoUrl,
         String permission,
-        Integer periodo
+        Integer periodo,
+        Double notaMedia,
+        Integer totalAvaliacoes
 ) {
     public static UsuarioResumoResponse fromEntity(Usuario usuario) {
         return new UsuarioResumoResponse(
@@ -20,7 +22,9 @@ public record UsuarioResumoResponse(
                 usuario.getCurso() != null ? usuario.getCurso().getNome() : null,
                 usuario.getFotoUrl(),
                 usuario.getNivelAcesso() != null ? usuario.getNivelAcesso().getNome() : null,
-                usuario.getPeriodo()
+                usuario.getPeriodo(),
+                usuario.getNotaMedia(),
+                usuario.getTotalAvaliacoes()
         );
     }
 }

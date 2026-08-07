@@ -69,17 +69,6 @@ CREATE INDEX idx_usuarios_nivel_acesso ON usuarios(nivel_acesso_id);
 CREATE INDEX idx_usuarios_curso ON usuarios(curso_id);
 CREATE INDEX idx_usuarios_ativo ON usuarios(ativo);
 
--- ========================================
--- 4. REFRESH_TOKENS TABLE
--- ========================================
-CREATE TABLE refresh_tokens (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    token VARCHAR(255) NOT NULL UNIQUE,
-    expiry_date TIMESTAMP WITH TIME ZONE NOT NULL,
-    usuario_id UUID NOT NULL REFERENCES usuarios(id) ON DELETE CASCADE
-);
-
-CREATE INDEX idx_refresh_tokens_usuario ON refresh_tokens(usuario_id);
 
 -- ========================================
 -- 5. HABILIDADES TABLE

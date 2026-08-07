@@ -3,10 +3,12 @@ package com.unifapi.academico.controller;
 import com.unifapi.academico.domain.models.Usuario;
 import com.unifapi.academico.dto.auth.MensagemResponse;
 import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
+import com.unifapi.academico.dto.avaliacao.AvaliacaoResponse;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
 import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaRequest;
 import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaResponse;
+import com.unifapi.academico.service.AvaliacaoService;
 import com.unifapi.academico.service.UsuarioService;
 
 import io.swagger.v3.oas.annotations.Operation;
@@ -16,6 +18,7 @@ import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -33,6 +36,7 @@ import java.util.UUID;
 public class UsuarioController {
 
     private final UsuarioService usuarioService;
+    private final AvaliacaoService avaliacaoService;
 
     // ============================================
     // PERFIL DO USUÁRIO LOGADO (/me)
@@ -99,7 +103,7 @@ public class UsuarioController {
     }
 
     @GetMapping
-    @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista completa de usuários")
+    @Operation(summary = "Listar todos os usuários (ADMIN)", description = "Retorna uma lista completa de usuários")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<List<UsuarioResumoResponse>> listarUsuarios() {
         List<UsuarioResumoResponse> usuarios = usuarioService.listarTodos();
@@ -125,5 +129,14 @@ public class UsuarioController {
     public ResponseEntity<UsuarioPerfilResponse> obterPorId(@PathVariable UUID id) {
         UsuarioPerfilResponse perfil = usuarioService.obterPorId(id);
         return ResponseEntity.ok(perfil);
+    }
+
+    @GetMapping("/{id}/avaliacoes")
+    @Operation(summary = "Listar avaliações recebidas", description = "Avaliações feitas por colaboradores de projetos em que o usuário participou")
+    public ResponseEntity<Page<AvaliacaoResponse>> listarAvaliacoesRecebidas(
+            @PathVariable UUID id,
+            @ParameterObject @PageableDefault(size = 10, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(avaliacaoService.listarPorAvaliado(id, pageable));
     }
 }

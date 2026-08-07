@@ -20,6 +20,8 @@ public record UsuarioPerfilResponse(
     String linkedinUrl,
     String githubUrl,
     List<UsuarioHabilidadeResponse> habilidades,
+    Double notaMedia,
+    Integer totalAvaliacoes,
     Boolean ativo,
     LocalDateTime criadoEm,
     LocalDateTime atualizadoEm
@@ -47,6 +49,8 @@ public record UsuarioPerfilResponse(
             usuario.getLinkedinUrl(),
             usuario.getGithubUrl(),
             habilidades,
+            usuario.getNotaMedia(),
+            usuario.getTotalAvaliacoes(),
             usuario.getAtivo(),
             usuario.getCriadoEm(),
             usuario.getAtualizadoEm()
