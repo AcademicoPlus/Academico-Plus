@@ -3,6 +3,7 @@ package com.unifapi.academico.service;
 import com.unifapi.academico.domain.models.Curso;
 import com.unifapi.academico.domain.models.NivelAcesso;
 import com.unifapi.academico.domain.models.ProjetoCanceladoAviso;
+import com.unifapi.academico.domain.models.TokenRevogado;
 import com.unifapi.academico.domain.models.Usuario;
 import com.unifapi.academico.dto.auth.CadastroRequest;
 import com.unifapi.academico.dto.auth.CadastroResponse;
@@ -18,8 +19,10 @@ import com.unifapi.academico.exception.RegraDeNegocioException;
 import com.unifapi.academico.repository.CursoRepository;
 import com.unifapi.academico.repository.NivelAcessoRepository;
 import com.unifapi.academico.repository.ProjetoCanceladoAvisoRepository;
+import com.unifapi.academico.repository.TokenRevogadoRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
 import com.unifapi.academico.security.JwtTokenProvider;
+import com.unifapi.academico.security.RateLimiterService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -40,9 +43,11 @@ public class AuthService {
     private final CursoRepository cursoRepository;
     private final NivelAcessoRepository nivelAcessoRepository;
     private final ProjetoCanceladoAvisoRepository projetoAvisoRepository;
+    private final TokenRevogadoRepository tokenRevogadoRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
     private final EmailService emailService;
+    private final RateLimiterService rateLimiterService;
 
     // ============================================
     // LOGIN & CADASTRO PÚBLICO
@@ -56,14 +61,21 @@ public class AuthService {
 
         String emailNorm = request.email().trim().toLowerCase();
 
+        rateLimiterService.verificarDisponivel(emailNorm);
+
         Usuario usuario = usuarioRepository.findByEmail(emailNorm).orElse(null);
 
         if (usuario == null || !passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {
+            rateLimiterService.registrarFalha(emailNorm);
             return new LoginResponse(false, "Email ou senha incorretos.", null, null, List.of());
         }
 
+        rateLimiterService.registrarSucesso(emailNorm);
+
+        // Mesmo contrato de resposta (200 + sucesso:false) da credencial errada acima,
+        // em vez de lançar exceção — mantém as duas falhas de login consistentes.
         if (Boolean.FALSE.equals(usuario.getAtivo())) {
-            throw new RegraDeNegocioException("Esta conta está desativada.");
+            return new LoginResponse(false, "Esta conta está desativada.", null, null, List.of());
         }
 
         String token = jwtTokenProvider.gerarTokenAcesso(usuario.getId(), usuario.getNivelAcesso().getNome());
@@ -156,20 +168,26 @@ public class AuthService {
     public ResetValidarResponse validarOtp(String email, String codigo) {
         String emailNorm = email.trim().toLowerCase();
 
-        Usuario usuario = usuarioRepository.findByEmail(emailNorm)
-                .orElseThrow(() -> new RegraDeNegocioException("Código inválido ou expirado."));
+        rateLimiterService.verificarDisponivel(emailNorm);
 
-        if (usuario.getCodigoRecuperacao() == null || usuario.getCodigoRecuperacaoExpiraEm() == null) {
+        Usuario usuario = usuarioRepository.findByEmail(emailNorm).orElse(null);
+
+        if (usuario == null || usuario.getCodigoRecuperacao() == null || usuario.getCodigoRecuperacaoExpiraEm() == null) {
+            rateLimiterService.registrarFalha(emailNorm);
             throw new RegraDeNegocioException("Código inválido ou expirado.");
         }
 
         if (usuario.getCodigoRecuperacaoExpiraEm().isBefore(LocalDateTime.now())) {
+            rateLimiterService.registrarFalha(emailNorm);
             throw new RegraDeNegocioException("Código expirado. Solicite um novo.");
         }
 
         if (!passwordEncoder.matches(codigo, usuario.getCodigoRecuperacao())) {
+            rateLimiterService.registrarFalha(emailNorm);
             throw new RegraDeNegocioException("Código inválido.");
         }
+
+        rateLimiterService.registrarSucesso(emailNorm);
 
         usuario.setCodigoRecuperacao(null);
         usuario.setCodigoRecuperacaoExpiraEm(null);
@@ -185,6 +203,12 @@ public class AuthService {
             throw new RegraDeNegocioException("Token de redefinição inválido ou expirado.");
         }
 
+        // Sem isso, o mesmo token de reset (válido por 15 min) poderia ser reusado
+        // várias vezes dentro da janela, inclusive depois que o dono já trocou a senha.
+        if (tokenRevogadoRepository.existsByToken(tokenRedefinicao)) {
+            throw new RegraDeNegocioException("Token de redefinição inválido ou expirado.");
+        }
+
         UUID userId = jwtTokenProvider.obterSubjectDoToken(tokenRedefinicao);
         Usuario usuario = usuarioRepository.findById(userId)
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Usuário não encontrado."));
@@ -194,6 +218,10 @@ public class AuthService {
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+
+        LocalDateTime expiracaoToken = jwtTokenProvider.obterDataExpiracaoDoToken(tokenRedefinicao);
+        tokenRevogadoRepository.save(new TokenRevogado(tokenRedefinicao, LocalDateTime.now(), expiracaoToken));
+
         return new MensagemResponse(true, "Senha redefinida com sucesso.");
     }
 
