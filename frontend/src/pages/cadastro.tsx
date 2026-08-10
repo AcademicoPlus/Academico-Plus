@@ -1,41 +1,41 @@
+import logo from '../assets/logo.png' 
+
 export default function Cadastro() {
   return (
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       
-      {/* Lado Esquerdo (Azul Vibrante) - Oculto no celular */}
-      <div className="hidden lg:flex w-1/2 bg-[#1472dd] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
+      {/* Lado Esquerdo (Azul Marinho) */}
+      <div className="hidden lg:flex w-1/2 bg-[#183E6C] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
         
-        {/* Efeito de círculos concêntricos */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-200 h-200 border-30 border-white/5 rounded-full pointer-events-none"></div>
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-137.5 h-137.5 border-30 border-white/5 rounded-full pointer-events-none"></div>
         
         <div className="relative z-10 text-white max-w-lg">
-          {/* Logo A+ */}
-          <div className="bg-white/20 w-16 h-16 rounded-2xl flex items-center justify-center text-2xl font-bold mb-10 shadow-sm backdrop-blur-sm">
-            A+
-          </div>
           
           <h1 className="text-4xl xl:text-5xl font-bold mb-6 leading-tight">
             Junte-se à nossa comunidade acadêmica
           </h1>
           
-          <p className="text-[#a7ccfd] text-lg mb-16 leading-relaxed max-w-md">
+          <p className="text-[#B2C6E0] text-lg mb-16 leading-relaxed max-w-md">
             Crie seu perfil, descubra projetos inovadores e colabore com estudantes e professores de toda a instituição.
           </p>
         </div>
       </div>
 
-      {/* Lado Direito (Formulário de Cadastro) */}
+      {/* Lado Direito (Formulário) */}
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6 my-8">
         <div className="w-full max-w-md">
           
-          {/* Cabeçalho do Formulário */}
+          {/* Logo movida para cá, em cima do título! */}
+          <div className="mb-8 px-2">
+            <img src={logo} alt="Logo Acadêmico+" className="h-12 object-contain" />
+          </div>
+          
           <div className="flex justify-between items-start mb-6 px-2">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900">Crie sua conta</h2>
+              <h2 className="text-3xl font-bold text-[#183E6C]">Crie sua conta</h2>
               <p className="text-gray-500 mt-1">Preencha seus dados institucionais</p>
             </div>
-            {/* Botão de Tema Escuro */}
             <button className="p-2.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
@@ -43,14 +43,12 @@ export default function Cadastro() {
             </button>
           </div>
 
-          {/* Card Branco */}
-          <div className="bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
+          <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
             
             <form className="flex flex-col gap-4">
               
-              {/* Campo Nome Completo */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Nome Completo</label>
+                <label className="block text-sm font-medium text-[#183E6C] mb-2">Nome Completo</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -60,14 +58,13 @@ export default function Cadastro() {
                   <input 
                     type="text" 
                     placeholder="Luana..." 
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                   />
                 </div>
               </div>
 
-              {/* Campo E-mail */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">E-mail institucional</label>
+                <label className="block text-sm font-medium text-[#183E6C] mb-2">E-mail institucional</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -77,14 +74,13 @@ export default function Cadastro() {
                   <input 
                     type="email" 
                     placeholder="luana@academico.edu.br" 
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                   />
                 </div>
               </div>
 
-              {/* Campo Curso (Dropdown atualizado) */}
               <div>
-                <label className="block text-sm font-medium text-gray-900 mb-2">Curso</label>
+                <label className="block text-sm font-medium text-[#183E6C] mb-2">Curso</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                     <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -95,7 +91,7 @@ export default function Cadastro() {
                   
                   <select 
                     defaultValue=""
-                    className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700 appearance-none cursor-pointer"
+                    className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 appearance-none cursor-pointer"
                   >
                     <option value="" disabled hidden>Selecione o seu curso</option>
                     <option value="administracao">Administração</option>
@@ -117,10 +113,9 @@ export default function Cadastro() {
                 </div>
               </div>
 
-              {/* Grid para Senha e Confirmar Senha */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Senha</label>
+                  <label className="block text-sm font-medium text-[#183E6C] mb-2">Senha</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -130,13 +125,13 @@ export default function Cadastro() {
                     <input 
                       type="password" 
                       placeholder="••••••••"
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-900 mb-2">Confirmar Senha</label>
+                  <label className="block text-sm font-medium text-[#183E6C] mb-2">Confirmar Senha</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                       <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -146,26 +141,24 @@ export default function Cadastro() {
                     <input 
                       type="password" 
                       placeholder="••••••••"
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#1472dd] focus:ring-2 focus:ring-[#1472dd]/20 outline-none transition-all text-gray-700"
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                     />
                   </div>
                 </div>
               </div>
 
-              {/* Botão Criar Conta */}
-              <button type="button" className="w-full bg-[#1472dd] hover:bg-[#105db8] text-white font-medium py-3.5 rounded-xl transition-colors shadow-md shadow-[#1472dd]/20 mt-4">
+              <button type="button" className="w-full bg-[#F27405] hover:bg-[#D96704] text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-[#F27405]/30 mt-4">
                 Criar Conta
               </button>
             </form>
 
             <p className="text-center text-sm text-gray-500 mt-6">
-              Já tem uma conta? <a href="#" className="text-[#1472dd] font-semibold hover:underline">Fazer login</a>
+              Já tem uma conta? <a href="/login" className="text-[#F27405] font-semibold hover:underline">Fazer login</a>
             </p>
           </div>
           
-          {/* Rodapé */}
-          <p className="text-center text-xs text-gray-400 mt-8">
-            UNIFAPI - Sistema Acadêmico Integrado
+          <p className="text-center text-xs text-gray-400 mt-8 font-medium tracking-wide">
+            UNIFAPI - SISTEMA ACADÊMICO INTEGRADO
           </p>
           
         </div>
