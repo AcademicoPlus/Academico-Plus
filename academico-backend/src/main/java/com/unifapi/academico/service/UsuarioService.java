@@ -6,6 +6,7 @@ import com.unifapi.academico.domain.models.TokenRevogado;
 import com.unifapi.academico.domain.models.Usuario;
 import com.unifapi.academico.dto.auth.MensagemResponse;
 import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
+import com.unifapi.academico.dto.usuario.ExcluirContaRequest;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
 import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaRequest;
@@ -200,6 +201,25 @@ public class UsuarioService {
     public void reativarUsuario(UUID idParaReativar) {
         Usuario usuario = buscarUsuarioPorId(idParaReativar);
         usuario.setAtivo(true);
+    }
+
+    /**
+     * Exclusão da própria conta (LGPD: direito do titular de solicitar a
+     * exclusão dos seus dados). Exige a senha atual — sem isso, uma sessão
+     * sequestrada poderia apagar a conta sem o dono perceber. Depois de
+     * ativo=false, o @SQLRestriction da entidade já barra o token atual em
+     * qualquer requisição futura, então não é preciso revogar o JWT à parte.
+     */
+    @Transactional
+    public void excluirMinhaConta(UUID idUsuario, ExcluirContaRequest request) {
+        Usuario usuario = buscarUsuarioPorId(idUsuario);
+
+        if (!passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {
+            throw new RegraDeNegocioException("Senha incorreta.");
+        }
+
+        usuario.setAtivo(false);
+        usuario.setDeletadoEm(LocalDateTime.now());
     }
 
     // ============================================

@@ -1,5 +1,6 @@
 package com.unifapi.academico.config;
 
+import com.unifapi.academico.security.GlobalRateLimitFilter;
 import com.unifapi.academico.security.JwtAuthenticationFilter;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
@@ -29,6 +30,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final GlobalRateLimitFilter globalRateLimitFilter;
 
     @Value("${cors.allowed-origins}")
     private String corsAllowedOrigins;
@@ -46,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/cursos/**").permitAll()
                         .anyRequest().authenticated()
                 )
+                // Rate limit roda antes do JWT: até tentativa de flood em /auth/** (sem token) é barrada.
+                .addFilterBefore(globalRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
     }

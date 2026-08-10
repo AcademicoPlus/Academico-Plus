@@ -76,6 +76,16 @@ public class Usuario {
     private Integer totalAvaliacoes = 0;
 
     // ============================================
+    // TERMOS DE USO / LGPD
+    // ============================================
+
+    // columnDefinition com DEFAULT now(): mesma razão do total_avaliacoes acima — contas
+    // já existentes são tratadas como tendo aceitado no momento em que a coluna foi criada.
+    @Column(name = "termos_aceitos_em", nullable = false, columnDefinition = "timestamp not null default now()")
+    @Builder.Default
+    private LocalDateTime termosAceitosEm = LocalDateTime.now();
+
+    // ============================================
     // CAMPOS DE RECUPERAÇÃO DE SENHA (OTP)
     // ============================================
 

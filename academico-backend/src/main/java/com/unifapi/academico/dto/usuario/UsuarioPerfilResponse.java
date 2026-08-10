@@ -22,6 +22,7 @@ public record UsuarioPerfilResponse(
     List<UsuarioHabilidadeResponse> habilidades,
     Double notaMedia,
     Integer totalAvaliacoes,
+    LocalDateTime termosAceitosEm,
     Boolean ativo,
     LocalDateTime criadoEm,
     LocalDateTime atualizadoEm
@@ -51,6 +52,7 @@ public record UsuarioPerfilResponse(
             habilidades,
             usuario.getNotaMedia(),
             usuario.getTotalAvaliacoes(),
+            usuario.getTermosAceitosEm(),
             usuario.getAtivo(),
             usuario.getCriadoEm(),
             usuario.getAtualizadoEm()

@@ -61,7 +61,7 @@ public class AvaliacaoService {
             throw new RegraDeNegocioException("Esta pessoa não participou deste projeto.");
         }
 
-        if (avaliacaoRepository.existsByProjeto_IdAndAvaliador_IdAndAvaliado_Id(
+        if (avaliacaoRepository.existsByProjeto_IdAndAvaliador_IdAndAvaliado_IdAndRemovidaFalse(
                 projetoId, avaliadorId, avaliado.getId())) {
             throw new RegraDeNegocioException("Você já avaliou esta pessoa neste projeto.");
         }
@@ -84,7 +84,7 @@ public class AvaliacaoService {
 
     @Transactional(readOnly = true)
     public Page<AvaliacaoResponse> listarPorAvaliado(UUID avaliadoId, Pageable pageable) {
-        return avaliacaoRepository.findByAvaliado_IdOrderByCriadoEmDesc(avaliadoId, pageable)
+        return avaliacaoRepository.findByAvaliado_IdAndRemovidaFalseOrderByCriadoEmDesc(avaliadoId, pageable)
                 .map(AvaliacaoResponse::fromEntity);
     }
 
@@ -93,10 +93,11 @@ public class AvaliacaoService {
         return ehCriador || projetoMembroRepository.existsByProjeto_IdAndUsuario_Id(projeto.getId(), usuarioId);
     }
 
-    private void recalcularMedia(UUID usuarioId) {
+    /** Pacote-privado: também usado por DenunciaService ao remover uma avaliação denunciada. */
+    void recalcularMedia(UUID usuarioId) {
         usuarioRepository.findById(usuarioId).ifPresent(usuario -> {
             usuario.setNotaMedia(avaliacaoRepository.calcularMediaPorAvaliado(usuarioId));
-            usuario.setTotalAvaliacoes((int) avaliacaoRepository.countByAvaliado_Id(usuarioId));
+            usuario.setTotalAvaliacoes((int) avaliacaoRepository.countByAvaliado_IdAndRemovidaFalse(usuarioId));
             usuarioRepository.save(usuario);
         });
     }

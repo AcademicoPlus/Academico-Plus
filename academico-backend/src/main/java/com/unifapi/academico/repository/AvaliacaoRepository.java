@@ -16,12 +16,13 @@ public interface AvaliacaoRepository extends JpaRepository<Avaliacao, UUID> {
 
     /** Só junta relações ManyToOne (avaliador, projeto) — seguro com paginação. */
     @EntityGraph(attributePaths = {"avaliador", "avaliador.curso", "avaliador.nivelAcesso", "projeto"})
-    Page<Avaliacao> findByAvaliado_IdOrderByCriadoEmDesc(UUID avaliadoId, Pageable pageable);
+    Page<Avaliacao> findByAvaliado_IdAndRemovidaFalseOrderByCriadoEmDesc(UUID avaliadoId, Pageable pageable);
 
-    boolean existsByProjeto_IdAndAvaliador_IdAndAvaliado_Id(UUID projetoId, UUID avaliadorId, UUID avaliadoId);
+    boolean existsByProjeto_IdAndAvaliador_IdAndAvaliado_IdAndRemovidaFalse(
+            UUID projetoId, UUID avaliadorId, UUID avaliadoId);
 
-    long countByAvaliado_Id(UUID avaliadoId);
+    long countByAvaliado_IdAndRemovidaFalse(UUID avaliadoId);
 
-    @Query("SELECT AVG(a.nota) FROM Avaliacao a WHERE a.avaliado.id = :avaliadoId")
+    @Query("SELECT AVG(a.nota) FROM Avaliacao a WHERE a.avaliado.id = :avaliadoId AND a.removida = false")
     Double calcularMediaPorAvaliado(@Param("avaliadoId") UUID avaliadoId);
 }

@@ -80,9 +80,14 @@ Academico-Plus/
 ├── frontend/               # React + Vite (ainda no template inicial)
 │   ├── src/
 │   └── package.json
+├── legal/                  # Termos de Uso e Política de Privacidade
 ├── .gitignore
 └── README.md
 ```
+
+## 📜 Termos e privacidade
+
+Cadastro na plataforma exige aceite dos [Termos de Uso](./legal/TERMOS_DE_USO.md) e da [Política de Privacidade](./legal/POLITICA_DE_PRIVACIDADE.md) (LGPD). Usuários podem excluir a própria conta a qualquer momento.
 
 ---
 
@@ -122,6 +127,8 @@ npm run dev
 
 ### Fase 4: Reputação & Networking
 - [x] Avaliação entre colegas que participaram do mesmo projeto (nota 1-5 + comentário, após o projeto encerrar)
+- [x] Denúncia de avaliação abusiva pelo avaliado, com resolução por admin
+- [x] Exclusão de conta pelo próprio usuário (LGPD)
 - [ ] Endosso de competências por professores (diferente do item acima — não implementado)
 - [ ] Sistema de mensagens
 
