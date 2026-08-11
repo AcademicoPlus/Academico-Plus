@@ -22,7 +22,8 @@ export default function App() {
         {/* Rotas privadas: RotaProtegida redireciona para /login sem token */}
         <Route element={<RotaProtegida />}>
           <Route path="/feed" element={<Feed />} />
-          <Route path="/projeto" element={<Projeto />} />
+          {/* :id é lido em projetodetalhes.tsx via useParams para chamar GET /projetos/:id */}
+          <Route path="/projeto/:id" element={<Projeto />} />
         </Route>
       </Routes>
     </BrowserRouter>
