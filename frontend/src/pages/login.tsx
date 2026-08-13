@@ -149,7 +149,7 @@ export default function Login() {
           </div>
           
           <p className="text-center text-xs text-gray-400 mt-10 font-medium tracking-wide">
-            UNIFAPI - SISTEMA ACADÊMICO INTEGRADO
+            UNIFAPI
           </p>
           
         </div>

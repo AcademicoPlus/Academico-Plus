@@ -9,7 +9,7 @@ export default function Feed() {
       titulo: "Sistema Inteligente de Proteção Web",
       descricao: "Projeto de IA voltado para segurança online utilizando análise de comportamento visual, eye-tracking e identificação de conteúdo para proteger os usuários.",
       autor: "Luana Caldas",
-      curso: "Engenharia de Software",
+      curso: "Ciências da Computação",
       vagas: 3,
       tags: ["Inteligência Artificial", "Segurança", "Visão Computacional"]
     },
@@ -17,8 +17,8 @@ export default function Feed() {
       id: 2,
       titulo: "Design de Interface para App Educacional",
       descricao: "Buscamos estudantes de Design e Computação para remodelar a interface gráfica e a experiência de usuário (UX) do nosso novo aplicativo de monitoria.",
-      autor: "Rafael Mendes",
-      curso: "Design Gráfico",
+      autor: "Eduarda Resende",
+      curso: "Ciências da Computação",
       vagas: 2,
       tags: ["UX/UI Design", "Mobile", "Educação"]
     },
