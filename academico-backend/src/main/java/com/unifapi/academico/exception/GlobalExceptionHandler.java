@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
@@ -87,6 +88,25 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+    }
+
+    // 3b. Trata negação de acesso do @PreAuthorize (ex.: hasRole('ADMIN') falhando para
+    // quem não é admin). Sem isso, a exceção cai no catch-all de baixo e vira 500 —
+    // o AOP do @PreAuthorize roda dentro do próprio dispatch do MVC, então chega
+    // primeiro neste @RestControllerAdvice, antes de qualquer filtro de segurança.
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<ErroResposta> handleAccessDenied(
+            AccessDeniedException ex,
+            HttpServletRequest request) {
+
+        ErroResposta erro = ErroResposta.simples(
+                HttpStatus.FORBIDDEN.value(),
+                "Acesso Negado",
+                "Você não tem permissão para acessar este recurso.",
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(erro);
     }
 
     // 4. Trata JSON malformatado ou tipos incorretos no Body
