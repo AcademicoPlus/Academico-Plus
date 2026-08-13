@@ -60,6 +60,12 @@ jobs:
           cache: maven
           cache-dependency-path: academico-backend/pom.xml
 
+      # Reforço: garante que ./mvnw seja executável mesmo se o bit +x for perdido
+      # de novo num commit futuro feito a partir do Windows (o git ali guarda o
+      # modo do arquivo, mas checkouts/commits no Windows não preservam +x por padrão).
+      - name: Garantir permissão de execução do mvnw
+        run: chmod +x ./mvnw
+
       - name: Testes unitários, slice e de repositório
         run: ./mvnw test
 
