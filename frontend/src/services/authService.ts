@@ -36,6 +36,7 @@ export type CadastroRequest = {
   periodo?: number;
   idCurso: string;
   senha: string;
+  aceitouTermos: boolean;
 };
 
 export type CadastroResponse = {

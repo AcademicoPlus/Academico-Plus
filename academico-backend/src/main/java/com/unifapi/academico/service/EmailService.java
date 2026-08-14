@@ -5,6 +5,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
+import org.thymeleaf.TemplateEngine;
+import org.thymeleaf.context.Context;
 
 import java.util.List;
 import java.util.Map;
@@ -26,9 +28,11 @@ public class EmailService {
     private int otpExpirationMinutes;
 
     private final RestClient restClient;
+    private final TemplateEngine templateEngine;
 
-    public EmailService() {
+    public EmailService(TemplateEngine templateEngine) {
         this.restClient = RestClient.create();
+        this.templateEngine = templateEngine;
     }
 
     /**
@@ -39,11 +43,10 @@ public class EmailService {
         String sanitizedCode = code != null ? code.trim() : "";
         String subject = sanitizedCode + " é o seu código de verificação";
 
-        String body = String.format(
-                "Olá! Seu código de verificação é: %s. Ele expira em %d minutos.",
-                sanitizedCode, otpExpirationMinutes
-        );
-        String html = "<strong>" + body + "</strong>";
+        Context context = new Context();
+        context.setVariable("codigo", sanitizedCode);
+        context.setVariable("minutosExpiracao", otpExpirationMinutes);
+        String html = templateEngine.process("email/otp-verificacao", context);
 
         // Prioridade 1: Envio via Resend API
         if (resendApiKey != null && resendApiKey.startsWith("re_")) {
@@ -77,9 +80,9 @@ public class EmailService {
                  "\nDEBUG: Modo Simulação Ativo" +
                  "\nPARA: {}" +
                  "\nASSUNTO: {}" +
-                 "\nCONTEÚDO: {}" +
-                 "\n==================================================", 
-                 userEmail, subject, body);
+                 "\nCÓDIGO: {}" +
+                 "\n==================================================",
+                 userEmail, subject, sanitizedCode);
 
         // Retorna true em ambiente de testes para permitir fluxo do AuthService sem bloquear no local
         return true; 

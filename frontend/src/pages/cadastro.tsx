@@ -20,6 +20,7 @@ export default function Cadastro() {
   const [periodo, setPeriodo] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [carregandoCursos, setCarregandoCursos] = useState(true);
@@ -51,6 +52,7 @@ export default function Cadastro() {
         idCurso,
         senha,
         periodo: periodo ? Number(periodo) : undefined,
+        aceitouTermos,
       });
       // Backend só cadastra, não faz login automático, então mandamos o
       // usuário para a tela de login para entrar com a conta recém-criada.
@@ -261,6 +263,21 @@ export default function Cadastro() {
                     />
                   </div>
                 </div>
+              </div>
+
+              {/* Aceite dos Termos de Uso e Política de Privacidade — obrigatório no backend (CadastroRequest.aceitouTermos) */}
+              <div className="flex items-start gap-2">
+                <input
+                  type="checkbox"
+                  id="aceitouTermos"
+                  checked={aceitouTermos}
+                  onChange={(e) => setAceitouTermos(e.target.checked)}
+                  required
+                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1472dd] focus:ring-[#1472dd]/20"
+                />
+                <label htmlFor="aceitouTermos" className="text-sm text-gray-600">
+                  Li e aceito os Termos de Uso e a Política de Privacidade.
+                </label>
               </div>
 
               {/* Botão Criar Conta */}
