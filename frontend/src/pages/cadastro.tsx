@@ -276,7 +276,15 @@ export default function Cadastro() {
                   className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1472dd] focus:ring-[#1472dd]/20"
                 />
                 <label htmlFor="aceitouTermos" className="text-sm text-gray-600">
-                  Li e aceito os Termos de Uso e a Política de Privacidade.
+                  Li e aceito os{' '}
+                  <Link to="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-[#1472dd] hover:underline">
+                    Termos de Uso
+                  </Link>{' '}
+                  e a{' '}
+                  <Link to="/politica-de-privacidade" target="_blank" rel="noopener noreferrer" className="text-[#1472dd] hover:underline">
+                    Política de Privacidade
+                  </Link>
+                  .
                 </label>
               </div>
 

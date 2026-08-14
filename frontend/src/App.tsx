@@ -5,6 +5,8 @@ import Login from './pages/login'
 import Cadastro from './pages/cadastro'
 import Feed from './pages/feedprojetos'
 import Projeto from './pages/projetodetalhes'
+import TermosDeUso from './pages/termosdeuso'
+import PoliticaDePrivacidade from './pages/politicadeprivacidade'
 // Guard que só deixa passar quem tem um token JWT salvo (ver rotaprotegida.tsx)
 import RotaProtegida from './routes/rotaprotegida'
 
@@ -18,6 +20,8 @@ export default function App() {
         {/* Rotas públicas: não exigem login */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/termos-de-uso" element={<TermosDeUso />} />
+        <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
 
         {/* Rotas privadas: RotaProtegida redireciona para /login sem token */}
         <Route element={<RotaProtegida />}>
