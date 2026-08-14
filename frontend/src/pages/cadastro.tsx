@@ -11,6 +11,7 @@ export default function Cadastro() {
   const [periodo, setPeriodo] = useState('');
   const [senha, setSenha] = useState('');
   const [confirmarSenha, setConfirmarSenha] = useState('');
+  const [aceitouTermos, setAceitouTermos] = useState(false);
 
   const [cursos, setCursos] = useState<Curso[]>([]);
   const [carregandoCursos, setCarregandoCursos] = useState(true);
@@ -42,6 +43,7 @@ export default function Cadastro() {
         idCurso,
         senha,
         periodo: periodo ? Number(periodo) : undefined,
+        aceitouTermos,
       });
       // Backend só cadastra, não faz login automático, então mandamos o
       // usuário para a tela de login para entrar com a conta recém-criada.
