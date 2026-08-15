@@ -163,8 +163,8 @@ class UsuarioServiceTest {
         List<UsuarioResumoResponse> resultado = usuarioService.listarTodos();
 
         assertThat(resultado).hasSize(2)
-                .extracting(UsuarioResumoResponse::email)
-                .containsExactlyInAnyOrder(usuario.getEmail(), outroUsuario.getEmail());
+                .extracting(UsuarioResumoResponse::nome)
+                .containsExactlyInAnyOrder(usuario.getNome(), outroUsuario.getNome());
     }
 
     @Test
@@ -193,7 +193,7 @@ class UsuarioServiceTest {
         Page<UsuarioResumoResponse> resultado = usuarioService.buscarPerfisPublicos(busca, idCurso, pageable);
 
         assertThat(resultado.getContent()).hasSize(1);
-        assertThat(resultado.getContent().get(0).email()).isEqualTo(usuario.getEmail());
+        assertThat(resultado.getContent().get(0).nome()).isEqualTo(usuario.getNome());
         verify(usuarioRepository).findAll(any(Specification.class), eq(pageable));
     }
 

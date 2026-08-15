@@ -136,9 +136,12 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID")
-    public ResponseEntity<UsuarioPerfilResponse> obterPorId(@PathVariable UUID id) {
-        UsuarioPerfilResponse perfil = usuarioService.obterPorId(id);
+    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID. Dados privados (email, aceite de termos) só voltam quando o próprio dono consulta o ID.")
+    public ResponseEntity<UsuarioPerfilResponse> obterPorId(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        UsuarioPerfilResponse perfil = usuarioService.obterPorId(id, usuarioLogado.getId());
         return ResponseEntity.ok(perfil);
     }
 

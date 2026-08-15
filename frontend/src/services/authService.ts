@@ -11,7 +11,6 @@ export type LoginRequest = {
 export type UsuarioResumo = {
   id: string;
   nome: string;
-  email: string;
   curso: string | null;
   fotoUrl: string | null;
   permission: string | null;

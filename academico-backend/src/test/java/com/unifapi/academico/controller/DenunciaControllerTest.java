@@ -51,11 +51,11 @@ class DenunciaControllerTest {
 
     private static DenunciaResponse respostaValida() {
         UsuarioResumoResponse avaliador = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Avaliador Um", "avaliador@unifapi.edu.br",
+                UUID.randomUUID(), "Avaliador Um",
                 "Sistemas de Informação", null, "ALUNO", 3, 4.0, 2
         );
         UsuarioResumoResponse denunciante = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Denunciante Um", "denunciante@unifapi.edu.br",
+                UUID.randomUUID(), "Denunciante Um",
                 "Engenharia de Software", null, "ALUNO", 4, 3.5, 1
         );
         return new DenunciaResponse(

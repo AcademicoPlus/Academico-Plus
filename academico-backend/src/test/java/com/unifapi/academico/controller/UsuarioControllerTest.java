@@ -239,12 +239,12 @@ class UsuarioControllerTest {
     @WithUsuarioMock(role = "ADMIN")
     void listarUsuarios_devePermitir_quandoAdmin() throws Exception {
         UsuarioResumoResponse resumo = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Usuario", "usuario@unifapi.edu.br", "Curso", null, "ALUNO", 1, null, 0);
+                UUID.randomUUID(), "Usuario", "Curso", null, "ALUNO", 1, null, 0);
         when(usuarioService.listarTodos()).thenReturn(List.of(resumo));
 
         mockMvc.perform(get("/usuarios"))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$[0].email").value("usuario@unifapi.edu.br"));
+                .andExpect(jsonPath("$[0].nome").value("Usuario"));
     }
 
     @Test
@@ -270,7 +270,7 @@ class UsuarioControllerTest {
     @WithUsuarioMock
     void explorarPerfis_deveRetornar200_quandoAutenticado() throws Exception {
         UsuarioResumoResponse resumo = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Usuario", "usuario@unifapi.edu.br", "Curso", null, "ALUNO", 1, null, 0);
+                UUID.randomUUID(), "Usuario", "Curso", null, "ALUNO", 1, null, 0);
         Page<UsuarioResumoResponse> pagina = new PageImpl<>(List.of(resumo), PageRequest.of(0, 12), 1);
         when(usuarioService.buscarPerfisPublicos(any(), any(), any())).thenReturn(pagina);
 
@@ -289,10 +289,26 @@ class UsuarioControllerTest {
     @WithUsuarioMock
     void obterPorId_deveRetornar200_quandoAutenticado() throws Exception {
         UUID id = UUID.randomUUID();
-        when(usuarioService.obterPorId(eq(id))).thenReturn(perfilPadrao(id));
+        when(usuarioService.obterPorId(eq(id), any(UUID.class))).thenReturn(perfilPadrao(id));
 
         mockMvc.perform(get("/usuarios/{id}", id))
                 .andExpect(status().isOk());
+    }
+
+    @Test
+    @WithUsuarioMock(id = "8f14e45f-ceea-467e-adc9-15476f4f2181")
+    void obterPorId_naoDeveExporEmail_quandoConsultandoOutroUsuario() throws Exception {
+        UUID idOutroUsuario = UUID.randomUUID();
+        UUID idUsuarioLogado = UUID.fromString("8f14e45f-ceea-467e-adc9-15476f4f2181");
+        when(usuarioService.obterPorId(eq(idOutroUsuario), eq(idUsuarioLogado)))
+                .thenReturn(new UsuarioPerfilResponse(idOutroUsuario, null, "Outro Usuario", null, null,
+                        3, "bio", null, null, null, List.of(), null, 0, null, true,
+                        LocalDateTime.now(), LocalDateTime.now()));
+
+        mockMvc.perform(get("/usuarios/{id}", idOutroUsuario))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.email").doesNotExist())
+                .andExpect(jsonPath("$.nome").value("Outro Usuario"));
     }
 
     @Test

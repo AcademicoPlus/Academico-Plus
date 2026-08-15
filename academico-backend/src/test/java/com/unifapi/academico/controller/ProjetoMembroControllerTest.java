@@ -49,7 +49,7 @@ class ProjetoMembroControllerTest {
 
     private static ProjetoMembroResponse membroResponse(UUID id, String funcao) {
         UsuarioResumoResponse usuario = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Membro Teste", "membro@unifapi.edu.br",
+                UUID.randomUUID(), "Membro Teste",
                 null, null, "ALUNO", null, null, 0);
         return new ProjetoMembroResponse(id, null, usuario, funcao, LocalDateTime.now());
     }

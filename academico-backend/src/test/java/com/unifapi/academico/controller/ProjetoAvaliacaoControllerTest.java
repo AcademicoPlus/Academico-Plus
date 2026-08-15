@@ -52,7 +52,7 @@ class ProjetoAvaliacaoControllerTest {
 
     private static AvaliacaoResponse respostaValida() {
         UsuarioResumoResponse avaliador = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Fulano de Tal", "fulano@unifapi.edu.br",
+                UUID.randomUUID(), "Fulano de Tal",
                 "Ciência da Computação", null, "ALUNO", 5, 4.5, 3
         );
         ProjetoRefResponse projeto = new ProjetoRefResponse(UUID.randomUUID(), "Projeto X", StatusProjeto.CONCLUIDO);

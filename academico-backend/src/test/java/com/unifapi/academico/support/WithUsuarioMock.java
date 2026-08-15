@@ -36,6 +36,9 @@ public @interface WithUsuarioMock {
 
     String nome() default "Usuario Teste";
 
+    /** UUID fixo do usuário autenticado; deixe em branco para um ID aleatório. Útil para testar checagens de dono/IDOR. */
+    String id() default "";
+
     class Factory implements WithSecurityContextFactory<WithUsuarioMock> {
 
         @Override
@@ -46,7 +49,7 @@ public @interface WithUsuarioMock {
                     .build();
 
             Usuario usuario = Usuario.builder()
-                    .id(UUID.randomUUID())
+                    .id(annotation.id().isBlank() ? UUID.randomUUID() : UUID.fromString(annotation.id()))
                     .email(annotation.email())
                     .nome(annotation.nome())
                     .senhaHash("$2a$10$hashDeTeste")

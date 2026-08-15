@@ -67,6 +67,14 @@ public class UsuarioService {
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
 
+    /** Usado por GET /usuarios/{id}: omite dados privados (email, aceite de termos) quando o alvo não é quem está logado. */
+    @Transactional(readOnly = true)
+    public UsuarioPerfilResponse obterPorId(UUID id, UUID idUsuarioLogado) {
+        Usuario usuario = buscarUsuarioPorId(id);
+        boolean ehProprioPerfil = usuario.getId().equals(idUsuarioLogado);
+        return UsuarioPerfilResponse.fromEntity(usuario, ehProprioPerfil);
+    }
+
     @Transactional(readOnly = true)
     @PreAuthorize("hasRole('ADMIN')")
     public List<UsuarioResumoResponse> listarTodos() {

@@ -63,7 +63,7 @@ class AuthControllerTest {
     void deveRetornar200ComTokenQuandoLoginValido() throws Exception {
         LoginRequest request = new LoginRequest("usuario@unifapi.edu.br", "senha12345");
         UsuarioResumoResponse resumo = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Usuario Teste", "usuario@unifapi.edu.br",
+                UUID.randomUUID(), "Usuario Teste",
                 "Engenharia de Software", null, "ALUNO", 3, 4.5, 2);
         LoginResponse response = new LoginResponse(true, "Login realizado com sucesso.",
                 "jwt-token-fake", resumo, List.of());
@@ -76,7 +76,7 @@ class AuthControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.sucesso").value(true))
                 .andExpect(jsonPath("$.token").value("jwt-token-fake"))
-                .andExpect(jsonPath("$.usuario.email").value("usuario@unifapi.edu.br"));
+                .andExpect(jsonPath("$.usuario.nome").value("Usuario Teste"));
 
         verify(authService).login(any(LoginRequest.class));
     }
