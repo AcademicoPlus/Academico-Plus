@@ -1,64 +1,6 @@
 import logo from '../assets/logo.png' 
 
 export default function Cadastro() {
-  const navigate = useNavigate();
-
-  const [nome, setNome] = useState('');
-  const [email, setEmail] = useState('');
-  const [idCurso, setIdCurso] = useState('');
-  // Campo livre, opcional no CadastroRequest do backend (sem @NotNull) — por
-  // isso fica como string aqui e só vira número (ou undefined) no submit.
-  const [periodo, setPeriodo] = useState('');
-  const [senha, setSenha] = useState('');
-  const [confirmarSenha, setConfirmarSenha] = useState('');
-  const [aceitouTermos, setAceitouTermos] = useState(false);
-
-  const [cursos, setCursos] = useState<Curso[]>([]);
-  const [carregandoCursos, setCarregandoCursos] = useState(true);
-  const [carregando, setCarregando] = useState(false);
-  const [erro, setErro] = useState<string | null>(null);
-
-  // Carrega os cursos uma vez, assim que a tela abre, para popular o dropdown.
-  useEffect(() => {
-    listarCursos()
-      .then(setCursos)
-      .catch(() => setErro('Não foi possível carregar a lista de cursos.'))
-      .finally(() => setCarregandoCursos(false));
-  }, []);
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    setErro(null);
-
-    if (senha !== confirmarSenha) {
-      setErro('As senhas não coincidem.');
-      return;
-    }
-
-    setCarregando(true);
-    try {
-      await cadastrar({
-        nome,
-        email,
-        idCurso,
-        senha,
-        periodo: periodo ? Number(periodo) : undefined,
-        aceitouTermos,
-      });
-      // Backend só cadastra, não faz login automático, então mandamos o
-      // usuário para a tela de login para entrar com a conta recém-criada.
-      navigate('/login');
-    } catch (erroCapturado) {
-      const mensagem =
-        erroCapturado instanceof ApiError
-          ? erroCapturado.message
-          : 'Não foi possível conectar ao servidor. Tente novamente.';
-      setErro(mensagem);
-    } finally {
-      setCarregando(false);
-    }
-  }
-
   return (
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       
@@ -151,22 +93,16 @@ export default function Cadastro() {
                     defaultValue=""
                     className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 appearance-none cursor-pointer"
                   >
-                    <option value="" disabled hidden>
-                      {carregandoCursos ? 'Carregando cursos...' : 'Selecione o seu curso'}
-                    </option>
-                    {cursos.map((curso) => (
-                      <option key={curso.id} value={curso.id}>
-                        {curso.nome}
-                      </option>
-                    ))}
-                    <option value="" disabled hidden>
-                      {carregandoCursos ? 'Carregando cursos...' : 'Selecione o seu curso'}
-                    </option>
-                    {cursos.map((curso) => (
-                      <option key={curso.id} value={curso.id}>
-                        {curso.nome}
-                      </option>
-                    ))}
+                    <option value="" disabled hidden>Selecione o seu curso</option>
+                    <option value="administracao">Administração</option>
+                    <option value="arquitetura">Arquitetura e Urbanismo</option>
+                    <option value="ciencia_computacao">Ciência da Computação</option>
+                    <option value="design">Design Gráfico</option>
+                    <option value="direito">Direito</option>
+                    <option value="enfermagem">Enfermagem</option>
+                    <option value="engenharia_software">Engenharia de Software</option>
+                    <option value="odontologia">Odontologia</option>
+                    <option value="psicologia">Psicologia</option>
                   </select>
 
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
@@ -186,10 +122,8 @@ export default function Cadastro() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                       </svg>
                     </div>
-                    <input
-                      type="password"
-                    <input
-                      type="password"
+                    <input 
+                      type="password" 
                       placeholder="••••••••"
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                     />
@@ -204,38 +138,13 @@ export default function Cadastro() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                       </svg>
                     </div>
-                    <input
-                      type="password"
-                    <input
-                      type="password"
+                    <input 
+                      type="password" 
                       placeholder="••••••••"
                       className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
                     />
                   </div>
                 </div>
-              </div>
-
-              {/* Aceite dos Termos de Uso e Política de Privacidade — obrigatório no backend (CadastroRequest.aceitouTermos) */}
-              <div className="flex items-start gap-2">
-                <input
-                  type="checkbox"
-                  id="aceitouTermos"
-                  checked={aceitouTermos}
-                  onChange={(e) => setAceitouTermos(e.target.checked)}
-                  required
-                  className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1472dd] focus:ring-[#1472dd]/20"
-                />
-                <label htmlFor="aceitouTermos" className="text-sm text-gray-600">
-                  Li e aceito os{' '}
-                  <Link to="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-[#1472dd] hover:underline">
-                    Termos de Uso
-                  </Link>{' '}
-                  e a{' '}
-                  <Link to="/politica-de-privacidade" target="_blank" rel="noopener noreferrer" className="text-[#1472dd] hover:underline">
-                    Política de Privacidade
-                  </Link>
-                  .
-                </label>
               </div>
 
               <button type="button" className="w-full bg-[#F27405] hover:bg-[#D96704] text-white font-bold py-3.5 rounded-xl transition-colors shadow-lg shadow-[#F27405]/30 mt-4">
