@@ -107,6 +107,10 @@ npm install
 npm run dev
 ```
 
+### Deploy em produção
+
+Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a passo para Render (backend + Postgres) e Cloudflare R2 (storage de fotos de perfil).
+
 ---
 
 ## 🔑 Funcionalidades

@@ -28,6 +28,15 @@ public record UsuarioPerfilResponse(
     LocalDateTime atualizadoEm
 ) {
     public static UsuarioPerfilResponse fromEntity(Usuario usuario) {
+        return fromEntity(usuario, true);
+    }
+
+    /**
+     * @param incluirDadosPrivados false ao montar o perfil de OUTRO usuário (ex.: GET /usuarios/{id}
+     *                             feito por alguém que não é o dono) — omite email e a data de aceite
+     *                             dos termos, que não são informações públicas do perfil.
+     */
+    public static UsuarioPerfilResponse fromEntity(Usuario usuario, boolean incluirDadosPrivados) {
         List<UsuarioHabilidadeResponse> habilidades = usuario.getHabilidades() == null
                 ? List.of()
                 : usuario.getHabilidades().stream()
@@ -40,7 +49,7 @@ public record UsuarioPerfilResponse(
 
         return new UsuarioPerfilResponse(
             usuario.getId(),
-            usuario.getEmail(),
+            incluirDadosPrivados ? usuario.getEmail() : null,
             usuario.getNome(),
             NivelAcessoResponse.fromEntity(usuario.getNivelAcesso()),
             CursoResponse.fromEntity(usuario.getCurso()),
@@ -52,7 +61,7 @@ public record UsuarioPerfilResponse(
             habilidades,
             usuario.getNotaMedia(),
             usuario.getTotalAvaliacoes(),
-            usuario.getTermosAceitosEm(),
+            incluirDadosPrivados ? usuario.getTermosAceitosEm() : null,
             usuario.getAtivo(),
             usuario.getCriadoEm(),
             usuario.getAtualizadoEm()

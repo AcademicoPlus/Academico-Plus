@@ -44,6 +44,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll() // Endpoints públicos de login, cadastro e reset
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
+                        // Health check do provedor de deploy (Render etc.) — não exige autenticação
+                        .requestMatchers("/actuator/health").permitAll()
                         // Cursos precisam ficar visíveis antes do login: alimenta o dropdown da tela de cadastro
                         .requestMatchers(HttpMethod.GET, "/cursos/**").permitAll()
                         .anyRequest().authenticated()

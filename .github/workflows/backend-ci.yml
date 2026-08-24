@@ -1,0 +1,80 @@
+name: Backend CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "academico-backend/**"
+      - ".github/workflows/backend-ci.yml"
+  pull_request:
+    paths:
+      - "academico-backend/**"
+      - ".github/workflows/backend-ci.yml"
+
+defaults:
+  run:
+    working-directory: academico-backend
+
+env:
+  # Mesmas credenciais do docker-compose.yml do backend, para consistência local/CI.
+  SPRING_DATASOURCE_URL: jdbc:postgresql://localhost:5432/academico_plus
+  SPRING_DATASOURCE_USERNAME: academico_user
+  SPRING_DATASOURCE_PASSWORD: senha123
+  # Segredo só para CI — nunca usar em produção. Precisa existir: application.properties
+  # não tem valor padrão para jwt.secret/jwt.expiration (a app falha ao subir sem eles).
+  JWT_SECRET: ci-only-test-secret-nao-usar-em-producao-0123456789abcdef
+  JWT_EXPIRATION: 3600000
+  SERVER_PORT: 8080
+  SERVER_SERVLET_CONTEXT_PATH: /api
+  SPRING_APPLICATION_NAME: academico-plus-api
+  CORS_ALLOWED_ORIGINS: http://localhost:5173
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: academico_plus
+          POSTGRES_USER: academico_user
+          POSTGRES_PASSWORD: senha123
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U academico_user"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: academico-backend/pom.xml
+
+      # Reforço: garante que ./mvnw seja executável mesmo se o bit +x for perdido
+      # de novo num commit futuro feito a partir do Windows (o git ali guarda o
+      # modo do arquivo, mas checkouts/commits no Windows não preservam +x por padrão).
+      - name: Garantir permissão de execução do mvnw
+        run: chmod +x ./mvnw
+
+      - name: Testes unitários, slice e de repositório
+        run: ./mvnw test
+
+      - name: Testes ponta-a-ponta (tag e2e, contra Postgres real)
+        run: ./mvnw test -Pe2e
+
+      - name: Publicar relatório de testes em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: academico-backend/target/surefire-reports/
