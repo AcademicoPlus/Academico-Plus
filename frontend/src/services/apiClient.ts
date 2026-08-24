@@ -3,15 +3,20 @@
 // e para tratar erros sempre do mesmo jeito (formato do GlobalExceptionHandler
 // do backend: { status, erro, mensagem, path, timestamp, erros? }).
 import { obterToken } from '../utils/auth';
+import { ApiError, type ErroCampo } from './apiError';
+import { mockFetch } from './mocks';
+
+export { ApiError } from './apiError';
 
 // Vem do .env do frontend (VITE_API_URL). Já inclui o context-path "/api"
 // configurado no backend (SERVER_SERVLET_CONTEXT_PATH).
 const BASE_URL = import.meta.env.VITE_API_URL as string;
 
-type ErroCampo = {
-  campo: string;
-  mensagem: string;
-};
+// Quando "true" no .env, todo apiFetch responde com dados fictícios
+// (services/mocks.ts) em vez de chamar o backend real — dá pra desenvolver
+// e testar as telas sem precisar subir o academico-backend nem o banco.
+// Veja docs/CONECTANDO_FRONT_BACKEND.md, seção "Testando sem o backend".
+const USE_MOCKS = import.meta.env.VITE_USE_MOCKS === 'true';
 
 type ErroResposta = {
   status: number;
@@ -20,19 +25,6 @@ type ErroResposta = {
   path: string;
   erros?: ErroCampo[];
 };
-
-// Erro lançado quando o backend responde com status >= 400, já com a
-// mensagem pronta para mostrar ao usuário (ex.: "Email ou senha inválidos").
-export class ApiError extends Error {
-  status: number;
-  erros?: ErroCampo[];
-
-  constructor(status: number, mensagem: string, erros?: ErroCampo[]) {
-    super(mensagem);
-    this.status = status;
-    this.erros = erros;
-  }
-}
 
 type ApiFetchOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
@@ -48,6 +40,10 @@ export async function apiFetch<TResposta>(
   caminho: string,
   { method = 'GET', body, autenticado = true }: ApiFetchOptions = {},
 ): Promise<TResposta> {
+  if (USE_MOCKS) {
+    return mockFetch<TResposta>(caminho, { method, body });
+  }
+
   const headers: Record<string, string> = {};
 
   const corpoFormData = body instanceof FormData;

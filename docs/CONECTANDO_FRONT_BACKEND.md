@@ -124,7 +124,50 @@ em `cadastro.tsx`.
   (`erros: [{ campo, mensagem }]`), o `ApiError.erros` traz o campo exato que
   falhou.
 
-## 6. Mapa dos services disponíveis
+## 6. Testando sem o backend rodando
+
+Nem sempre dá pra ter o `academico-backend` + banco de dados de pé (ex.:
+sem Docker, ou testando só uma tela de UI). Pra isso existe um modo de
+mocks: `apiFetch` (a única função que fala com o backend, ver seção 1) pode
+responder com dados fictícios em vez de fazer a chamada HTTP real.
+
+**Como ativar:**
+```
+# frontend/.env
+VITE_USE_MOCKS=true
+```
+Reinicie o `npm run dev` depois de mudar (Vite só lê `.env` na subida — mesmo
+aviso da seção 2).
+
+**Login** — use as credenciais fixas do mock:
+- E-mail: `ana.silva@academico.edu.br`
+- Senha: `senha123`
+
+Qualquer outra combinação simula "Email ou senha incorretos." (401), do
+jeito que a tela já trata.
+
+**Cadastro** — qualquer e-mail funciona e "cadastra com sucesso", exceto
+`duplicado@academico.edu.br`, que simula erro de e-mail já cadastrado (400).
+
+**Cursos** — o dropdown do cadastro é preenchido com uma lista fixa de
+cursos de exemplo.
+
+**Como funciona por baixo:** `services/mocks.ts` tem uma função `mockFetch`
+com um `switch` por rota (`"MÉTODO /caminho"`). `apiClient.ts` chama essa
+função no lugar do `fetch` real quando `VITE_USE_MOCKS=true` — nenhuma
+página ou service precisa saber a diferença.
+
+**Conectando uma tela nova sem esperar o backend:** siga o checklist da
+seção 4 normalmente (service + página), e adicione um `case` novo em
+`services/mocks.ts` com dados de exemplo no formato do DTO. Uma rota sem
+mock cadastrado devolve erro 501 explicando isso, em vez de falhar
+silenciosamente.
+
+Lembre de deixar `VITE_USE_MOCKS=false` (o padrão) quando for testar contra
+o backend de verdade — é fácil esquecer ligado e passar horas "debugando" um
+bug que não existe no backend real.
+
+## 7. Mapa dos services disponíveis
 
 Todo `*Controller.java` do backend já tem um `services/*Service.ts`
 correspondente no frontend, pronto pra importar — a "camada 2" da seção 1 já
@@ -150,7 +193,7 @@ está feita para toda a API. O que falta, na maioria dos casos, é só a
 Cada arquivo tem, no topo, um comentário dizendo qual `Controller.java`
 ele espelha — é o primeiro lugar a olhar quando for usar um.
 
-## 7. Exercício pra praticar
+## 8. Exercício pra praticar
 
 Hoje só 4 telas têm UI: `login.tsx`, `cadastro.tsx`, `feedprojetos.tsx` e
 `projetodetalhes.tsx`. Todo o resto da tabela acima já tem o service pronto,

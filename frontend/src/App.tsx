@@ -6,6 +6,8 @@ import LayoutBase from './components/layout-base'
 // 2. Importando as Telas Públicas (Fora do sistema)
 import Login from './pages/login'
 import Cadastro from './pages/cadastro'
+import TermosDeUso from './pages/termosdeuso'
+import PoliticaDePrivacidade from './pages/politicadeprivacidade'
 
 // 3. Importando as Telas Logadas (Dentro do sistema)
 import Dashboard from './pages/dashboard'
@@ -23,6 +25,8 @@ export default function App() {
         {/* ROTAS PÚBLICAS (Ocupam a tela toda, sem o menu) */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/termos-de-uso" element={<TermosDeUso />} />
+        <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
         
         {/* ROTAS DA ÁREA LOGADA (O "LayoutBase" abraça todas essas telas) */}
         <Route element={<LayoutBase />}>
