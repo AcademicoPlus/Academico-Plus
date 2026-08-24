@@ -82,22 +82,35 @@ não escala horizontalmente — se a aplicação um dia rodar em múltiplas inst
 teria seu próprio contador, efetivamente multiplicando o limite real pelo número de instâncias.
 Migrar para um contador compartilhado (Redis) é o caminho natural nesse cenário.
 
-## 6. Flyway declarado, mas `ddl-auto=update` como fonte real do schema
+## 6. Flyway como fonte real do schema, `ddl-auto=validate` (resolvido em 2026-08-21)
 
-**Contexto**: o projeto usa Flyway para versionar o schema, mas o único arquivo de migração
-(`V1_schema_inicial.sql`) usa uma convenção de nome que o Flyway rejeita.
+**Contexto**: o projeto usa Flyway para versionar o schema, mas o arquivo de migração inicial
+usava uma convenção de nome (`V1_schema_inicial.sql`, underscore simples) que o Flyway rejeita —
+por isso `spring.jpa.hibernate.ddl-auto=update` era, na prática, quem mantinha o schema
+atualizado, incluindo tabelas inteiras (`avaliacoes`, `denuncias_avaliacao`) que nunca tinham
+ido para uma migração Flyway.
 
-**Decisão (de fato, não intencional)**: `spring.jpa.hibernate.ddl-auto=update` é quem
-efetivamente mantém o schema atualizado hoje, incluindo tabelas inteiras (`avaliacoes`,
-`denuncias_avaliacao`) que nunca foram para uma migração Flyway.
+**Decisão**: o nome do arquivo foi corrigido (`V1__schema_inicial.sql`) e as migrações que
+faltavam foram adicionadas (V2: `avaliacoes`/`denuncias_avaliacao`/`projeto_cancelamento_aviso`
+e colunas de reputação/LGPD em `usuarios`; V3/V4: seeds de cursos/habilidades/níveis de acesso).
+Uma varredura entidade-por-entidade contra as 4 migrações não encontrou nenhuma divergência que
+bloquearia `ddl-auto=validate` — a única lacuna real encontrada foi `usuarios.ativo`,
+`cursos.ativo` e `projetos.ativo` sem `NOT NULL` no banco, embora as entidades JPA exijam
+`nullable = false` (um NULL aí escaparia do `@SQLRestriction("ativo = true")` da entidade
+`Usuario`, ver item 4). V5 corrige isso (backfill + `SET NOT NULL`), e `ddl-auto` virou
+`validate`. Validado tanto contra um Postgres local só-migração (V1→V5 do zero) quanto contra o
+schema real de produção (via `AcademicoBackendApplicationTests`, antes de esse teste ser isolado
+com H2 — ver nota abaixo).
 
-**Consequências**: funciona para desenvolvimento local e para uma única instância, mas é uma
-dívida técnica reconhecida: sem controle de versão real do schema, um `ALTER` que adiciona
-coluna `NOT NULL` numa tabela já populada falha silenciosamente se não vier com
-`columnDefinition`/`DEFAULT` (como já tratado em `Usuario.totalAvaliacoes`,
-`Usuario.termosAceitosEm`, `Avaliacao.removida`). Recomendação para antes de produção: corrigir
-o nome do arquivo de migração, adicionar as migrações que faltam (`avaliacoes`,
-`denuncias_avaliacao`), e mudar `ddl-auto` para `validate`.
+**Consequências**: o schema agora tem uma fonte de verdade única e versionada; `validate` só
+verifica existência de tabela/coluna e compatibilidade de tipo (não nullability, defaults,
+tamanho de VARCHAR ou índices — então drift nesses aspectos ainda é possível e não quebra o
+boot). Achado colateral corrigido nesse trabalho: `AcademicoBackendApplicationTests` era um
+`@SpringBootTest` sem override de propriedades, o que o fazia herdar a datasource de produção
+importada de `.env` — ou seja, um simples `mvn test` local rodava Flyway e `ddl-auto` (antes
+`update`, agora `validate`) contra o Postgres de produção. Isolado com H2 dedicado; os únicos
+testes que hoje tocam Postgres real são os `@Tag("e2e")`, contra o container local do
+`docker-compose.yml`, fora do `mvn test` padrão.
 
 ## 7. Upload de foto de perfil em disco local
 

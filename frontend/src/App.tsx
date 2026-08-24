@@ -1,33 +1,52 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 
-// Importando as suas telas
+// 1. Importando o "Esqueleto" (Header e Menu)
+import LayoutBase from './components/layout-base'
+
+// 2. Importando as Telas Públicas (Fora do sistema)
 import Login from './pages/login'
 import Cadastro from './pages/cadastro'
-import Feed from './pages/feedprojetos'
-import Projeto from './pages/projetodetalhes'
 import TermosDeUso from './pages/termosdeuso'
 import PoliticaDePrivacidade from './pages/politicadeprivacidade'
-// Guard que só deixa passar quem tem um token JWT salvo (ver rotaprotegida.tsx)
-import RotaProtegida from './routes/rotaprotegida'
+
+// 3. Importando as Telas Logadas (Dentro do sistema)
+import Dashboard from './pages/dashboard'
+import Projetos from './pages/projetos'
+import DetalhesProjeto from './pages/detalhes-projeto'
+import Candidaturas from './pages/candidaturas'
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Se a pessoa acessar a raiz do site, joga ela pro login */}
+        {/* Redireciona quem entra no site direto para a tela de Login */}
         <Route path="/" element={<Navigate to="/login" />} />
-
-        {/* Rotas públicas: não exigem login */}
+        
+        {/* ROTAS PÚBLICAS (Ocupam a tela toda, sem o menu) */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/termos-de-uso" element={<TermosDeUso />} />
         <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
-
-        {/* Rotas privadas: RotaProtegida redireciona para /login sem token */}
-        <Route element={<RotaProtegida />}>
-          <Route path="/feed" element={<Feed />} />
-          {/* :id é lido em projetodetalhes.tsx via useParams para chamar GET /projetos/:id */}
-          <Route path="/projeto/:id" element={<Projeto />} />
+        
+        {/* ROTAS DA ÁREA LOGADA (O "LayoutBase" abraça todas essas telas) */}
+        <Route element={<LayoutBase />}>
+          
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projetos" element={<Projetos />} />
+          
+          {/* ALTERADO AQUI: Adicionado o /:id para carregar o projeto certo */}
+          <Route path="/detalhes/:id" element={<DetalhesProjeto />} />
+          
+          <Route path="/candidaturas" element={<Candidaturas />} />
+          
+          {/* Telas que faremos no futuro (Aparece só um texto provisório por enquanto) */}
+          <Route path="/pessoas" element={
+            <div className="p-8 text-[#183E6C] font-bold text-xl">Tela "Explorar Pessoas" em construção...</div>
+          } />
+          <Route path="/criar-projeto" element={
+            <div className="p-8 text-[#183E6C] font-bold text-xl">Tela "Criar Novo Projeto" em construção...</div>
+          } />
+          
         </Route>
       </Routes>
     </BrowserRouter>

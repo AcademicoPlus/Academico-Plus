@@ -42,12 +42,10 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Exige Postgres rodando (local: {@code docker-compose up -d} no diretório do backend;
  * CI: serviço Postgres do workflow, ver .github/workflows/backend-ci.yml).
  *
- * {@code spring.flyway.enabled=false} porque o único migration file
- * (V1_schema_inicial.sql) não segue a convenção de nome do Flyway e é ignorado (ver
- * "Limitações conhecidas" no README do backend) — {@code ddl-auto=create-drop} cria o
- * schema do zero a cada execução, e por isso os dados de seed (níveis de acesso,
- * cursos) que normalmente viriam da migração precisam ser inseridos manualmente
- * no {@link #seed()} abaixo.
+ * Roda as migrações Flyway reais (schema V1–V5) e valida o mapeamento JPA contra elas
+ * ({@code ddl-auto=validate}) em vez de recriar o schema a partir das entidades — os
+ * mesmos dados de seed usados em produção (níveis de acesso, cursos) já vêm da migração;
+ * {@link #seed()} abaixo só cobre o caso de um Postgres ainda não migrado.
  */
 @Tag("e2e")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
@@ -55,8 +53,7 @@ import static org.assertj.core.api.Assertions.assertThat;
         "spring.datasource.url=jdbc:postgresql://localhost:5432/academico_plus",
         "spring.datasource.username=academico_user",
         "spring.datasource.password=senha123",
-        "spring.flyway.enabled=false",
-        "spring.jpa.hibernate.ddl-auto=create-drop",
+        "spring.jpa.hibernate.ddl-auto=validate",
         "jwt.secret=e2e-test-secret-nao-usar-em-producao-0123456789abcdef",
         "jwt.expiration=3600000",
         "cors.allowed-origins=http://localhost:5173",
