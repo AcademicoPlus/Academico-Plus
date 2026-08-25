@@ -2,6 +2,8 @@
 
 API REST em Spring Boot para a plataforma Academico+ — cadastro de usuários, projetos acadêmicos, candidaturas e habilidades/competências.
 
+Cadastro de usuário exige aceite dos [Termos de Uso](../legal/TERMOS_DE_USO.md) e da [Política de Privacidade](../legal/POLITICA_DE_PRIVACIDADE.md) (LGPD).
+
 ## Stack
 
 - **Java 21** + **Spring Boot 3.5**
@@ -68,7 +70,18 @@ Com a aplicação no ar:
 
 ## Autenticação
 
-Login (`POST /auth/login`) retorna um JWT (`Bearer`). Ele carrega o ID do usuário e o nível de acesso (`ALUNO`, `PROFESSOR` ou `ADMIN`) no payload; endpoints administrativos usam `@PreAuthorize("hasRole('ADMIN')")`. Não há refresh token — o token de acesso dura `JWT_EXPIRATION` (ms) e precisa de novo login ao expirar. Logout (`POST /usuarios/logout`) invalida o token corrente numa blacklist, limpa automaticamente por um job diário.
+Login (`POST /auth/login`) retorna um JWT (`Bearer`). Ele carrega o ID do usuário e o nível de acesso (`ALUNO`, `PROFESSOR` ou `ADMIN`) no payload; endpoints administrativos usam `@PreAuthorize("hasRole('ADMIN')")`. Não há refresh token — o token de acesso dura `JWT_EXPIRATION` (ms) e precisa de novo login ao expirar. Logout (`POST /usuarios/logout`) invalida o token corrente numa blacklist, limpa automaticamente por um job diário. Cadastro (`POST /auth/cadastro`) exige `aceitouTermos: true`; a data do aceite fica registrada em `Usuario.termosAceitosEm`.
+
+Um usuário pode excluir a própria conta a qualquer momento (`DELETE /usuarios/me`, mediante confirmação de senha) — exclusão lógica, direito do titular sob a LGPD.
+
+## Rate limiting
+
+Dois níveis independentes:
+
+- **Por conta**: `login` e `validarOtp` (recuperação de senha) bloqueiam por 15 min após 5 tentativas falhas em 15 min, por e-mail (`RateLimiterService`).
+- **Geral, por IP**: toda a API aceita no máximo `app.rate-limit.requisicoes-por-minuto` requisições por minuto por IP (padrão: 120; configurável, não exige variável de ambiente). Acima disso, `429 Too Many Requests` (`GlobalRateLimitFilter`).
+
+Ambos guardam o estado em memória (instância única). Se a aplicação escalar horizontalmente, isso precisa virar um contador compartilhado (Redis).
 
 ## Recursos e endpoints
 
@@ -85,6 +98,7 @@ Login (`POST /auth/login`) retorna um JWT (`Bearer`). Ele carrega o ID do usuár
 | Habilidades do projeto | `/projetos/{projetoId}/habilidades` | Requisitos de competência do projeto |
 | Candidaturas | `/candidaturas` | Candidatar-se, aceitar/rejeitar, cancelar |
 | Avaliações | `/projetos/{projetoId}/avaliacoes`, `/usuarios/{id}/avaliacoes` | Avaliação entre quem participou do mesmo projeto |
+| Denúncias | `/avaliacoes/{avaliacaoId}/denuncias`, `/denuncias` | Denúncia de avaliação abusiva pelo avaliado; resolução por admin |
 | Recomendações | `/recomendacoes` | Ranking de projetos/candidatos por compatibilidade de habilidades |
 
 A lista completa de rotas, parâmetros e schemas está no Swagger UI.
@@ -97,6 +111,13 @@ A nota média (`notaMedia`) e o total (`totalAvaliacoes`) ficam armazenados no p
 
 - `POST /projetos/{projetoId}/avaliacoes`
 - `GET /usuarios/{id}/avaliacoes`
+
+### Denúncia de avaliação
+
+A pessoa avaliada — só ela — pode denunciar uma avaliação que considere abusiva, falsa ou fora do propósito de avaliar a colaboração (`POST /avaliacoes/{avaliacaoId}/denuncias`, motivo obrigatório). Um admin analisa (`GET /denuncias`, `PATCH /denuncias/{id}/resolver?procedente=true|false`):
+
+- **Procedente**: a avaliação é marcada como removida (`Avaliacao.removida`, soft-delete) — some da listagem pública e do cálculo da nota média, mas a linha e a denúncia continuam no banco para histórico/auditoria. Apagar de verdade quebraria a referência da própria denúncia à avaliação.
+- **Improcedente**: só arquiva a denúncia; a avaliação permanece como estava.
 
 ## Recomendação por habilidades
 
@@ -124,10 +145,18 @@ src/main/java/com/unifapi/academico/
 └── scheduler/     # Jobs agendados (limpeza de tokens revogados)
 ```
 
+## Antes de lançar em produção — pendências que não são código
+
+- **CAPTCHA no cadastro** (ex.: hCaptcha, reCAPTCHA) — não implementado porque exige criar conta num provedor externo e gerar chaves. Sem isso, criação de conta em massa por bot é trivial mesmo com o rate limit atual.
+- **Observabilidade** (ex.: Sentry) — hoje só há log em arquivo/console; sem monitoramento de erro, só se sabe que algo quebrou se um usuário reclamar. Também exige conta num provedor externo.
+- **HTTPS/TLS** — a API em si não força nada; quem deve terminar TLS é o proxy reverso/PaaS de deploy.
+- **Backup do banco** — nenhuma estratégia automatizada de backup existe hoje; é decisão de infraestrutura do ambiente de produção.
+- **Verificação de e-mail e/ou domínio institucional no cadastro** — hoje `POST /auth/cadastro` aceita qualquer e-mail com formato válido, sem confirmar posse nem restringir a domínios da instituição. Adiado propositalmente: o plano é usar a matrícula do aluno como identificador institucional no lugar disso.
+
 ## Limitações conhecidas / fora do escopo atual
 
 - **Sem refresh token**: avaliado como desnecessário para a duração atual do access token (24h por padrão); reconsiderar se o tempo de expiração for reduzido.
 - **Sem endosso de competências por professores** — diferente do sistema de avaliação entre colegas de projeto (esse já existe), não há um fluxo onde um professor valida formalmente uma habilidade de um aluno.
 - **Sem sistema de mensagens** entre usuários.
 - **Upload de foto** salva em disco local (`LocalStorageService`); não há integração com storage externo (S3, etc.).
-- **Flyway não é a fonte real do schema**: o único arquivo de migração (`V1_schema_inicial.sql`) usa uma convenção de nome que o Flyway rejeita (log mostra "não segue a convenção de nome" na subida). Quem efetivamente mantém o schema atualizado é `spring.jpa.hibernate.ddl-auto=update`. Ao adicionar coluna `NOT NULL` em tabela já populada, lembrar de usar `columnDefinition` com `DEFAULT` (ver `Usuario.totalAvaliacoes`), senão o ALTER falha silenciosamente contra um banco com dados.
+- **Flyway não é a fonte real do schema**: o único arquivo de migração (`V1_schema_inicial.sql`) usa uma convenção de nome que o Flyway rejeita (log mostra "não segue a convenção de nome" na subida). Quem efetivamente mantém o schema atualizado é `spring.jpa.hibernate.ddl-auto=update`. Ao adicionar coluna `NOT NULL` em tabela já populada, lembrar de usar `columnDefinition` com `DEFAULT` (ver `Usuario.totalAvaliacoes`, `Usuario.termosAceitosEm`, `Avaliacao.removida`), senão o ALTER falha silenciosamente contra um banco com dados.

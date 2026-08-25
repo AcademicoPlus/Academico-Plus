@@ -56,6 +56,17 @@ public class Avaliacao {
     @Column(columnDefinition = "TEXT")
     private String comentario;
 
+    /**
+     * Soft-delete: usado quando uma denúncia contra esta avaliação é julgada
+     * procedente (ver DenunciaService). Preferido a excluir a linha porque a
+     * DenunciaAvaliacao que motivou a remoção referencia esta avaliação por FK
+     * — apagar quebraria esse histórico. columnDefinition com DEFAULT evita
+     * falha do ddl-auto=update numa tabela avaliacoes que já tenha linhas.
+     */
+    @Column(nullable = false, columnDefinition = "boolean not null default false")
+    @Builder.Default
+    private Boolean removida = false;
+
     @Column(name = "criado_em", nullable = false, updatable = false)
     @Builder.Default
     private LocalDateTime criadoEm = LocalDateTime.now();

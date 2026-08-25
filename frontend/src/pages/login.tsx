@@ -1,6 +1,35 @@
 import logo from '../assets/logo.png' 
 
 export default function Login() {
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [carregando, setCarregando] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setErro(null);
+    setCarregando(true);
+
+    try {
+      const resposta = await login({ email, senha });
+      salvarToken(resposta.token);
+      navigate('/feed');
+    } catch (erroCapturado) {
+      // ApiError vem do apiClient com a mensagem que o backend retornou
+      // (ex.: "Email ou senha inválidos"); qualquer outro erro é de rede/CORS.
+      const mensagem =
+        erroCapturado instanceof ApiError
+          ? erroCapturado.message
+          : 'Não foi possível conectar ao servidor. Tente novamente.';
+      setErro(mensagem);
+    } finally {
+      setCarregando(false);
+    }
+  }
+
   return (
     <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
       

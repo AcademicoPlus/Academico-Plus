@@ -4,6 +4,7 @@ import com.unifapi.academico.domain.models.Usuario;
 import com.unifapi.academico.dto.auth.MensagemResponse;
 import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
 import com.unifapi.academico.dto.avaliacao.AvaliacaoResponse;
+import com.unifapi.academico.dto.usuario.ExcluirContaRequest;
 import com.unifapi.academico.dto.usuario.UsuarioPerfilResponse;
 import com.unifapi.academico.dto.usuario.UsuarioUpdatePerfilRequest;
 import com.unifapi.academico.dto.usuario.UsuarioUpdateSenhaRequest;
@@ -87,6 +88,16 @@ public class UsuarioController {
         return ResponseEntity.ok(perfilAtualizado);
     }
 
+    @DeleteMapping("/me")
+    @Operation(summary = "Excluir minha conta", description = "Exclusão lógica da própria conta (direito do titular, LGPD). Exige confirmação de senha")
+    public ResponseEntity<MensagemResponse> excluirMinhaConta(
+            @AuthenticationPrincipal Usuario usuarioLogado,
+            @Valid @RequestBody ExcluirContaRequest request
+    ) {
+        usuarioService.excluirMinhaConta(usuarioLogado.getId(), request);
+        return ResponseEntity.ok(new MensagemResponse(true, "Conta excluída com sucesso."));
+    }
+
     // ============================================
     // CONSULTAS E ADMINISTRAÇÃO
     // ============================================
@@ -125,9 +136,12 @@ public class UsuarioController {
     }
 
     @GetMapping("/{id}")
-    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID")
-    public ResponseEntity<UsuarioPerfilResponse> obterPorId(@PathVariable UUID id) {
-        UsuarioPerfilResponse perfil = usuarioService.obterPorId(id);
+    @Operation(summary = "Buscar usuário por ID", description = "Retorna um usuário específico pelo seu ID. Dados privados (email, aceite de termos) só voltam quando o próprio dono consulta o ID.")
+    public ResponseEntity<UsuarioPerfilResponse> obterPorId(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        UsuarioPerfilResponse perfil = usuarioService.obterPorId(id, usuarioLogado.getId());
         return ResponseEntity.ok(perfil);
     }
 
