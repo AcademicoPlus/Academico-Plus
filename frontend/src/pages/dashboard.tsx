@@ -1,13 +1,44 @@
 import { Link } from 'react-router-dom'
-import { projetos } from '../data/projetosdata'
+import { useEffect, useState } from 'react'
+import { recomendarProjetos, type ProjetoRecomendado } from '../services/recomendacaoService'
+import { listarMeusProjetos, type Projeto } from '../services/projetoService'
+import { obterMeuPerfil } from '../services/usuarioService'
+import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
 
 export default function Dashboard() {
+  const [nome, setNome] = useState<string | null>(null);
+  const [meusProjetos, setMeusProjetos] = useState<Projeto[]>([]);
+  const [carregandoMeusProjetos, setCarregandoMeusProjetos] = useState(true);
+  const [recomendados, setRecomendados] = useState<ProjetoRecomendado[]>([]);
+  const [carregandoRecomendados, setCarregandoRecomendados] = useState(true);
+
+  useEffect(() => {
+    obterMeuPerfil()
+      .then((perfil) => setNome(perfil.nome))
+      .catch(() => {
+      });
+
+    listarMeusProjetos({ tamanho: 3 })
+      .then((pagina) => setMeusProjetos(pagina.content))
+      .catch(() => {
+      })
+      .finally(() => setCarregandoMeusProjetos(false));
+
+    recomendarProjetos(5)
+      .then(setRecomendados)
+      .catch(() => {
+      })
+      .finally(() => setCarregandoRecomendados(false));
+  }, []);
+
+  const primeiroNome = nome?.split(' ')[0];
+
   return (
     <div className="flex flex-col gap-8 pb-10">
       {/* Cabeçalho */}
       <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">Olá, Luana 👋</h1>
-        <p className="text-gray-500 text-sm md:text-base">Bem-vinda de volta ao Acadêmico+</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">Olá{primeiroNome ? `, ${primeiroNome}` : ''} 👋</h1>
+        <p className="text-gray-500 text-sm md:text-base">Bem-vindo(a) de volta ao Acadêmico+</p>
       </div>
 
       {/* Cards de Resumo (No celular fica um embaixo do outro, no PC ficam 3 lado a lado) */}
@@ -15,7 +46,7 @@ export default function Dashboard() {
         {[
           { label: 'Projetos ativos', value: '1', iconColor: 'text-[#183E6C]', bg: 'bg-blue-50' },
           { label: 'Candidaturas pendentes', value: '1', iconColor: 'text-[#F27405]', bg: 'bg-orange-50' },
-          { label: 'Projetos recomendados', value: projetos.length.toString(), iconColor: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Projetos recomendados', value: recomendados.length.toString(), iconColor: 'text-green-600', bg: 'bg-green-50' },
         ].map((item, i) => (
           <div key={i} className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
             <div className={`p-3 rounded-xl ${item.bg} ${item.iconColor}`}>
@@ -35,42 +66,78 @@ export default function Dashboard() {
           <h2 className="text-lg font-bold text-[#183E6C]">Meus Projetos</h2>
           <Link to="/projetos" className="text-sm text-[#F27405] font-semibold hover:underline">Ver todos</Link>
         </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
-            <div>
-              <h3 className="font-bold text-[#183E6C]">Sistema Inteligente de Proteção Web</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-[10px] bg-blue-50 text-[#183E6C] px-2 py-0.5 rounded-full font-bold">Inteligência Artificial</span>
-                <span className="text-[10px] bg-orange-50 text-[#F27405] px-2 py-0.5 rounded-full font-bold">Visão Computacional</span>
-              </div>
-            </div>
-            <span className="text-xs bg-orange-50 text-[#F27405] px-3 py-1 rounded-full font-bold w-fit">Em andamento</span>
+
+        {carregandoMeusProjetos ? (
+          <p className="text-sm text-gray-400">Carregando...</p>
+        ) : meusProjetos.length === 0 ? (
+          <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 text-sm text-gray-500">
+            Você ainda não criou nenhum projeto.{' '}
+            <Link to="/criar-projeto" className="text-[#F27405] font-semibold hover:underline">Criar o primeiro →</Link>
           </div>
-          <div className="w-full bg-gray-100 h-2 rounded-full mt-4">
-            <div className="bg-[#183E6C] h-2 rounded-full w-[67%]"></div>
+        ) : (
+          <div className="flex flex-col gap-4">
+            {meusProjetos.map((proj) => {
+              const percentual = proj.vagas > 0 ? Math.round((proj.vagasPreenchidas / proj.vagas) * 100) : 0;
+              return (
+                <Link
+                  key={proj.id}
+                  to={`/detalhes/${proj.id}`}
+                  className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 hover:border-[#F27405]/30 transition-colors block"
+                >
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
+                    <div>
+                      <h3 className="font-bold text-[#183E6C]">{proj.titulo}</h3>
+                      {proj.habilidadesNecessarias.length > 0 && (
+                        <div className="flex flex-wrap gap-2 mt-2">
+                          {proj.habilidadesNecessarias.map((h) => (
+                            <span key={h.id} className="text-[10px] bg-blue-50 text-[#183E6C] px-2 py-0.5 rounded-full font-bold">
+                              {h.habilidade.nome}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    <span className={`text-xs px-3 py-1 rounded-full font-bold w-fit shrink-0 ${STATUS_PROJETO_BADGE[proj.status]}`}>
+                      {STATUS_PROJETO_LABEL[proj.status]}
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-100 h-2 rounded-full mt-4">
+                    <div className="bg-[#183E6C] h-2 rounded-full" style={{ width: `${percentual}%` }}></div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-2 font-medium">{proj.vagasPreenchidas}/{proj.vagas} vagas preenchidas</p>
+                </Link>
+              );
+            })}
           </div>
-          <p className="text-xs text-gray-400 mt-2 font-medium">2/3 vagas preenchidas • TCC</p>
-        </div>
+        )}
       </div>
 
-      {/* Projetos Recomendados (Agora puxando do banco de dados e clicáveis!) */}
+      {/* Projetos Recomendados (via RecomendacaoController, a partir das habilidades do perfil) */}
       <div>
         <div className="flex justify-between items-center mb-4">
           <h2 className="text-lg font-bold text-[#183E6C]">Recomendado para o seu perfil</h2>
         </div>
         <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-50">
-          {projetos.map((proj) => (
-            <Link 
-              key={proj.id} 
-              to={`/detalhes/${proj.id}`} 
-              className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 hover:bg-gray-50 transition-colors"
-            >
-              <p className="font-medium text-gray-700 text-sm md:text-base">{proj.titulo}</p>
-              <span className="bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-lg w-fit">
-                Ver detalhes →
-              </span>
-            </Link>
-          ))}
+          {carregandoRecomendados ? (
+            <p className="p-4 text-sm text-gray-400">Carregando recomendações...</p>
+          ) : recomendados.length === 0 ? (
+            <p className="p-4 text-sm text-gray-400">
+              Nenhuma recomendação por enquanto — cadastre habilidades no seu perfil pra receber sugestões.
+            </p>
+          ) : (
+            recomendados.map(({ projeto }) => (
+              <Link
+                key={projeto.id}
+                to={`/detalhes/${projeto.id}`}
+                className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 hover:bg-gray-50 transition-colors"
+              >
+                <p className="font-medium text-gray-700 text-sm md:text-base">{projeto.titulo}</p>
+                <span className="bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-lg w-fit">
+                  Ver detalhes →
+                </span>
+              </Link>
+            ))
+          )}
         </div>
       </div>
     </div>
