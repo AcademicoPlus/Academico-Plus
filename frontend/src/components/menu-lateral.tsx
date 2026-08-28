@@ -1,16 +1,38 @@
+import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import { projetos } from '../data/projetosdata'
+import { listarMeusProjetos, type Projeto } from '../services/projetoService'
+import { obterMeuPerfil, type UsuarioPerfil } from '../services/usuarioService'
+import { iniciaisDoNome } from '../utils/projeto'
 
 export default function MenuLateral() {
   const location = useLocation();
   const activeClass = "bg-[#183E6C] text-white shadow-md";
   const inactiveClass = "text-gray-600 hover:bg-gray-50 hover:text-[#F27405]";
 
+  const [perfil, setPerfil] = useState<UsuarioPerfil | null>(null);
+  const [meusProjetos, setMeusProjetos] = useState<Projeto[]>([]);
+  const [carregandoProjetos, setCarregandoProjetos] = useState(true);
+
+  useEffect(() => {
+    obterMeuPerfil()
+      .then(setPerfil)
+      .catch(() => {
+        // Sem perfil, só o rodapé fica sem nome/curso — não trava o menu.
+      });
+
+    listarMeusProjetos({ tamanho: 5 })
+      .then((pagina) => setMeusProjetos(pagina.content))
+      .catch(() => {
+        // Lista fica vazia — a mensagem de "nenhum projeto" cobre o caso.
+      })
+      .finally(() => setCarregandoProjetos(false));
+  }, []);
+
   return (
     <aside className="hidden lg:flex w-72 bg-white border-r border-gray-100 h-[calc(100vh-4rem)] flex-col justify-between overflow-y-auto">
       <div className="py-6">
         <nav className="flex flex-col gap-2 px-4">
-          
+
           {/* Dashboard */}
           <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/dashboard' ? activeClass : inactiveClass}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -52,31 +74,38 @@ export default function MenuLateral() {
           </Link>
         </nav>
 
-        {/* Meus Projetos (Dinamicos) */}
+        {/* Meus Projetos */}
         <div className="px-8 mt-10">
           <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Meus Projetos</p>
-          <ul className="flex flex-col gap-4">
-            {projetos.map(proj => (
-              <li key={proj.id}>
-                <Link to={`/detalhes/${proj.id}`} className="flex items-center gap-3 text-sm text-gray-500 hover:text-[#F27405] transition-colors">
-                  <div className="w-2 h-2 rounded-full bg-[#183E6C] shrink-0"></div>
-                  <span className="truncate">{proj.titulo}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
+
+          {carregandoProjetos ? (
+            <p className="text-sm text-gray-400">Carregando...</p>
+          ) : meusProjetos.length === 0 ? (
+            <p className="text-sm text-gray-400">Você ainda não criou nenhum projeto.</p>
+          ) : (
+            <ul className="flex flex-col gap-4">
+              {meusProjetos.map((proj) => (
+                <li key={proj.id}>
+                  <Link to={`/detalhes/${proj.id}`} className="flex items-center gap-3 text-sm text-gray-500 hover:text-[#F27405] transition-colors">
+                    <div className="w-2 h-2 rounded-full bg-[#183E6C] shrink-0"></div>
+                    <span className="truncate">{proj.titulo}</span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       </div>
 
       {/* Perfil na Base do Menu */}
       <div className="p-6 border-t border-gray-100 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-sm">
-            LC
+          <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-sm shrink-0">
+            {perfil ? iniciaisDoNome(perfil.nome) : '···'}
           </div>
           <div>
-            <p className="text-sm font-bold text-gray-900">Luana Caldas</p>
-            <p className="text-xs text-gray-500">Engenharia de Software</p>
+            <p className="text-sm font-bold text-gray-900">{perfil?.nome ?? 'Carregando...'}</p>
+            <p className="text-xs text-gray-500">{perfil?.curso?.nome ?? '—'}</p>
           </div>
         </div>
       </div>
