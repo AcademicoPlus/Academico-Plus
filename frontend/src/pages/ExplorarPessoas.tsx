@@ -1,50 +1,34 @@
-// Página "Explorar Pessoas" — lista paginada de usuários com busca por nome,
-// filtro por curso e por habilidade. Consome GET /usuarios (autenticado) via
-// apiFetch, o mesmo client central usado no restante do frontend.
+// Página "Explorar Pessoas" — lista paginada de usuários com busca por nome
+// e filtros por curso e habilidade. Usa explorarPerfis() do usuarioService
+// (GET /usuarios/explorar) e os padrões do projeto (apiFetch, construirQuery,
+// PaginaResposta).
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
-import { apiFetch } from '../services/apiClient';
+import {
+  explorarPerfis,
+  type FiltroExplorarPerfis,
+} from '../services/usuarioService';
+import { apiFetch, type PaginaResposta } from '../services/apiClient';
 import { listarCursos, type Curso } from '../services/cursoService';
+import type { UsuarioResumo } from '../services/authService';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
 
-// ─── Tipos ────────────────────────────────────────────────────────────────────
+// ─── Tipos locais ─────────────────────────────────────────────────────────────
 
-type Habilidade = {
-  id: string;
-  nome: string;
+// O endpoint /usuarios/explorar pode retornar habilidades além do UsuarioResumo
+// base. Tipamos localmente para não alterar o service.
+type HabilidadeResumo = { id: string; nome: string };
+
+type UsuarioExplorar = UsuarioResumo & {
+  habilidades?: HabilidadeResumo[];
 };
 
-type Usuario = {
-  id: string;
-  nome: string;
-  email: string;
-  curso: string;
-  habilidades: Habilidade[];
-  projetos: number;
-  endossos: number;
-  foto?: string;
-  bio?: string;
-};
-
-type PaginaUsuarios = {
-  pagina: number;
-  limite: number;
-  total: number;
-  totalPaginas: number;
-  dados: Usuario[];
-};
-
-type Params = {
-  busca: string;
-  habilidade: string;
-  curso: string;
-};
+type HabilidadeCatalogo = { id: string; nome: string };
 
 // ─── Utilitários ──────────────────────────────────────────────────────────────
 
-/** Retorna as iniciais do nome (até 2 letras). */
 function iniciais(nome: string): string {
   return nome
     .split(' ')
@@ -54,36 +38,33 @@ function iniciais(nome: string): string {
     .join('');
 }
 
-/** Cores de avatar — cicla pelo nome para manter consistência. */
-const avatarColors = [
+const avatarPalette = [
   'bg-indigo-100 text-indigo-700',
   'bg-violet-100 text-violet-700',
   'bg-emerald-100 text-emerald-700',
-  'bg-amber-100  text-amber-700',
-  'bg-rose-100   text-rose-700',
+  'bg-amber-100 text-amber-700',
+  'bg-rose-100 text-rose-700',
 ];
 
 function avatarColor(nome: string): string {
-  let hash = 0;
-  for (let i = 0; i < nome.length; i++) {
-    hash = (hash * 31 + nome.charCodeAt(i)) >>> 0;
-  }
-  return avatarColors[hash % avatarColors.length];
+  let h = 0;
+  for (let i = 0; i < nome.length; i++) h = (h * 31 + nome.charCodeAt(i)) >>> 0;
+  return avatarPalette[h % avatarPalette.length];
 }
 
 // ─── Skeleton ─────────────────────────────────────────────────────────────────
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col gap-3 animate-pulse">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3 animate-pulse">
       <div className="flex items-center gap-3">
-        <div className="h-12 w-12 rounded-full bg-gray-200 shrink-0" />
+        <div className="h-11 w-11 rounded-full bg-gray-200 shrink-0" />
         <div className="flex-1 flex flex-col gap-2">
-          <div className="h-4 w-2/3 rounded bg-gray-200" />
-          <div className="h-3 w-1/2 rounded bg-gray-100" />
+          <div className="h-3.5 w-3/5 rounded bg-gray-200" />
+          <div className="h-3 w-2/5 rounded bg-gray-100" />
         </div>
       </div>
-      <div className="flex gap-2 mt-1">
+      <div className="flex gap-2">
         <div className="h-5 w-16 rounded-full bg-gray-100" />
         <div className="h-5 w-20 rounded-full bg-gray-100" />
         <div className="h-5 w-14 rounded-full bg-gray-100" />
@@ -97,91 +78,108 @@ function SkeletonCard() {
 export default function ExplorarPessoas() {
   const navigate = useNavigate();
 
-  // Filtros controlados
-  const [params, setParams] = useState<Params>({
-    busca: '',
-    habilidade: '',
-    curso: '',
-  });
+  // ── Filtros ────────────────────────────────────────────────────────────────
+  const [busca, setBusca] = useState('');
+  const [idCursoSelecionado, setIdCursoSelecionado] = useState('');
+  const [idHabilidadeSelecionada, setIdHabilidadeSelecionada] = useState('');
 
-  // Dados
-  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
+  // ── Dados ──────────────────────────────────────────────────────────────────
+  const [usuarios, setUsuarios] = useState<UsuarioExplorar[]>([]);
+  const [total, setTotal] = useState<number | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
 
-  // Cursos para o select de filtro (lista pública)
+  // ── Listas de filtro ───────────────────────────────────────────────────────
   const [cursos, setCursos] = useState<Curso[]>([]);
-
-  // Habilidades únicas extraídas dos resultados para popular o select
-  const [habilidades, setHabilidades] = useState<string[]>([]);
+  const [habilidadesCatalogo, setHabilidadesCatalogo] = useState<HabilidadeCatalogo[]>([]);
 
   // Debounce da busca por texto
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Filtros "commitados" (após debounce)
+  const [filtroAtivo, setFiltroAtivo] = useState<FiltroExplorarPerfis>({});
 
-  // ── Carrega cursos uma vez ──────────────────────────────────────────────────
+  // ── Carrega cursos e catálogo de habilidades uma vez ──────────────────────
   useEffect(() => {
     listarCursos()
       .then(setCursos)
-      .catch(() => {/* silencia — select ficará vazio */});
+      .catch(() => {/* select de cursos ficará vazio */});
+
+    apiFetch<PaginaResposta<HabilidadeCatalogo>>('/habilidades?size=100')
+      .then((res) => setHabilidadesCatalogo(res.content ?? []))
+      .catch(() => {/* select de habilidades ficará vazio */});
   }, []);
 
-  // ── Busca usuários sempre que os filtros mudarem ────────────────────────────
+  // ── Busca usuários sempre que o filtro ativo mudar ────────────────────────
   useEffect(() => {
     setCarregando(true);
     setErro(null);
 
-    const query = new URLSearchParams({ pagina: '1', limite: '20' });
-    if (params.busca)      query.set('busca', params.busca);
-    if (params.habilidade) query.set('habilidade', params.habilidade);
-    if (params.curso)      query.set('curso', params.curso);
-
-    apiFetch<PaginaUsuarios>(`/usuarios?${query.toString()}`)
+    explorarPerfis({ ...filtroAtivo, tamanho: 20 })
       .then((res) => {
-        setUsuarios(res.dados);
-        // Extrai habilidades únicas dos resultados para o filtro
-        const nomes = Array.from(
-          new Set(
-            res.dados.flatMap((u) => u.habilidades.map((h) => h.nome)),
-          ),
-        ).sort();
-        setHabilidades(nomes);
+        setUsuarios((res.content ?? []) as UsuarioExplorar[]);
+        setTotal(res.totalElements ?? null);
       })
       .catch((e: Error) => setErro(e.message ?? 'Erro ao carregar pessoas.'))
       .finally(() => setCarregando(false));
-  }, [params]);
+  }, [filtroAtivo]);
 
-  // ── Handlers ────────────────────────────────────────────────────────────────
+  // ── Handlers ───────────────────────────────────────────────────────────────
 
   function handleBusca(valor: string) {
+    setBusca(valor);
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
-      setParams((p) => ({ ...p, busca: valor }));
+      setFiltroAtivo((f) => ({ ...f, busca: valor || undefined, pagina: undefined }));
     }, 400);
   }
 
   function handleCurso(valor: string) {
-    setParams((p) => ({ ...p, curso: valor }));
+    setIdCursoSelecionado(valor);
+    setFiltroAtivo((f) => ({ ...f, idCurso: valor || undefined, pagina: undefined }));
   }
 
   function handleHabilidade(valor: string) {
-    setParams((p) => ({ ...p, habilidade: valor }));
+    setIdHabilidadeSelecionada(valor);
+    // Filtragem local por habilidade quando o backend não suporta esse param
+    // diretamente no /explorar — o select serve de filtro client-side.
+    setFiltroAtivo((f) => ({ ...f, pagina: undefined }));
+    // Salva o id escolhido para o filtro client-side abaixo
+    _setHabClienteId(valor);
   }
 
-  // ── Render ──────────────────────────────────────────────────────────────────
+  // Id de habilidade para filtro client-side (não enviado ao backend)
+  const [_habClienteId, _setHabClienteId] = useState('');
+
+  // Lista filtrada client-side por habilidade selecionada
+  const usuariosFiltrados =
+    _habClienteId
+      ? usuarios.filter((u) =>
+          (u.habilidades ?? []).some((h) => h.id === _habClienteId),
+        )
+      : usuarios;
+
+  // ── Render ─────────────────────────────────────────────────────────────────
+
+  const subtitulo =
+    carregando
+      ? 'Buscando…'
+      : total !== null
+        ? `${total} ${total === 1 ? 'pessoa encontrada' : 'pessoas encontradas'}`
+        : 'Encontre colaboradores por nome, curso ou habilidade';
 
   return (
     <div className="flex flex-col gap-6">
+
       {/* Cabeçalho */}
       <div>
         <h1 className="text-2xl font-bold text-gray-900">Explorar Pessoas</h1>
-        <p className="text-sm text-gray-500 mt-0.5">
-          Encontre colaboradores por nome, curso ou habilidade
-        </p>
+        <p className="text-sm text-gray-500 mt-0.5">{subtitulo}</p>
       </div>
 
       {/* Barra de busca + filtros */}
       <div className="flex flex-col sm:flex-row gap-3">
-        {/* Busca por nome */}
+
+        {/* Campo de busca */}
         <div className="relative flex-1">
           <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none"
@@ -192,9 +190,9 @@ export default function ExplorarPessoas() {
           </span>
           <input
             type="search"
-            placeholder="Buscar por nome..."
-            defaultValue={params.busca}
+            value={busca}
             onChange={(e) => handleBusca(e.target.value)}
+            placeholder="Buscar por nome ou curso..."
             className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4
                        text-sm text-gray-800 placeholder:text-gray-400 outline-none
                        focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500
@@ -204,50 +202,49 @@ export default function ExplorarPessoas() {
 
         {/* Filtro por curso */}
         <select
-          value={params.curso}
+          value={idCursoSelecionado}
           onChange={(e) => handleCurso(e.target.value)}
           className="rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-3 text-sm
                      text-gray-700 outline-none focus:border-indigo-400 focus:ring-2
                      focus:ring-indigo-500 focus:bg-white transition-colors duration-150
-                     min-w-[160px]"
+                     min-w-[170px]"
         >
           <option value="">Todos os cursos</option>
           {cursos.map((c) => (
-            <option key={c.id} value={c.nome}>{c.nome}</option>
+            <option key={c.id} value={c.id}>{c.nome}</option>
           ))}
         </select>
 
         {/* Filtro por habilidade */}
         <select
-          value={params.habilidade}
+          value={idHabilidadeSelecionada}
           onChange={(e) => handleHabilidade(e.target.value)}
           className="rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-3 text-sm
                      text-gray-700 outline-none focus:border-indigo-400 focus:ring-2
                      focus:ring-indigo-500 focus:bg-white transition-colors duration-150
-                     min-w-[160px]"
+                     min-w-[170px]"
         >
           <option value="">Todas as habilidades</option>
-          {habilidades.map((h) => (
-            <option key={h} value={h}>{h}</option>
+          {habilidadesCatalogo.map((h) => (
+            <option key={h.id} value={h.id}>{h.nome}</option>
           ))}
         </select>
       </div>
 
       {/* Erro */}
       {erro && (
-        <p className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+        <p role="alert"
+          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
           {erro}
         </p>
       )}
 
-      {/* Grid de cards */}
+      {/* Grid */}
       {carregando ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <SkeletonCard key={i} />
-          ))}
+          {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
-      ) : usuarios.length === 0 ? (
+      ) : usuariosFiltrados.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <span className="text-4xl">🔍</span>
           <p className="text-gray-500 text-sm">Nenhuma pessoa encontrada.</p>
@@ -255,77 +252,64 @@ export default function ExplorarPessoas() {
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {usuarios.map((usuario) => (
-            <Card
-              key={usuario.id}
-              onClick={() => navigate(`/usuarios/${usuario.id}`)}
-            >
+          {usuariosFiltrados.map((u) => (
+            <Card key={u.id} onClick={() => navigate(`/usuarios/${u.id}`)}>
               <div className="flex flex-col gap-3">
+
                 {/* Avatar + nome + curso */}
                 <div className="flex items-center gap-3">
-                  {usuario.foto ? (
+                  {u.fotoUrl ? (
                     <img
-                      src={usuario.foto}
-                      alt={usuario.nome}
-                      className="h-12 w-12 rounded-full object-cover shrink-0"
+                      src={u.fotoUrl}
+                      alt={u.nome}
+                      className="h-11 w-11 rounded-full object-cover shrink-0"
                     />
                   ) : (
                     <span
-                      className={`inline-flex h-12 w-12 items-center justify-center
+                      className={`inline-flex h-11 w-11 items-center justify-center
                                   rounded-full text-sm font-semibold shrink-0
-                                  ${avatarColor(usuario.nome)}`}
+                                  ${avatarColor(u.nome)}`}
                     >
-                      {iniciais(usuario.nome)}
+                      {iniciais(u.nome)}
                     </span>
                   )}
 
-                  <div className="min-w-0">
-                    <p className="text-sm font-semibold text-gray-900 truncate">
-                      {usuario.nome}
-                    </p>
-                    <p className="text-xs text-gray-500 truncate">{usuario.curso}</p>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{u.nome}</p>
+                    <p className="text-xs text-gray-500 truncate">{u.curso ?? '—'}</p>
                   </div>
                 </div>
 
-                {/* Bio (quando disponível) */}
-                {usuario.bio && (
-                  <p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
-                    {usuario.bio}
-                  </p>
+                {/* Badge de professor */}
+                {u.permission === 'PROFESSOR' && (
+                  <div>
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5
+                                     text-xs font-medium bg-indigo-100 text-indigo-700">
+                      Professor
+                    </span>
+                  </div>
                 )}
 
                 {/* Habilidades */}
-                {usuario.habilidades.length > 0 && (
+                {(u.habilidades ?? []).length > 0 && (
                   <div className="flex flex-wrap gap-1.5">
-                    {usuario.habilidades.slice(0, 4).map((h) => (
-                      <Badge key={h.id} variant="skill">
-                        {h.nome}
-                      </Badge>
+                    {(u.habilidades ?? []).slice(0, 4).map((h) => (
+                      <Badge key={h.id} variant="skill">{h.nome}</Badge>
                     ))}
-                    {usuario.habilidades.length > 4 && (
+                    {(u.habilidades ?? []).length > 4 && (
                       <span className="text-xs text-gray-400 self-center">
-                        +{usuario.habilidades.length - 4}
+                        +{(u.habilidades ?? []).length - 4}
                       </span>
                     )}
                   </div>
                 )}
 
-                {/* Rodapé com métricas */}
-                <div className="flex gap-4 pt-1 border-t border-gray-50 mt-auto">
-                  <span className="text-xs text-gray-500">
-                    <span className="font-semibold text-gray-700">{usuario.projetos}</span>{' '}
-                    {usuario.projetos === 1 ? 'projeto' : 'projetos'}
-                  </span>
-                  <span className="text-xs text-gray-500">
-                    <span className="font-semibold text-gray-700">{usuario.endossos}</span>{' '}
-                    {usuario.endossos === 1 ? 'endosso' : 'endossos'}
-                  </span>
-                </div>
               </div>
             </Card>
           ))}
         </div>
       )}
+
     </div>
   );
 }

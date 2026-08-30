@@ -1,8 +1,23 @@
 import { Link, useLocation } from 'react-router-dom'
 import { projetos } from '../data/projetosdata'
+import { useEffect, useState } from 'react';
+import { obterMeuPerfil, type UsuarioPerfil } from '../services/usuarioService';
 
 export default function MenuLateral() {
   const location = useLocation();
+  // Usuário logado, para o link de perfil no rodapé do menu e para
+  // mostrar nome/curso reais em vez de valores fixos.
+  const [meuPerfil, setMeuPerfil] = useState<UsuarioPerfil | null>(null);
+
+  useEffect(() => {
+    obterMeuPerfil()
+      .then(setMeuPerfil)
+      .catch(() => {/* menu mostra o estado padrão se a busca falhar */ });
+  }, []);
+
+  const iniciaisPerfil = meuPerfil
+    ? meuPerfil.nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('')
+    : '';
   const activeClass = "bg-[#183E6C] text-white shadow-md";
   const inactiveClass = "text-gray-600 hover:bg-gray-50 hover:text-[#F27405]";
 
@@ -10,7 +25,7 @@ export default function MenuLateral() {
     <aside className="hidden lg:flex w-72 bg-white border-r border-gray-100 h-[calc(100vh-4rem)] flex-col justify-between overflow-y-auto">
       <div className="py-6">
         <nav className="flex flex-col gap-2 px-4">
-          
+
           {/* Dashboard */}
           <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/dashboard' ? activeClass : inactiveClass}`}>
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -68,18 +83,23 @@ export default function MenuLateral() {
         </div>
       </div>
 
-      {/* Perfil na Base do Menu */}
-      <div className="p-6 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-sm">
-            LC
+      {/* Perfil na Base do Menu — leva ao próprio perfil (/usuarios/:id) */}
+      {meuPerfil && (
+        <Link
+          to={`/usuarios/${meuPerfil.id}`}
+          className="p-6 border-t border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-sm">
+              {iniciaisPerfil}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">{meuPerfil.nome}</p>
+              <p className="text-xs text-gray-500">{meuPerfil.curso?.nome ?? '—'}</p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-bold text-gray-900">Luana Caldas</p>
-            <p className="text-xs text-gray-500">Engenharia de Software</p>
-          </div>
-        </div>
-      </div>
+        </Link>
+      )}
     </aside>
   )
 }

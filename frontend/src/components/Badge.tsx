@@ -3,27 +3,29 @@ import React from "react";
 interface BadgeProps {
   children: React.ReactNode;
   variant?: "status" | "skill";
-  status?: "ABERTO" | "EM_ANDAMENTO" | "CONCLUIDO" | "PENDENTE" | "ACEITO" | "REJEITADO";
+  status?: "ABERTO" | "EM_ANDAMENTO" | "CONCLUIDO" | "PENDENTE" | "ACEITO" | "REJEITADO" | "CANCELADO";
 }
 
 // Status → [bg, text] Tailwind classes (cores suaves, fundo claro + texto combinando)
 const statusClasses: Record<NonNullable<BadgeProps["status"]>, string> = {
-  ABERTO:       "bg-emerald-100 text-emerald-700",
+  ABERTO: "bg-emerald-100 text-emerald-700",
   EM_ANDAMENTO: "bg-amber-100   text-amber-700",
-  CONCLUIDO:    "bg-violet-100  text-violet-700",
-  PENDENTE:     "bg-yellow-100  text-yellow-700",
-  ACEITO:       "bg-green-100   text-green-700",
-  REJEITADO:    "bg-red-100     text-red-600",
+  CONCLUIDO: "bg-violet-100  text-violet-700",
+  PENDENTE: "bg-yellow-100  text-yellow-700",
+  ACEITO: "bg-green-100   text-green-700",
+  REJEITADO: "bg-red-100     text-red-600",
+  CANCELADO: "bg-gray-100 text-gray-500"
 };
 
 // Rótulos legíveis para exibição quando variant="status"
 const statusLabel: Record<NonNullable<BadgeProps["status"]>, string> = {
-  ABERTO:       "Aberto",
+  ABERTO: "Aberto",
   EM_ANDAMENTO: "Em andamento",
-  CONCLUIDO:    "Concluído",
-  PENDENTE:     "Pendente",
-  ACEITO:       "Aceito",
-  REJEITADO:    "Rejeitado",
+  CONCLUIDO: "Concluído",
+  PENDENTE: "Pendente",
+  ACEITO: "Aceito",
+  REJEITADO: "Rejeitado",
+  CANCELADO: "Cancelado",
 };
 
 // Paleta de cores suaves para badges de habilidade (cicla pelo índice do texto)
