@@ -46,7 +46,7 @@ public class AuthService {
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
-    private final EmailService emailService;
+    private final CodigoVerificacaoPublisher codigoVerificacaoPublisher;
     private final RateLimiterService rateLimiterService;
 
     // ============================================
@@ -144,10 +144,10 @@ public class AuthService {
         usuario.setCodigoRecuperacaoExpiraEm(LocalDateTime.now().plusMinutes(15));
         usuarioRepository.save(usuario);
 
-        boolean enviado = emailService.enviarCodigoVerificacao(usuario.getEmail(), otp);
-        if (!enviado) {
-            throw new RegraDeNegocioException("Não foi possível enviar o e-mail de recuperação. Tente novamente mais tarde.");
-        }
+        // Fire-and-forget: o envio passou a ser assíncrono (fila consumida pelo
+        // academico-email-service). Falhas reais de envio não voltam pro chamador
+        // HTTP — ficam observáveis via log/DLQ do próprio email-service.
+        codigoVerificacaoPublisher.publicar(usuario.getEmail(), otp, 15);
 
         return new MensagemResponse(true, mensagemGenerica);
     }

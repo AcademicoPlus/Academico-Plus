@@ -43,7 +43,7 @@ public class UsuarioService {
     private final PasswordEncoder passwordEncoder;
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final JwtTokenProvider jwtTokenProvider;
-    private final StorageService storageService;
+    private final FotoStorageClient fotoStorageClient;
 
     // ============================================
     // CADASTRO E BUSCA
@@ -170,16 +170,16 @@ public class UsuarioService {
         return UsuarioUpdateSenhaResponse.sucesso();
     }
 
-    /** Salva a nova foto em disco e remove a anterior, se existir. */
+    /** Envia a nova foto pro academico-upload-service e remove a anterior, se existir. */
     @Transactional
     public UsuarioPerfilResponse atualizarFoto(UUID idUsuario, MultipartFile arquivo) {
         Usuario usuario = buscarUsuarioPorId(idUsuario);
 
         String fotoAntiga = usuario.getFotoUrl();
-        usuario.setFotoUrl(storageService.salvar(arquivo));
+        usuario.setFotoUrl(fotoStorageClient.salvar(arquivo));
 
         if (fotoAntiga != null && !fotoAntiga.isBlank()) {
-            storageService.deletar(fotoAntiga);
+            fotoStorageClient.deletar(fotoAntiga);
         }
 
         return UsuarioPerfilResponse.fromEntity(usuario);

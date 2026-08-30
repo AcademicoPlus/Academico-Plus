@@ -41,6 +41,28 @@ services:
       postgres:
         condition: service_healthy
 
+  # ========================================
+  # RabbitMQ (fila consumida pelo academico-email-service)
+  # ========================================
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: academico_rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - "5672:5672"   # protocolo AMQP
+      - "15672:15672" # painel de administração (http://localhost:15672)
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - academico_network
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
 # ========================================
 # Volumes
 # ========================================
@@ -48,6 +70,8 @@ volumes:
   postgres_data:
     driver: local
   pgadmin_data:
+    driver: local
+  rabbitmq_data:
     driver: local
 
 # ========================================

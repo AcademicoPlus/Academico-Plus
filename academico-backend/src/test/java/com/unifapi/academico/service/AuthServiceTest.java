@@ -63,7 +63,7 @@ class AuthServiceTest {
     @Mock private TokenRevogadoRepository tokenRevogadoRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtTokenProvider jwtTokenProvider;
-    @Mock private EmailService emailService;
+    @Mock private CodigoVerificacaoPublisher codigoVerificacaoPublisher;
     @Mock private RateLimiterService rateLimiterService;
 
     private AuthService authService;
@@ -82,7 +82,7 @@ class AuthServiceTest {
                 tokenRevogadoRepository,
                 passwordEncoder,
                 jwtTokenProvider,
-                emailService,
+                codigoVerificacaoPublisher,
                 rateLimiterService
         );
 
@@ -317,7 +317,7 @@ class AuthServiceTest {
         assertThat(response.mensagem())
                 .isEqualTo("Se este e-mail estiver cadastrado, um código de verificação foi enviado.");
 
-        verifyNoInteractions(emailService);
+        verifyNoInteractions(codigoVerificacaoPublisher);
         verify(usuarioRepository, never()).save(any());
     }
 
@@ -326,7 +326,6 @@ class AuthServiceTest {
         String email = usuario.getEmail();
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.encode(anyString())).thenReturn("hash-otp");
-        when(emailService.enviarCodigoVerificacao(eq(usuario.getEmail()), anyString())).thenReturn(true);
 
         MensagemResponse response = authService.solicitarResetSenha(email);
 
@@ -341,21 +340,9 @@ class AuthServiceTest {
                 .isBefore(LocalDateTime.now().plusMinutes(16));
 
         verify(usuarioRepository).save(usuario);
-        verify(emailService).enviarCodigoVerificacao(eq(usuario.getEmail()), anyString());
-    }
-
-    @Test
-    void deveLancarExcecaoQuandoEnvioDeEmailFalhaAoSolicitarReset() {
-        String email = usuario.getEmail();
-        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
-        when(passwordEncoder.encode(anyString())).thenReturn("hash-otp");
-        when(emailService.enviarCodigoVerificacao(eq(usuario.getEmail()), anyString())).thenReturn(false);
-
-        // Esta é a única diferença de comportamento entre "usuário existe" e "usuário não existe":
-        // quando o usuário existe mas o envio de e-mail falha, o método lança em vez de retornar sucesso.
-        assertThatThrownBy(() -> authService.solicitarResetSenha(email))
-                .isInstanceOf(RegraDeNegocioException.class)
-                .hasMessageContaining("Não foi possível enviar o e-mail de recuperação");
+        // Fire-and-forget: publicar na fila é o único envolvimento do AuthService com o
+        // envio — falhas reais de entrega não voltam mais pro chamador HTTP (ver academico-email-service).
+        verify(codigoVerificacaoPublisher).publicar(eq(usuario.getEmail()), anyString(), eq(15));
     }
 
     @Test

@@ -35,15 +35,18 @@ Cadastro de usuário exige aceite dos [Termos de Uso](../legal/TERMOS_DE_USO.md)
    | `JWT_EXPIRATION` | Duração do access token, em **milissegundos** |
    | `SERVER_PORT` / `SERVER_SERVLET_CONTEXT_PATH` | Porta e context path (padrão do projeto: `8080` / `/api`) |
    | `CORS_ALLOWED_ORIGINS` | Origens liberadas para o frontend |
-   | `RESEND_API_KEY` | Opcional — sem ela, e-mails de recuperação de senha só são logados no console (modo simulação) |
+   | `RABBITMQ_HOST` / `PORT` / `USERNAME` / `PASSWORD` / `VHOST` | Broker usado para publicar o código de recuperação de senha — consumido pelo [`academico-email-service`](../academico-email-service) |
+   | `UPLOAD_SERVICE_URL` / `UPLOAD_SERVICE_API_KEY` | Endereço e chave compartilhada do [`academico-upload-service`](../academico-upload-service) (upload de foto de perfil) |
 
    O `application.properties` carrega o `.env` automaticamente via `spring.config.import`.
 
-3. Suba o banco local:
+3. Suba a infra local:
    ```bash
    docker-compose up -d
    ```
-   Isso levanta o Postgres (porta `5432`) e o pgAdmin (porta `5050`, login `admin@academico.edu.br` / `admin`).
+   Isso levanta o Postgres (porta `5432`), o pgAdmin (porta `5050`, login `admin@academico.edu.br` / `admin`) e o RabbitMQ (porta `5672`, painel em `http://localhost:15672`, login `guest`/`guest`).
+
+   O fluxo de recuperação de senha e o upload de foto de perfil só funcionam de ponta a ponta com o `academico-email-service` e o `academico-upload-service` também rodando — veja o README de cada um.
 
 ## Rodando
 
@@ -158,5 +161,5 @@ src/main/java/com/unifapi/academico/
 - **Sem refresh token**: avaliado como desnecessário para a duração atual do access token (24h por padrão); reconsiderar se o tempo de expiração for reduzido.
 - **Sem endosso de competências por professores** — diferente do sistema de avaliação entre colegas de projeto (esse já existe), não há um fluxo onde um professor valida formalmente uma habilidade de um aluno.
 - **Sem sistema de mensagens** entre usuários.
-- **Upload de foto** salva em disco local (`LocalStorageService`); não há integração com storage externo (S3, etc.).
+- **Upload de foto**: delegado ao `academico-upload-service` via REST síncrono, que envia pro Cloudflare R2 — ver README daquele serviço.
 - **Flyway não é a fonte real do schema**: o único arquivo de migração (`V1_schema_inicial.sql`) usa uma convenção de nome que o Flyway rejeita (log mostra "não segue a convenção de nome" na subida). Quem efetivamente mantém o schema atualizado é `spring.jpa.hibernate.ddl-auto=update`. Ao adicionar coluna `NOT NULL` em tabela já populada, lembrar de usar `columnDefinition` com `DEFAULT` (ver `Usuario.totalAvaliacoes`, `Usuario.termosAceitosEm`, `Avaliacao.removida`), senão o ALTER falha silenciosamente contra um banco com dados.

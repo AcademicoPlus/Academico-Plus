@@ -1,6 +1,6 @@
-package com.unifapi.academico.service;
+package com.unifapi.academico.upload.service;
 
-import com.unifapi.academico.exception.RegraDeNegocioException;
+import com.unifapi.academico.upload.exception.UploadException;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
@@ -16,12 +16,12 @@ final class ImagemUploadValidator {
 
     static void validar(MultipartFile arquivo) {
         if (arquivo == null || arquivo.isEmpty()) {
-            throw new RegraDeNegocioException("Selecione um arquivo de imagem válido.");
+            throw new UploadException("Selecione um arquivo de imagem válido.");
         }
 
         String contentType = arquivo.getContentType();
         if (contentType == null || !EXTENSOES_PERMITIDAS.contains(contentType.toLowerCase())) {
-            throw new RegraDeNegocioException("Apenas imagens (PNG, JPG, WEBP) são permitidas.");
+            throw new UploadException("Apenas imagens (PNG, JPG, WEBP) são permitidas.");
         }
 
         // Content-Type é declarado pelo cliente e pode ser forjado — confere a
@@ -31,11 +31,11 @@ final class ImagemUploadValidator {
         try (InputStream inputStream = arquivo.getInputStream()) {
             lidos = inputStream.readNBytes(cabecalho, 0, cabecalho.length);
         } catch (IOException e) {
-            throw new RegraDeNegocioException("Não foi possível ler o arquivo enviado.");
+            throw new UploadException("Não foi possível ler o arquivo enviado.");
         }
 
         if (!assinaturaDeImagemValida(cabecalho, lidos)) {
-            throw new RegraDeNegocioException(
+            throw new UploadException(
                     "O conteúdo do arquivo não corresponde a uma imagem válida (PNG, JPG ou WEBP).");
         }
     }

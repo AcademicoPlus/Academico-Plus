@@ -57,16 +57,12 @@ export default function Login() {
           {/* Estatísticas */}
           <div className="flex gap-10">
             <div>
-              <h3 className="text-3xl font-bold">120+</h3>
-              <p className="text-[#B2C6E0] text-sm mt-1">Projetos ativos</p>
             </div>
             <div>
-              <h3 className="text-3xl font-bold">850+</h3>
-              <p className="text-[#B2C6E0] text-sm mt-1">Estudantes</p>
+
             </div>
             <div>
-              <h3 className="text-3xl font-bold">45+</h3>
-              <p className="text-[#B2C6E0] text-sm mt-1">Professores</p>
+
             </div>
           </div>
         </div>

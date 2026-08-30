@@ -1,6 +1,6 @@
 # Deploy em produção
 
-Guia para colocar o backend no ar via **Render** (backend + Postgres gerenciado) e o storage de fotos de perfil no **Cloudflare R2**. O frontend (SPA estática) é hospedado separadamente (Vercel, Netlify ou Cloudflare Pages — qualquer uma delas serve).
+Guia para colocar no ar, via **Render**: o monolito (`academico-backend`), o **academico-email-service** (consome RabbitMQ, envia e-mails via Resend) e o **academico-upload-service** (fotos de perfil, via Cloudflare R2). O broker RabbitMQ roda no **CloudAMQP** (Render não tem um serviço de fila gerenciado). O frontend (SPA estática) é hospedado separadamente (Vercel, Netlify ou Cloudflare Pages — qualquer uma delas serve).
 
 ## 1. Cloudflare R2 (storage de fotos de perfil)
 
@@ -18,7 +18,21 @@ Guia para colocar o backend no ar via **Render** (backend + Postgres gerenciado)
    - `R2_BUCKET_NAME` (nome do bucket criado)
    - `R2_PUBLIC_URL` (a URL pública do passo 3, **sem** barra no final)
 
-## 2. Render — Postgres
+## 2. CloudAMQP (fila RabbitMQ, usada pelo fluxo de e-mail)
+
+O Render não tem um serviço de mensageria gerenciado, então o RabbitMQ roda no [CloudAMQP](https://www.cloudamqp.com/) (tier gratuito "Little Lemur" é suficiente para o TCC).
+
+1. Crie uma conta e uma instância (plano free).
+2. Na página da instância, copie a **AMQP URL** (formato `amqps://usuario:senha@host/vhost`) — o painel também mostra host, porta (5671, TLS), usuário, senha e vhost separados.
+3. Você vai precisar de 5 valores para configurar o monolito e o `academico-email-service`:
+   - `RABBITMQ_HOST`
+   - `RABBITMQ_PORT` (`5671`, porta TLS do CloudAMQP)
+   - `RABBITMQ_USERNAME`
+   - `RABBITMQ_PASSWORD`
+   - `RABBITMQ_VHOST`
+   - `RABBITMQ_SSL_ENABLED=true`
+
+## 3. Render — Postgres
 
 1. No painel do Render, **New > PostgreSQL**.
 2. Escolha o plano (Starter/Basic é suficiente para o MVP institucional).
@@ -31,7 +45,45 @@ Guia para colocar o backend no ar via **Render** (backend + Postgres gerenciado)
    ```
    (Se usar a Internal Database URL — recomendado quando backend e banco estão na mesma região do Render, é mais rápido e não conta como tráfego externo.)
 
-## 3. Render — Web Service (backend)
+## 4. Render — Web Service (academico-email-service)
+
+Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no RabbitMQ na inicialização.
+
+1. **New > Web Service**, conecte o repositório Git.
+2. Runtime: **Docker**. Root directory: `academico-email-service`.
+3. Plano: Starter é suficiente (serviço leve, sem banco).
+4. Health check path: `/actuator/health`.
+5. Variáveis de ambiente (mesmas chaves do `.env.example` do serviço):
+
+   | Variável | Valor |
+   |---|---|
+   | `RABBITMQ_HOST` / `PORT` / `USERNAME` / `PASSWORD` / `VHOST` | do passo 2 (CloudAMQP) |
+   | `RABBITMQ_SSL_ENABLED` | `true` |
+   | `RESEND_API_KEY` | sua chave `re_...` |
+   | `EMAIL_FROM` | remetente exibido no e-mail |
+   | `LOGGING_LEVEL_ROOT` | `INFO` |
+
+## 5. Render — Web Service (academico-upload-service)
+
+1. **New > Web Service**, conecte o repositório Git.
+2. Runtime: **Docker**. Root directory: `academico-upload-service`.
+3. Plano: Starter é suficiente.
+4. Health check path: `/actuator/health`.
+5. Variáveis de ambiente:
+
+   | Variável | Valor |
+   |---|---|
+   | `INTERNAL_API_KEY` | gere uma string aleatória — o monolito precisa da mesma chave |
+   | `R2_ACCOUNT_ID` | do passo 1 |
+   | `R2_ACCESS_KEY_ID` | do passo 1 |
+   | `R2_SECRET_ACCESS_KEY` | do passo 1 |
+   | `R2_BUCKET_NAME` | do passo 1 |
+   | `R2_PUBLIC_URL` | do passo 1 |
+   | `LOGGING_LEVEL_ROOT` | `INFO` |
+
+6. Anote a URL pública deste serviço no Render (ex.: `https://academico-upload-service.onrender.com`) — o monolito vai usá-la como `UPLOAD_SERVICE_URL`.
+
+## 6. Render — Web Service (backend)
 
 1. **New > Web Service**, conecte o repositório Git.
 2. Runtime: **Docker**. Root directory: `academico-backend` (o `Dockerfile` está lá).
@@ -41,28 +93,25 @@ Guia para colocar o backend no ar via **Render** (backend + Postgres gerenciado)
 
    | Variável | Valor |
    |---|---|
-   | `SPRING_DATASOURCE_URL` | do passo 2 |
-   | `SPRING_DATASOURCE_USERNAME` | do passo 2 |
-   | `SPRING_DATASOURCE_PASSWORD` | do passo 2 |
+   | `SPRING_DATASOURCE_URL` | do passo 3 |
+   | `SPRING_DATASOURCE_USERNAME` | do passo 3 |
+   | `SPRING_DATASOURCE_PASSWORD` | do passo 3 |
    | `JWT_SECRET` | gere uma string aleatória longa (ex.: `openssl rand -base64 48`) |
    | `JWT_EXPIRATION` | ex.: `86400000` (24h, em ms) |
    | `SERVER_PORT` | `8080` |
    | `SERVER_SERVLET_CONTEXT_PATH` | `/api` |
    | `SPRING_APPLICATION_NAME` | `academico-plus-api` |
    | `CORS_ALLOWED_ORIGINS` | URL do frontend em produção (ex.: `https://academicoplus.vercel.app`) |
-   | `RESEND_API_KEY` | sua chave `re_...` |
-   | `STORAGE_PROVIDER` | `r2` |
-   | `R2_ACCOUNT_ID` | do passo 1 |
-   | `R2_ACCESS_KEY_ID` | do passo 1 |
-   | `R2_SECRET_ACCESS_KEY` | do passo 1 |
-   | `R2_BUCKET_NAME` | do passo 1 |
-   | `R2_PUBLIC_URL` | do passo 1 |
+   | `RABBITMQ_HOST` / `PORT` / `USERNAME` / `PASSWORD` / `VHOST` | do passo 2 (CloudAMQP) |
+   | `RABBITMQ_SSL_ENABLED` | `true` |
+   | `UPLOAD_SERVICE_URL` | URL do passo 5.6 |
+   | `UPLOAD_SERVICE_API_KEY` | mesma chave configurada no passo 5 (`INTERNAL_API_KEY`) |
    | `LOGGING_LEVEL_ROOT` | `INFO` |
    | `LOGGING_LEVEL_COM_UNIFAPI_ACADEMICO` | `INFO` |
 
 6. Deploy. O Render provisiona HTTPS automaticamente (não precisa configurar nada na aplicação).
 
-## 4. Frontend
+## 7. Frontend
 
 Build estático (`npm run build` gera `frontend/dist/`), hospedável em qualquer CDN estática (Vercel, Netlify, Cloudflare Pages). Configure a única variável de ambiente do frontend:
 

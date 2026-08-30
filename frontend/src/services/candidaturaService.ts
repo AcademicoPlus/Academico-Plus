@@ -33,10 +33,17 @@ export function candidatar(projetoId: string, mensagem?: string): Promise<Candid
   });
 }
 
+export type FiltroCandidaturas = {
+  status?: StatusCandidatura;
+  pagina?: number;
+  tamanho?: number;
+};
+
 export function listarMinhasCandidaturas(
-  status?: StatusCandidatura,
+  filtro: FiltroCandidaturas = {},
 ): Promise<PaginaResposta<Candidatura>> {
-  return apiFetch<PaginaResposta<Candidatura>>(`/candidaturas/minhas${construirQuery({ status })}`);
+  const query = construirQuery({ status: filtro.status, page: filtro.pagina, size: filtro.tamanho });
+  return apiFetch<PaginaResposta<Candidatura>>(`/candidaturas/minhas${query}`);
 }
 
 // Desistência do próprio candidato — só funciona enquanto PENDENTE (backend valida).
@@ -50,11 +57,10 @@ export function cancelarCandidatura(id: string): Promise<{ sucesso: boolean; men
 
 export function listarCandidaturasDoProjeto(
   projetoId: string,
-  status?: StatusCandidatura,
+  filtro: FiltroCandidaturas = {},
 ): Promise<PaginaResposta<Candidatura>> {
-  return apiFetch<PaginaResposta<Candidatura>>(
-    `/candidaturas/projeto/${projetoId}${construirQuery({ status })}`,
-  );
+  const query = construirQuery({ status: filtro.status, page: filtro.pagina, size: filtro.tamanho });
+  return apiFetch<PaginaResposta<Candidatura>>(`/candidaturas/projeto/${projetoId}${query}`);
 }
 
 // Espelha AceitarCandidaturaRequest (dto/candidatura) — corpo opcional, só

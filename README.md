@@ -34,6 +34,8 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
 
 ## 🏗️ Arquitetura
 
+O sistema é um monolito (Spring Boot) com duas partes extraídas como microserviços — decisão didática para o TCC, escolhidas por serem as de menor acoplamento com o restante do domínio (nenhuma dependência de repositório/entidade, um único ponto de chamada cada). Ver `academico-backend/DEPLOY.md` para o racional completo.
+
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │                  Frontend (React + Vite)                    │
@@ -42,18 +44,20 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
                          │ HTTP/REST
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│                  Backend (Spring Boot)                      │
+│              academico-backend (monolito)                   │
 │         Java + Spring Security + JWT Auth                   │
 │  - Controllers (REST APIs)                                  │
 │  - Services (Business Logic)                                │
 │  - Repositories (Data Access)                                │
 │  - Recomendação por compatibilidade de habilidades           │
-└────────────────────────┬────────────────────────────────────┘
-                         │ JDBC
-                         ↓
-┌─────────────────────────────────────────────────────────────┐
-│              Database (PostgreSQL)                          │
-└─────────────────────────────────────────────────────────────┘
+└──────┬──────────────────┬──────────────────┬─────────────────┘
+       │ JDBC             │ RabbitMQ         │ REST (interno)
+       ↓                  ↓ (fire-and-forget) ↓ (síncrono)
+┌──────────────┐   ┌──────────────────────┐   ┌───────────────────────┐
+│  PostgreSQL  │   │ academico-email-     │   │ academico-upload-     │
+│              │   │ service              │   │ service               │
+│              │   │ (envia OTP p/ Resend)│   │ (fotos → Cloudflare R2)│
+└──────────────┘   └──────────────────────┘   └───────────────────────┘
 ```
 
 ---
@@ -73,14 +77,16 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
 
 ```
 Academico-Plus/
-├── academico-backend/     # API Java/Spring Boot (ver README próprio)
+├── academico-backend/         # Monolito Java/Spring Boot (ver README próprio)
 │   ├── src/
-│   ├── docker-compose.yml # Postgres + pgAdmin para dev local
+│   ├── docker-compose.yml     # Postgres + pgAdmin + RabbitMQ para dev local
 │   └── pom.xml
-├── frontend/               # React + Vite (ainda no template inicial)
+├── academico-email-service/   # Microserviço: consome RabbitMQ, envia e-mail via Resend
+├── academico-upload-service/  # Microserviço: upload de fotos de perfil pro Cloudflare R2
+├── frontend/                   # React + Vite (ainda no template inicial)
 │   ├── src/
 │   └── package.json
-├── legal/                  # Termos de Uso e Política de Privacidade
+├── legal/                      # Termos de Uso e Política de Privacidade
 ├── .gitignore
 └── README.md
 ```
@@ -109,7 +115,7 @@ npm run dev
 
 ### Deploy em produção
 
-Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a passo para Render (backend + Postgres) e Cloudflare R2 (storage de fotos de perfil).
+Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a passo para Render (os três serviços + Postgres), CloudAMQP (RabbitMQ) e Cloudflare R2 (storage de fotos de perfil).
 
 ---
 
@@ -118,7 +124,7 @@ Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a
 ### Fase 1: Autenticação & Perfis
 - [x] Cadastro e login com JWT
 - [x] Perfis com tags de competências (`/usuarios/me/habilidades`)
-- [x] Upload de foto de perfil (salvo em disco local)
+- [x] Upload de foto de perfil (`academico-upload-service` → Cloudflare R2)
 
 ### Fase 2: Mural & Busca
 - [x] CRUD de projetos, candidaturas e equipe
