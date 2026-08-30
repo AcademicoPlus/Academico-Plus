@@ -1,114 +1,110 @@
-import { useEffect, useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 import { listarMeusProjetos, type Projeto } from '../services/projetoService'
-import { obterMeuPerfil, type UsuarioPerfil } from '../services/usuarioService'
-import { iniciaisDoNome } from '../utils/projeto'
+import { obterMeuPerfil } from '../services/usuarioService'
 
 export default function MenuLateral() {
   const location = useLocation();
-  const activeClass = "bg-[#183E6C] text-white shadow-md";
-  const inactiveClass = "text-gray-600 hover:bg-gray-50 hover:text-[#F27405]";
-
-  const [perfil, setPerfil] = useState<UsuarioPerfil | null>(null);
   const [meusProjetos, setMeusProjetos] = useState<Projeto[]>([]);
   const [carregandoProjetos, setCarregandoProjetos] = useState(true);
+  const [nomeUsuario, setNomeUsuario] = useState('Carregando...');
 
   useEffect(() => {
+    // 1. Busca o nome do usuário logado
     obterMeuPerfil()
-      .then(setPerfil)
-      .catch(() => {
-        // Sem perfil, só o rodapé fica sem nome/curso — não trava o menu.
-      });
+      .then((perfil) => setNomeUsuario(perfil.nome))
+      .catch(() => setNomeUsuario('Usuário'));
 
+    // 2. Busca os projetos criados/participados pelo usuário (limite de 5 para o menu não ficar gigante)
     listarMeusProjetos({ tamanho: 5 })
       .then((pagina) => setMeusProjetos(pagina.content))
-      .catch(() => {
-        // Lista fica vazia — a mensagem de "nenhum projeto" cobre o caso.
-      })
+      .catch(() => {})
       .finally(() => setCarregandoProjetos(false));
   }, []);
 
+  // Estilos padronizados do Design System
+  const activeClass = "bg-[#183E6C] text-white shadow-md font-bold";
+  const inactiveClass = "text-gray-500 hover:bg-gray-50 hover:text-[#F27405] font-medium transition-all duration-200";
+
+  // Gera as iniciais para o Avatar (ex: "Luana Caldas" vira "L")
+  const inicial = nomeUsuario !== 'Carregando...' ? nomeUsuario.charAt(0).toUpperCase() : '';
+
   return (
     <aside className="hidden lg:flex w-72 bg-white border-r border-gray-100 h-[calc(100vh-4rem)] flex-col justify-between overflow-y-auto">
-      <div className="py-6">
-        <nav className="flex flex-col gap-2 px-4">
-
-          {/* Dashboard */}
-          <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/dashboard' ? activeClass : inactiveClass}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
-            </svg>
+      
+      <div className="py-8">
+        {/* Navegação Principal */}
+        <nav className="flex flex-col gap-1.5 px-4">
+          <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl ${location.pathname === '/dashboard' ? activeClass : inactiveClass}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
             Dashboard
           </Link>
 
-          {/* Projetos */}
-          <Link to="/projetos" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/projetos' ? activeClass : inactiveClass}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002 2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-            </svg>
-            Projetos
+          <Link to="/projetos" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl ${location.pathname === '/projetos' ? activeClass : inactiveClass}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002 2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path></svg>
+            Explorar Projetos
           </Link>
 
-          {/* Explorar Pessoas */}
-          <Link to="/pessoas" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/pessoas' ? activeClass : inactiveClass}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
-            </svg>
-            Explorar Pessoas
+          <Link to="/candidaturas" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl ${location.pathname === '/candidaturas' ? activeClass : inactiveClass}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+            Minhas Candidaturas
           </Link>
 
-          {/* Candidaturas */}
-          <Link to="/candidaturas" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/candidaturas' ? activeClass : inactiveClass}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-            </svg>
-            Candidaturas
-          </Link>
-
-          {/* Criar Projeto */}
-          <Link to="/criar-projeto" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/criar-projeto' ? activeClass : inactiveClass}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 4v16m8-8H4"></path>
-            </svg>
-            Criar Projeto
+          <Link to="/pessoas" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl ${location.pathname === '/pessoas' ? activeClass : inactiveClass}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+            Encontrar Pessoas
           </Link>
         </nav>
 
-        {/* Meus Projetos */}
-        <div className="px-8 mt-10">
-          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-4">Meus Projetos</p>
+        {/* Divisor */}
+        <div className="px-8 my-6">
+          <div className="h-px w-full bg-gray-100"></div>
+        </div>
 
-          {carregandoProjetos ? (
-            <p className="text-sm text-gray-400">Carregando...</p>
-          ) : meusProjetos.length === 0 ? (
-            <p className="text-sm text-gray-400">Você ainda não criou nenhum projeto.</p>
-          ) : (
-            <ul className="flex flex-col gap-4">
-              {meusProjetos.map((proj) => (
+        {/* Seção Dinâmica: Meus Projetos */}
+        <div className="px-8">
+          <div className="flex justify-between items-center mb-4">
+            <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">Meus Projetos</p>
+            <Link to="/criar-projeto" className="text-[#F27405] hover:bg-orange-50 p-1 rounded transition-colors" title="Criar Novo Projeto">
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
+            </Link>
+          </div>
+
+          <ul className="flex flex-col gap-1">
+            {carregandoProjetos ? (
+              <li className="text-sm text-gray-400 italic py-2">Buscando projetos...</li>
+            ) : meusProjetos.length === 0 ? (
+              <li className="text-xs text-gray-400 py-2 leading-relaxed">Você ainda não faz parte de nenhum projeto.</li>
+            ) : (
+              meusProjetos.map((proj) => (
                 <li key={proj.id}>
-                  <Link to={`/detalhes/${proj.id}`} className="flex items-center gap-3 text-sm text-gray-500 hover:text-[#F27405] transition-colors">
-                    <div className="w-2 h-2 rounded-full bg-[#183E6C] shrink-0"></div>
+                  <Link 
+                    to={`/detalhes/${proj.id}`} 
+                    className="flex items-center gap-3 text-sm text-gray-500 font-medium hover:text-[#F27405] hover:bg-gray-50 py-2.5 px-3 -mx-3 rounded-lg transition-all group"
+                  >
+                    <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#F27405] transition-colors shrink-0"></div>
                     <span className="truncate">{proj.titulo}</span>
                   </Link>
                 </li>
-              ))}
-            </ul>
-          )}
+              ))
+            )}
+          </ul>
         </div>
       </div>
 
-      {/* Perfil na Base do Menu */}
-      <div className="p-6 border-t border-gray-100 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-sm shrink-0">
-            {perfil ? iniciaisDoNome(perfil.nome) : '···'}
+      {/* Footer do Menu: Perfil Dinâmico */}
+      <div className="p-6 mt-auto border-t border-gray-50 bg-gray-50/50">
+        <Link to="/perfil" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
+          <div className="w-11 h-11 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
+            {inicial}
           </div>
-          <div>
-            <p className="text-sm font-bold text-gray-900">{perfil?.nome ?? 'Carregando...'}</p>
-            <p className="text-xs text-gray-500">{perfil?.curso?.nome ?? '—'}</p>
+          <div className="overflow-hidden">
+            <p className="text-sm font-extrabold text-[#183E6C] truncate">{nomeUsuario}</p>
+            <p className="text-xs text-gray-500 font-medium mt-0.5 truncate">Minha Conta</p>
           </div>
-        </div>
+        </Link>
       </div>
+      
     </aside>
   )
 }
