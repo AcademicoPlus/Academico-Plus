@@ -113,11 +113,16 @@ Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no Rab
 
 ## 7. Frontend
 
-Build estático (`npm run build` gera `frontend/dist/`), hospedável em qualquer CDN estática (Vercel, Netlify, Cloudflare Pages). Configure a única variável de ambiente do frontend:
+Build estático (`npm run build` gera `frontend/dist/`), hospedável em qualquer CDN estática (Vercel, Netlify, Cloudflare Pages). Configure as variáveis de ambiente do frontend:
 
 ```
 VITE_API_URL=https://<seu-backend>.onrender.com/api
+VITE_USE_MOCKS=false
 ```
+
+`VITE_USE_MOCKS` **precisa** estar `false` (ou ausente — esse é o padrão) em produção — com
+`true` o frontend nunca chama o backend real, só devolve dados fictícios de `services/mocks.ts`
+(usado só pra desenvolver telas sem o backend de pé, ver `docs/CONECTANDO_FRONT_BACKEND.md`).
 
 ## Pendências que continuam fora do código (decisão de infra, não de código)
 

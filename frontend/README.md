@@ -1,75 +1,45 @@
-# React + TypeScript + Vite
+# Academico+ — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+SPA em React + TypeScript + Vite que consome a API do `academico-backend`. Ver o
+[README raiz](../README.md) para a visão geral do projeto e
+[docs/CONECTANDO_FRONT_BACKEND.md](../docs/CONECTANDO_FRONT_BACKEND.md) para o guia de como as
+telas falam com o backend (camadas, padrão de tela nova, modo de mocks).
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+- React 19 + TypeScript
+- Vite 8
+- React Router 7 (`react-router-dom`) — rotas em `src/App.tsx`, com guards de autenticação
+  (`RotaProtegida`) e de nível de acesso ADMIN (`RotaAdmin`)
+- Tailwind CSS 4
 
-## React Compiler
+## Rodando localmente
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-
+```bash
+cp .env.example .env   # ajuste VITE_API_URL se o backend não estiver em localhost:8080
+npm install
+npm run dev
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+| Script | O que faz |
+|---|---|
+| `npm run dev` | Sobe o servidor de desenvolvimento do Vite (padrão: `http://localhost:5173`) |
+| `npm run build` | Type-check (`tsc -b`) + build de produção em `dist/` |
+| `npm run lint` | ESLint |
+| `npm run preview` | Serve o build de produção localmente, pra conferir antes de deployar |
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+Dá pra rodar as telas sem o `academico-backend` de pé, com dados fictícios: defina
+`VITE_USE_MOCKS=true` no `.env` e reinicie o `npm run dev` (Vite só lê o `.env` na subida).
+Detalhes de como o modo mock funciona e como adicionar uma rota nova nele estão em
+`docs/CONECTANDO_FRONT_BACKEND.md`, seção 6.
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+## Estrutura
 
+```
+src/
+├── pages/       # uma tela por arquivo (login, dashboard, projetos, candidaturas, admin*, ...)
+├── components/  # componentes reutilizáveis (layout, header, menu lateral, cards, formulários)
+├── services/    # um arquivo por Controller do backend — única camada que fala com a API
+├── routes/      # guards de rota (RotaProtegida, RotaAdmin)
+└── utils/       # helpers de exibição compartilhados (labels/badges de status, formatação)
 ```

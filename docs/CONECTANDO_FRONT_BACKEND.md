@@ -195,17 +195,31 @@ ele espelha — é o primeiro lugar a olhar quando for usar um.
 
 ## 8. Exercício pra praticar
 
-Hoje só 4 telas têm UI: `login.tsx`, `cadastro.tsx`, `feedprojetos.tsx` e
-`projetodetalhes.tsx`. Todo o resto da tabela acima já tem o service pronto,
-só falta a tela. Bons exercícios pra fixar o padrão da seção 3, do mais
-simples ao mais completo:
+O frontend hoje já cobre autenticação (`login.tsx`, `cadastro.tsx`), dashboard
+(`dashboard.tsx`), projetos (`projetos.tsx`, `detalhes-projeto.tsx`,
+`criar-projeto.tsx`, `editar-projeto.tsx`), candidaturas (`candidaturas.tsx`,
+mais o fluxo de candidatar-se/aceitar/rejeitar dentro de
+`detalhes-projeto.tsx`) e um painel de administração (`admin.tsx`,
+`admin-usuarios.tsx`, `admin-habilidades.tsx`, `admin-denuncias.tsx`). O que
+ainda falta tela, com o service já pronto pra usar — bons exercícios pra
+fixar o padrão da seção 3, do mais simples ao mais completo:
 
-1. **Meu perfil** — tela que chama `usuarioService.obterMeuPerfil()` e mostra
-   os dados (bom primeiro exercício, só leitura).
-2. **Minhas candidaturas** — `candidaturaService.listarMinhasCandidaturas()`,
-   com botão de cancelar (`cancelarCandidatura`).
-3. **Botão "Candidatar-se"** dentro de `projetodetalhes.tsx` — chama
-   `candidaturaService.candidatar(projeto.id)` (mistura leitura + escrita
-   numa tela que já existe).
-4. **Criar projeto** — formulário usando `projetoService.criarProjeto()`,
-   parecido com o form de `cadastro.tsx`.
+1. **Meu perfil** — tela que chama `usuarioService.obterMeuPerfil()` e
+   permite editar (`atualizarMeuPerfil`), trocar senha
+   (`alterarMinhaSenha`), enviar foto (`enviarFotoDePerfil`) e gerenciar as
+   próprias habilidades (`usuarioHabilidadeService.ts`). O menu lateral já
+   linka pra `/perfil`, mas a rota não existe em `App.tsx` — é o próximo
+   passo natural.
+2. **Encontrar Pessoas** (`/pessoas`) — hoje é só um texto "em construção"
+   direto no `App.tsx`. Trocar por uma tela de busca usando
+   `usuarioService.explorarPerfis()` (busca por nome + filtro por curso, já
+   paginado).
+3. **Avaliar colaborador** — formulário de nota (1 a 5) + comentário usando
+   `avaliacaoService.avaliarParticipante(projetoId, avaliadoId, nota,
+   comentario)`, liberado depois que o projeto está `CONCLUIDO` ou
+   `CANCELADO`; e uma seção/tela pra `avaliacaoService.listarAvaliacoesRecebidas(usuarioId)`.
+   Nenhuma das duas tem UI ainda.
+4. **Candidatos recomendados** — em `detalhes-projeto.tsx`, pro criador do
+   projeto, usar `recomendacaoService.recomendarCandidatos(projetoId)` pra
+   sugerir quem se encaixa nas habilidades exigidas. Hoje só a metade
+   "projetos recomendados" (`recomendarProjetos`) tem tela, no dashboard.

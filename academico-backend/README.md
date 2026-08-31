@@ -54,7 +54,7 @@ Cadastro de usuário exige aceite dos [Termos de Uso](../legal/TERMOS_DE_USO.md)
 ./mvnw spring-boot:run
 ```
 
-O schema é criado/atualizado automaticamente na subida via `spring.jpa.hibernate.ddl-auto=update` (ver observação sobre o Flyway em "Limitações conhecidas"), incluindo os níveis de acesso padrão (`ALUNO`, `PROFESSOR`, `ADMIN`), inseridos pelo script em `src/main/resources/db/migration`.
+O schema é versionado via Flyway (`spring.jpa.hibernate.ddl-auto=validate`) — as migrações em `src/main/resources/db/migration` rodam automaticamente na subida, incluindo os seeds de níveis de acesso padrão (`ALUNO`, `PROFESSOR`, `ADMIN`), cursos e habilidades.
 
 Com a configuração padrão, a API fica em `http://localhost:8080/api`.
 
@@ -162,4 +162,3 @@ src/main/java/com/unifapi/academico/
 - **Sem endosso de competências por professores** — diferente do sistema de avaliação entre colegas de projeto (esse já existe), não há um fluxo onde um professor valida formalmente uma habilidade de um aluno.
 - **Sem sistema de mensagens** entre usuários.
 - **Upload de foto**: delegado ao `academico-upload-service` via REST síncrono, que envia pro Cloudflare R2 — ver README daquele serviço.
-- **Flyway não é a fonte real do schema**: o único arquivo de migração (`V1_schema_inicial.sql`) usa uma convenção de nome que o Flyway rejeita (log mostra "não segue a convenção de nome" na subida). Quem efetivamente mantém o schema atualizado é `spring.jpa.hibernate.ddl-auto=update`. Ao adicionar coluna `NOT NULL` em tabela já populada, lembrar de usar `columnDefinition` com `DEFAULT` (ver `Usuario.totalAvaliacoes`, `Usuario.termosAceitosEm`, `Avaliacao.removida`), senão o ALTER falha silenciosamente contra um banco com dados.

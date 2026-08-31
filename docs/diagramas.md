@@ -6,11 +6,10 @@ cada bloco (ou use uma extensão de export Mermaid → PNG/SVG).
 
 ## 1. Diagrama Entidade-Relacionamento
 
-Construído a partir de `academico-backend/src/main/resources/db/migration/V1_schema_inicial.sql`
-mais as entidades JPA `Avaliacao` e `DenunciaAvaliacao`, que **não estão** nesse arquivo de
-migração — hoje elas só existem porque `spring.jpa.hibernate.ddl-auto=update` as cria em tempo
-de execução (ver [decisões arquiteturais](./decisoes-arquiteturais.md#6-flyway-declarado-mas-ddl-auto).
-Isso é uma dívida técnica conhecida do projeto, não um erro deste diagrama.
+Construído a partir das migrações Flyway em
+`academico-backend/src/main/resources/db/migration/` (schema versionado, `ddl-auto=validate` —
+ver [decisões arquiteturais](./decisoes-arquiteturais.md), item 6) mais as entidades JPA para os
+campos e relacionamentos completos.
 
 ```mermaid
 erDiagram
@@ -218,15 +217,17 @@ graph LR
 
 ## 3. Diagrama de arquitetura
 
-Expande o diagrama ASCII do README raiz, detalhando a cadeia de filtros de segurança (a ordem
-importa: rate limit por IP roda **antes** da validação do JWT, então até uma tentativa de flood
-em `/auth/**` sem token é barrada) e as integrações externas.
+Expande o diagrama ASCII do README raiz, detalhando a cadeia de filtros de segurança do
+monolito (a ordem importa: rate limit por IP roda **antes** da validação do JWT, então até uma
+tentativa de flood em `/auth/**` sem token é barrada), os dois microserviços extraídos e as
+integrações externas. Ver [decisão 9](./decisoes-arquiteturais.md#9-extração-de-e-mail-e-upload-como-microserviços-monolito-para-o-resto)
+para o racional de por que só essas duas partes viraram serviço separado.
 
 ```mermaid
 graph TB
     FE["Frontend<br/>React + Vite + TypeScript"]
 
-    subgraph Backend["Backend — Spring Boot"]
+    subgraph Backend["academico-backend (monolito)"]
         direction TB
         RL["GlobalRateLimitFilter<br/>limite por IP (120 req/min)"]
         JWT["JwtAuthenticationFilter<br/>valida Bearer token"]
@@ -235,12 +236,20 @@ graph TB
         SRV["Services<br/>regras de negócio"]
         REPO["Repositories<br/>Spring Data JPA"]
         SCHED["TokenCleanupScheduler<br/>job diário"]
+        PUB["CodigoVerificacaoPublisher"]
+        UPCLIENT["FotoStorageClient"]
     end
 
     DB[("PostgreSQL")]
-    EMAIL[["Resend API<br/>envio de e-mail (OTP)"]]
+    MQ{{"RabbitMQ<br/>email.exchange"}}
+    EMAILSVC["academico-email-service"]
+    UPLOADSVC["academico-upload-service"]
+    RESEND[["Resend API<br/>envio de e-mail (OTP)"]]
+    R2[("Cloudflare R2<br/>fotos de perfil")]
 
     FE -->|"HTTP/REST + Bearer JWT"| RL --> JWT --> SEC --> CTRL --> SRV --> REPO --> DB
-    SRV -.->|"código de recuperação de senha"| EMAIL
+    SRV -.-> PUB -.->|"fire-and-forget"| MQ -.-> EMAILSVC
+    EMAILSVC -.->|"código de recuperação de senha"| RESEND
+    SRV -.-> UPCLIENT -->|"REST síncrono<br/>X-Internal-Api-Key"| UPLOADSVC --> R2
     SCHED -.->|"limpeza de tokens revogados expirados"| DB
 ```

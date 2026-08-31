@@ -67,8 +67,8 @@ O sistema é um monolito (Spring Boot) com duas partes extraídas como microserv
 | Camada | Tecnologia | Situação |
 |--------|-----------|--------|
 | **Backend** | Java 21 + Spring Boot 3.5, Spring Security, JWT, Spring Data JPA | Em desenvolvimento ativo — ver [academico-backend/README.md](./academico-backend/README.md) |
-| **Frontend** | React 19 + TypeScript + Vite | Projeto inicializado, sem telas implementadas ainda |
-| **Database** | PostgreSQL 14+ | Schema mantido por `ddl-auto=update` (ver observação no README do backend) |
+| **Frontend** | React 19 + TypeScript + Vite, React Router, Tailwind CSS | Em desenvolvimento ativo — telas de autenticação, dashboard, projetos, candidaturas e um painel de administração já implementadas |
+| **Database** | PostgreSQL 14+ | Schema versionado via Flyway (`ddl-auto=validate`) |
 | **Auth** | JWT (JSON Web Tokens), sem refresh token | Em uso |
 
 ---
@@ -83,7 +83,7 @@ Academico-Plus/
 │   └── pom.xml
 ├── academico-email-service/   # Microserviço: consome RabbitMQ, envia e-mail via Resend
 ├── academico-upload-service/  # Microserviço: upload de fotos de perfil pro Cloudflare R2
-├── frontend/                   # React + Vite (ainda no template inicial)
+├── frontend/                   # React + Vite + TypeScript (SPA com rotas e telas reais)
 │   ├── src/
 │   └── package.json
 ├── legal/                      # Termos de Uso e Política de Privacidade
@@ -105,13 +105,17 @@ Veja o passo a passo completo em **[academico-backend/README.md](./academico-bac
 
 ### Frontend
 
-Ainda é o template padrão do Vite (sem telas da aplicação). Para rodar o que existe:
-
 ```bash
 cd frontend
+cp .env.example .env   # ajuste VITE_API_URL se o backend não estiver em localhost:8080
 npm install
 npm run dev
 ```
+
+Dá pra rodar as telas sem o backend de pé, com dados fictícios: defina `VITE_USE_MOCKS=true`
+no `.env` (reinicie o `npm run dev` depois de mudar). Ver
+**[docs/CONECTANDO_FRONT_BACKEND.md](./docs/CONECTANDO_FRONT_BACKEND.md)** para o guia completo
+de como o frontend fala com a API (camadas, padrão de tela nova, mocks).
 
 ### Deploy em produção
 
@@ -143,7 +147,17 @@ Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a
 - [ ] Sistema de mensagens
 
 ### Frontend
-- [ ] Todas as telas — o projeto React ainda é o template inicial do Vite
+- [x] Autenticação (login, cadastro, termos de uso, política de privacidade)
+- [x] Dashboard com projetos recentes, recomendações e indicadores
+- [x] Explorar/buscar projetos, ver detalhes, criar e editar projeto
+- [x] Candidatar-se a um projeto, acompanhar e cancelar candidaturas (`/candidaturas`), e o
+      criador aceitar/rejeitar candidatos direto na tela de detalhes
+- [x] Painel de administração (`/admin`): usuários e nível de acesso, catálogo de habilidades,
+      fila de denúncias — restrito a quem tem `nivelAcesso` ADMIN
+- [ ] Tela de perfil próprio (o menu já linka pra `/perfil`, mas a rota ainda não existe)
+- [ ] "Encontrar Pessoas" (`/pessoas`) — hoje é só um placeholder, sem busca implementada
+- [ ] Avaliação entre colegas de projeto e recomendação de candidatos (services prontos, sem tela)
+- [ ] Testes automatizados de frontend
 
 ---
 
