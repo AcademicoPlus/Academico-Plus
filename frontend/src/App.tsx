@@ -17,6 +17,8 @@ import DetalhesProjeto from './pages/detalhes-projeto'
 import Candidaturas from './pages/candidaturas'
 import EditarPerfil from './pages/EditarPerfil';
 import Perfil from './pages/Perfil';
+import CriarProjeto from './pages/criar-projeto'
+import EditarProjeto from './pages/editar-projeto'
 
 export default function App() {
   return (
@@ -46,10 +48,8 @@ export default function App() {
 
           <Route path="/usuarios/:id/editar" element={<EditarPerfil />} />
           {/* Telas que faremos no futuro (Aparece só um texto provisório por enquanto) */}
-
-          <Route path="/criar-projeto" element={
-            <div className="p-8 text-[#183E6C] font-bold text-xl">Tela "Criar Novo Projeto" em construção...</div>
-          } />
+          <Route path="/criar-projeto" element={<CriarProjeto />} />
+          <Route path="/editar-projeto/:id" element={<EditarProjeto />} />
 
         </Route>
       </Routes>

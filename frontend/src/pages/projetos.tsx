@@ -1,55 +1,151 @@
 import { Link } from 'react-router-dom'
-import { projetos } from '../data/projetosdata'
+import { useEffect, useState } from 'react'
+import { listarProjetos, type Projeto, type StatusProjeto } from '../services/projetoService'
+import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL, iniciaisDoNome } from '../utils/projeto'
+
+const OPCOES_STATUS: StatusProjeto[] = ['ABERTO', 'EM_ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
+const ATRASO_BUSCA_MS = 400;
 
 export default function Projetos() {
+  const [projetos, setProjetos] = useState<Projeto[]>([]);
+  const [totalElementos, setTotalElementos] = useState(0);
+  const [carregando, setCarregando] = useState(true);
+  const [erro, setErro] = useState<string | null>(null);
+
+  const [busca, setBusca] = useState('');
+  const [buscaAplicada, setBuscaAplicada] = useState('');
+  const [status, setStatus] = useState<StatusProjeto | ''>('');
+
+  useEffect(() => {
+    const temporizador = setTimeout(() => setBuscaAplicada(busca.trim()), ATRASO_BUSCA_MS);
+    return () => clearTimeout(temporizador);
+  }, [busca]);
+
+  useEffect(() => {
+    let ativo = true;
+    listarProjetos({ busca: buscaAplicada || undefined, status: status || undefined, tamanho: 20 })
+      .then((pagina) => {
+        if (!ativo) return;
+        setProjetos(pagina.content);
+        setTotalElementos(pagina.totalElements);
+        setErro(null);
+      })
+      .catch(() => {
+        if (ativo) setErro('Não foi possível carregar os projetos. Tente novamente.');
+      })
+      .finally(() => {
+        if (ativo) setCarregando(false);
+      });
+    return () => { ativo = false; };
+  }, [buscaAplicada, status]);
+
   return (
-    <div className="pb-10">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="pb-12 max-w-7xl mx-auto">
+      
+      {/* Header e Ação Principal */}
+      <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-10 gap-6">
         <div>
-          <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">Feed de Projetos</h1>
-          <p className="text-gray-500 text-sm">{projetos.length} projetos encontrados</p>
+          <h1 className="text-3xl md:text-4xl font-extrabold text-[#183E6C] tracking-tight">Explorar Projetos</h1>
+          <p className="text-gray-500 mt-2 font-medium">{totalElementos} oportunidades disponíveis no momento</p>
         </div>
-        <button className="bg-[#F27405] text-white px-6 py-2.5 rounded-xl font-bold w-full md:w-auto shadow-md shadow-[#F27405]/20 hover:bg-[#D96704] transition-colors">
-          + Criar projeto
-        </button>
-      </div>
+        <Link to="/criar-projeto" className="bg-[#F27405] text-white px-8 py-3.5 rounded-xl font-extrabold shadow-lg shadow-[#F27405]/30 hover:bg-[#D96704] hover:-translate-y-0.5 transition-all text-center w-full md:w-auto">
+          + Criar Novo Projeto
+        </Link>
+      </header>
 
-      {/* Barra de Pesquisa */}
-      <div className="flex flex-col md:flex-row gap-4 mb-8">
-        <input type="text" placeholder="Buscar projetos..." className="flex-1 p-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405]" />
-        <select className="p-3 bg-white border border-gray-200 rounded-xl outline-none">
-          <option>Todos os status</option>
+      {/* Filtros de Busca (Modernizados) */}
+      <section className="flex flex-col md:flex-row gap-4 mb-10">
+        <div className="flex-1 relative">
+          <input 
+            type="text" 
+            placeholder="Buscar por título, tag ou área..." 
+            value={busca}
+            onChange={(e) => { setBusca(e.target.value); setCarregando(true); }}
+            className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 text-gray-700 shadow-sm transition-all" 
+          />
+          <svg className="w-6 h-6 text-gray-400 absolute left-4 top-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+        </div>
+        <select 
+          value={status}
+          onChange={(e) => { setStatus(e.target.value as StatusProjeto | ''); setCarregando(true); }}
+          className="px-6 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer min-w-[200px]"
+        >
+          <option value="">Todos os status</option>
+          {OPCOES_STATUS.map((opcao) => (
+            <option key={opcao} value={opcao}>{STATUS_PROJETO_LABEL[opcao]}</option>
+          ))}
         </select>
-      </div>
+      </section>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {projetos.map((proj) => (
-          <div key={proj.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between">
-            <div>
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-bold text-lg text-[#183E6C]">{proj.titulo}</h3>
-                <span className="text-[10px] bg-green-50 text-green-600 px-2 py-1 rounded-full font-bold uppercase">{proj.status}</span>
-              </div>
-              <p className="text-sm text-gray-500 mb-4 line-clamp-2">{proj.descricao}</p>
-              <div className="flex flex-wrap gap-2 mb-6">
-                {proj.tags.map(tag => <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-md">{tag}</span>)}
-              </div>
-            </div>
-            
-            <div className="flex justify-between items-center border-t border-gray-50 pt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#183E6C] text-white flex justify-center items-center text-xs font-bold">{proj.autor[0]}</div>
-                <span className="text-sm text-gray-600">{proj.autor}</span>
+      {erro && (
+        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm">
+          {erro}
+        </div>
+      )}
+
+      {carregando ? (
+        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 animate-pulse">Buscando projetos...</p></div>
+      ) : projetos.length === 0 ? (
+        <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center shadow-sm">
+          <p className="text-lg text-gray-500 font-medium">Nenhum projeto encontrado com os filtros atuais.</p>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {projetos.map((proj) => (
+            <div key={proj.id} className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden group hover:shadow-[0_15px_40px_rgb(0,0,0,0.08)] transition-all duration-300">
+              
+              {/* Capa do Card */}
+              <div className="relative h-56 overflow-hidden bg-gray-100">
+                <img 
+                  src={`https://picsum.photos/seed/${proj.id}projeto/800/400`} 
+                  alt="Capa do projeto" 
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1D33]/90 via-[#0B1D33]/20 to-transparent"></div>
+                
+                <div className="absolute top-4 right-4">
+                  <span className={`bg-white/95 backdrop-blur-sm px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${STATUS_PROJETO_BADGE[proj.status]}`}>
+                    {STATUS_PROJETO_LABEL[proj.status]}
+                  </span>
+                </div>
+                
+                <h3 className="absolute bottom-4 left-6 right-6 font-extrabold text-2xl text-white leading-tight drop-shadow-md">
+                  {proj.titulo}
+                </h3>
               </div>
               
-              {/* O Link correto passando o ID dinâmico do projeto */}
-              <Link to={`/detalhes/${proj.id}`} className="text-sm font-bold text-[#F27405] hover:underline">
-                Ver detalhes →
-              </Link>
+              <div className="p-6 md:p-8 flex flex-col flex-1">
+                <p className="text-gray-500 mb-6 line-clamp-3 leading-relaxed">
+                  {proj.descricao}
+                </p>
+                
+                <div className="flex flex-wrap gap-2 mb-8">
+                  {proj.habilidadesNecessarias.map(h => (
+                    <span key={h.id} className="text-xs bg-gray-50 border border-gray-200 text-gray-600 px-3 py-1.5 rounded-lg font-bold">
+                      {h.habilidade.nome}
+                    </span>
+                  ))}
+                </div>
+                
+                <div className="flex justify-between items-center pt-5 border-t border-gray-100 mt-auto">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-orange-50 text-[#F27405] flex justify-center items-center font-black border border-orange-100">
+                      {proj.criador ? iniciaisDoNome(proj.criador.nome) : '?'}
+                    </div>
+                    <div>
+                      <span className="block text-sm font-bold text-[#183E6C]">{proj.criador?.nome ?? 'Usuário removido'}</span>
+                    </div>
+                  </div>
+                  
+                  <Link to={`/detalhes/${proj.id}`} className="text-sm font-extrabold text-[#F27405] bg-orange-50 px-5 py-2.5 rounded-xl hover:bg-[#F27405] hover:text-white transition-colors">
+                    Detalhes →
+                  </Link>
+                </div>
+              </div>
             </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      )}
     </div>
   )
 }

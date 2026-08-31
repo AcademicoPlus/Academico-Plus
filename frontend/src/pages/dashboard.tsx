@@ -1,77 +1,151 @@
 import { Link } from 'react-router-dom'
-import { projetos } from '../data/projetosdata'
+import { useEffect, useState } from 'react'
+import { recomendarProjetos, type ProjetoRecomendado } from '../services/recomendacaoService'
+import { listarMeusProjetos, type Projeto } from '../services/projetoService'
+import { obterMeuPerfil } from '../services/usuarioService'
+import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
 
 export default function Dashboard() {
+  const [nome, setNome] = useState<string | null>(null);
+  const [meusProjetos, setMeusProjetos] = useState<Projeto[]>([]);
+  const [carregandoMeusProjetos, setCarregandoMeusProjetos] = useState(true);
+  const [recomendados, setRecomendados] = useState<ProjetoRecomendado[]>([]);
+  const [carregandoRecomendados, setCarregandoRecomendados] = useState(true);
+
+  useEffect(() => {
+    obterMeuPerfil()
+      .then((perfil) => setNome(perfil.nome))
+      .catch(() => {});
+
+    listarMeusProjetos({ tamanho: 3 })
+      .then((pagina) => setMeusProjetos(pagina.content))
+      .catch(() => {})
+      .finally(() => setCarregandoMeusProjetos(false));
+
+    recomendarProjetos(5)
+      .then(setRecomendados)
+      .catch(() => {})
+      .finally(() => setCarregandoRecomendados(false));
+  }, []);
+
+  const primeiroNome = nome?.split(' ')[0];
+
   return (
-    <div className="flex flex-col gap-8 pb-10">
-      {/* Cabeçalho */}
-      <div>
-        <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">Olá, Luana 👋</h1>
-        <p className="text-gray-500 text-sm md:text-base">Bem-vinda de volta ao Acadêmico+</p>
+    <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto">
+      
+      {/* Cabeçalho Padronizado */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
+        <div>
+          {/* MESMA FONTE DO PROJETOS.TSX */}
+          <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">
+            Olá{primeiroNome ? `, ${primeiroNome}` : ''} 👋
+          </h1>
+          <p className="text-gray-500 text-sm mt-1">
+            Bem-vindo(a) de volta ao Acadêmico+
+          </p>
+        </div>
+        <Link to="/criar-projeto" className="text-sm bg-[#183E6C] text-white px-5 py-2.5 rounded-xl font-bold hover:bg-blue-900 transition-colors shadow-sm">
+          + Novo Projeto
+        </Link>
       </div>
 
-      {/* Cards de Resumo (No celular fica um embaixo do outro, no PC ficam 3 lado a lado) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+      {/* Métricas Minimalistas */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
-          { label: 'Projetos ativos', value: '1', iconColor: 'text-[#183E6C]', bg: 'bg-blue-50' },
-          { label: 'Candidaturas pendentes', value: '1', iconColor: 'text-[#F27405]', bg: 'bg-orange-50' },
-          { label: 'Projetos recomendados', value: projetos.length.toString(), iconColor: 'text-green-600', bg: 'bg-green-50' },
+          { label: 'Projetos ativos', value: '1', border: 'border-blue-200' },
+          { label: 'Candidaturas', value: '1', border: 'border-orange-200' },
+          { label: 'Recomendações', value: recomendados.length.toString(), border: 'border-green-200' },
         ].map((item, i) => (
-          <div key={i} className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100 flex items-center gap-4">
-            <div className={`p-3 rounded-xl ${item.bg} ${item.iconColor}`}>
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
-            </div>
+          <div key={i} className={`bg-white p-5 rounded-2xl border-l-4 ${item.border} border-y border-r border-gray-100 shadow-sm flex items-center justify-between`}>
             <div>
-              <p className="text-2xl font-bold text-gray-900">{item.value}</p>
-              <p className="text-sm text-gray-500">{item.label}</p>
+              <p className="text-sm font-bold text-gray-400 uppercase tracking-wide">{item.label}</p>
+              <p className="text-2xl font-bold text-[#183E6C] mt-1">{item.value}</p>
             </div>
           </div>
         ))}
       </div>
 
-      {/* Meus Projetos */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-[#183E6C]">Meus Projetos</h2>
-          <Link to="/projetos" className="text-sm text-[#F27405] font-semibold hover:underline">Ver todos</Link>
-        </div>
-        <div className="bg-white p-5 md:p-6 rounded-2xl shadow-sm border border-gray-100">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-2 mb-2">
-            <div>
-              <h3 className="font-bold text-[#183E6C]">Sistema Inteligente de Proteção Web</h3>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <span className="text-[10px] bg-blue-50 text-[#183E6C] px-2 py-0.5 rounded-full font-bold">Inteligência Artificial</span>
-                <span className="text-[10px] bg-orange-50 text-[#F27405] px-2 py-0.5 rounded-full font-bold">Visão Computacional</span>
-              </div>
-            </div>
-            <span className="text-xs bg-orange-50 text-[#F27405] px-3 py-1 rounded-full font-bold w-fit">Em andamento</span>
+      {/* Grid Principal */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-2">
+        
+        {/* Coluna Principal: Meus Projetos */}
+        <div className="lg:col-span-2 flex flex-col gap-4">
+          <div className="flex justify-between items-center">
+            <h2 className="text-lg font-bold text-[#183E6C]">Meus Projetos</h2>
+            <Link to="/projetos" className="text-sm text-[#F27405] font-bold hover:underline">Ver todos</Link>
           </div>
-          <div className="w-full bg-gray-100 h-2 rounded-full mt-4">
-            <div className="bg-[#183E6C] h-2 rounded-full w-[67%]"></div>
-          </div>
-          <p className="text-xs text-gray-400 mt-2 font-medium">2/3 vagas preenchidas • TCC</p>
-        </div>
-      </div>
 
-      {/* Projetos Recomendados (Agora puxando do banco de dados e clicáveis!) */}
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-lg font-bold text-[#183E6C]">Recomendado para o seu perfil</h2>
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-2">
+            {carregandoMeusProjetos ? (
+              <p className="text-sm text-gray-400 p-5">Carregando...</p>
+            ) : meusProjetos.length === 0 ? (
+              <div className="p-8 text-center text-sm text-gray-500">
+                Você ainda não criou nenhum projeto.<br/><br/>
+                <Link to="/criar-projeto" className="text-[#F27405] font-bold hover:underline">Criar o primeiro →</Link>
+              </div>
+            ) : (
+              <div className="divide-y divide-gray-50">
+                {meusProjetos.map((proj) => {
+                  const percentual = proj.vagas > 0 ? Math.round((proj.vagasPreenchidas / proj.vagas) * 100) : 0;
+                  return (
+                    <Link key={proj.id} to={`/detalhes/${proj.id}`} className="p-5 block hover:bg-gray-50 rounded-xl transition-colors">
+                      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-[#183E6C] text-base">{proj.titulo}</h3>
+                          <div className="flex flex-wrap gap-2 mt-2">
+                            {proj.habilidadesNecessarias.slice(0, 3).map((h) => (
+                              <span key={h.id} className="text-[10px] bg-blue-50 text-[#183E6C] px-2 py-1 rounded font-bold border border-blue-100">
+                                {h.habilidade.nome}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="flex flex-col items-end shrink-0 w-32">
+                          <span className={`text-[10px] px-2.5 py-1 rounded-full font-bold uppercase ${STATUS_PROJETO_BADGE[proj.status]}`}>
+                            {STATUS_PROJETO_LABEL[proj.status]}
+                          </span>
+                          <div className="w-full bg-gray-100 h-1.5 rounded-full mt-3">
+                            <div className="bg-[#183E6C] h-full rounded-full" style={{ width: `${percentual}%` }}></div>
+                          </div>
+                          <p className="text-[10px] text-gray-400 mt-1 font-medium">{proj.vagasPreenchidas}/{proj.vagas} vagas</p>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+          </div>
         </div>
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 divide-y divide-gray-50">
-          {projetos.map((proj) => (
-            <Link 
-              key={proj.id} 
-              to={`/detalhes/${proj.id}`} 
-              className="p-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-2 hover:bg-gray-50 transition-colors"
-            >
-              <p className="font-medium text-gray-700 text-sm md:text-base">{proj.titulo}</p>
-              <span className="bg-green-50 text-green-600 text-xs font-bold px-3 py-1 rounded-lg w-fit">
-                Ver detalhes →
-              </span>
-            </Link>
-          ))}
+
+        {/* Coluna Lateral: Recomendações */}
+        <div className="flex flex-col gap-4">
+          <h2 className="text-lg font-bold text-[#183E6C]">Recomendado para você</h2>
+          
+          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden divide-y divide-gray-50">
+            {carregandoRecomendados ? (
+              <p className="p-5 text-sm text-gray-400">Buscando oportunidades...</p>
+            ) : recomendados.length === 0 ? (
+              <p className="p-5 text-sm text-gray-400 text-center">Nenhuma recomendação baseada nas suas habilidades.</p>
+            ) : (
+              recomendados.map(({ projeto }) => (
+                <Link key={projeto.id} to={`/detalhes/${projeto.id}`} className="p-5 block hover:bg-gray-50 transition-colors group">
+                  <h4 className="font-bold text-sm text-[#183E6C] group-hover:text-[#F27405] transition-colors leading-tight line-clamp-2">
+                    {projeto.titulo}
+                  </h4>
+                  <div className="flex justify-between items-center mt-3">
+                    <p className="text-xs text-gray-500 font-medium truncate pr-2">{projeto.criador?.nome ?? 'Autor desconhecido'}</p>
+                    <span className="text-[10px] font-bold text-green-600 bg-green-50 border border-green-100 px-2 py-1 rounded whitespace-nowrap">
+                      Visualizar
+                    </span>
+                  </div>
+                </Link>
+              ))
+            )}
+          </div>
         </div>
+
       </div>
     </div>
   )
