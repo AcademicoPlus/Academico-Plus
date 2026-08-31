@@ -14,7 +14,7 @@ import {
   desvincularHabilidadeDoProjeto,
   vincularHabilidadeAoProjeto,
 } from '../services/projetoHabilidadeService'
-import { obterMeuPerfil } from '../services/usuarioService'
+import { obterMeuPerfilCache } from '../hooks/useMeuPerfil'
 import {
   ANOS_MAXIMOS_PRAZO,
   STATUS_PROJETO_BADGE,
@@ -79,7 +79,7 @@ function EditarProjeto({ id }: { id: string }) {
 
   useEffect(() => {
     let ativo = true;
-    Promise.all([buscarProjetoPorId(id), obterMeuPerfil().catch(() => null)])
+    Promise.all([buscarProjetoPorId(id), obterMeuPerfilCache().catch(() => null)])
       .then(([detalhe, meuPerfil]) => {
         if (!ativo) return;
         setProjeto(detalhe);

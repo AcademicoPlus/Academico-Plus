@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
 import { buscarProjetoPorId, type ProjetoDetalhe } from '../services/projetoService'
 import { listarMembrosDoProjeto, type ProjetoMembro } from '../services/projetoMembroService'
-import { obterMeuPerfil } from '../services/usuarioService'
+import { obterMeuPerfilCache } from '../hooks/useMeuPerfil'
 import {
   aceitarCandidatura,
   candidatar,
@@ -60,7 +60,7 @@ function DetalhesProjeto({ id }: { id: string }) {
     const [detalhe, listaDeMembros, meuPerfil] = await Promise.all([
       buscarProjetoPorId(id),
       listarMembrosDoProjeto(id).catch(() => [] as ProjetoMembro[]),
-      obterMeuPerfil().catch(() => null),
+      obterMeuPerfilCache().catch(() => null),
     ]);
 
     setProjeto(detalhe);

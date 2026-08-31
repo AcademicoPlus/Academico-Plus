@@ -4,7 +4,7 @@
 // acessar as telas de admin digitando a URL direto.
 import { useEffect, useState } from 'react';
 import { Navigate, Outlet } from 'react-router-dom';
-import { obterMeuPerfil } from '../services/usuarioService';
+import { obterMeuPerfilCache } from '../hooks/useMeuPerfil';
 
 export default function RotaAdmin() {
   const [carregando, setCarregando] = useState(true);
@@ -12,7 +12,7 @@ export default function RotaAdmin() {
 
   useEffect(() => {
     let ativo = true;
-    obterMeuPerfil()
+    obterMeuPerfilCache()
       .then((perfil) => {
         if (ativo) setEhAdmin(perfil.nivelAcesso?.nome?.toUpperCase() === 'ADMIN');
       })

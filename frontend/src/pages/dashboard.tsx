@@ -2,12 +2,12 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { recomendarProjetos, type ProjetoRecomendado } from '../services/recomendacaoService'
 import { listarMeusProjetos, type Projeto } from '../services/projetoService'
-import { obterMeuPerfil } from '../services/usuarioService'
+import { useMeuPerfil } from '../hooks/useMeuPerfil'
 import { listarMinhasCandidaturas } from '../services/candidaturaService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
 
 export default function Dashboard() {
-  const [nome, setNome] = useState<string | null>(null);
+  const { data: meuPerfil } = useMeuPerfil();
   const [meusProjetos, setMeusProjetos] = useState<Projeto[]>([]);
   const [carregandoMeusProjetos, setCarregandoMeusProjetos] = useState(true);
   const [recomendados, setRecomendados] = useState<ProjetoRecomendado[]>([]);
@@ -15,10 +15,6 @@ export default function Dashboard() {
   const [totalCandidaturasPendentes, setTotalCandidaturasPendentes] = useState<number | null>(null);
 
   useEffect(() => {
-    obterMeuPerfil()
-      .then((perfil) => setNome(perfil.nome))
-      .catch(() => {});
-
     listarMeusProjetos({ tamanho: 3 })
       .then((pagina) => setMeusProjetos(pagina.content))
       .catch(() => {})
@@ -34,7 +30,7 @@ export default function Dashboard() {
       .catch(() => {});
   }, []);
 
-  const primeiroNome = nome?.split(' ')[0];
+  const primeiroNome = meuPerfil?.nome.split(' ')[0];
 
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto">

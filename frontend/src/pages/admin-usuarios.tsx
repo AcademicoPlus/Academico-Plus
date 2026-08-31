@@ -2,16 +2,17 @@ import { useEffect, useMemo, useState } from 'react'
 import {
   alterarNivelDeAcesso,
   listarTodosOsUsuarios,
-  obterMeuPerfil,
 } from '../services/usuarioService'
 import { listarNiveisDeAcesso, type NivelAcesso } from '../services/nivelAcessoService'
 import type { UsuarioResumo } from '../services/authService'
 import { ApiError } from '../services/apiClient'
+import { useMeuPerfil } from '../hooks/useMeuPerfil'
 
 export default function AdminUsuarios() {
+  const { data: meuPerfil } = useMeuPerfil();
+  const meuId = meuPerfil?.id ?? null;
   const [usuarios, setUsuarios] = useState<UsuarioResumo[]>([]);
   const [niveis, setNiveis] = useState<NivelAcesso[]>([]);
-  const [meuId, setMeuId] = useState<string | null>(null);
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [busca, setBusca] = useState('');
@@ -22,11 +23,10 @@ export default function AdminUsuarios() {
   const [erroLinha, setErroLinha] = useState<Record<string, string>>({});
 
   useEffect(() => {
-    Promise.all([listarTodosOsUsuarios(), listarNiveisDeAcesso(), obterMeuPerfil()])
-      .then(([listaUsuarios, listaNiveis, perfil]) => {
+    Promise.all([listarTodosOsUsuarios(), listarNiveisDeAcesso()])
+      .then(([listaUsuarios, listaNiveis]) => {
         setUsuarios(listaUsuarios);
         setNiveis(listaNiveis);
-        setMeuId(perfil.id);
         setErro(null);
       })
       .catch(() => setErro('Não foi possível carregar os usuários. Tente novamente.'))
