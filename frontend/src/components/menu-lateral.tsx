@@ -1,46 +1,49 @@
 import { Link, useLocation } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { listarMeusProjetos, type Projeto } from '../services/projetoService'
-import { obterMeuPerfil } from '../services/usuarioService'
+import { obterMeuPerfil, type UsuarioPerfil } from '../services/usuarioService';
 
 export default function MenuLateral() {
   const location = useLocation();
   const [meusProjetos, setMeusProjetos] = useState<Projeto[]>([]);
   const [carregandoProjetos, setCarregandoProjetos] = useState(true);
-  const [nomeUsuario, setNomeUsuario] = useState('Carregando...');
-  const [ehAdmin, setEhAdmin] = useState(false);
+  const [meuPerfil, setMeuPerfil] = useState<UsuarioPerfil | null>(null);
 
   useEffect(() => {
     // 1. Busca o nome (e o nível de acesso) do usuário logado
     obterMeuPerfil()
-      .then((perfil) => {
-        setNomeUsuario(perfil.nome);
-        setEhAdmin(perfil.nivelAcesso?.nome?.toUpperCase() === 'ADMIN');
-      })
-      .catch(() => setNomeUsuario('Usuário'));
+      .then(setMeuPerfil)
+      .catch(() => {/* menu mostra o estado padrão se a busca falhar */ });
 
     // 2. Busca os projetos criados/participados pelo usuário (limite de 5 para o menu não ficar gigante)
     listarMeusProjetos({ tamanho: 5 })
       .then((pagina) => setMeusProjetos(pagina.content))
-      .catch(() => {})
+      .catch(() => { })
       .finally(() => setCarregandoProjetos(false));
   }, []);
+
+  // Verifica se o usuário é administrador
+  const ehAdmin = meuPerfil?.nivelAcesso?.nome?.toUpperCase() === 'ADMIN';
 
   // Estilos padronizados do Design System
   const activeClass = "bg-[#183E6C] text-white shadow-md font-bold";
   const inactiveClass = "text-gray-500 hover:bg-gray-50 hover:text-[#F27405] font-medium transition-all duration-200";
 
   // Gera as iniciais para o Avatar (ex: "Luana Caldas" vira "L")
-  const inicial = nomeUsuario !== 'Carregando...' ? nomeUsuario.charAt(0).toUpperCase() : '';
+  const iniciaisPerfil = meuPerfil
+    ? meuPerfil.nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('')
+    : '';
 
   return (
     <aside className="hidden lg:flex w-72 bg-white border-r border-gray-100 h-[calc(100vh-4rem)] flex-col justify-between overflow-y-auto">
-      
-      <div className="py-8">
-        {/* Navegação Principal */}
-        <nav className="flex flex-col gap-1.5 px-4">
-          <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl ${location.pathname === '/dashboard' ? activeClass : inactiveClass}`}>
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path></svg>
+      <div className="py-6">
+        <nav className="flex flex-col gap-2 px-4">
+
+          {/* Dashboard */}
+          <Link to="/dashboard" className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all font-medium ${location.pathname === '/dashboard' ? activeClass : inactiveClass}`}>
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+            </svg>
             Dashboard
           </Link>
 
@@ -89,8 +92,8 @@ export default function MenuLateral() {
             ) : (
               meusProjetos.map((proj) => (
                 <li key={proj.id}>
-                  <Link 
-                    to={`/detalhes/${proj.id}`} 
+                  <Link
+                    to={`/detalhes/${proj.id}`}
                     className="flex items-center gap-3 text-sm text-gray-500 font-medium hover:text-[#F27405] hover:bg-gray-50 py-2.5 px-3 -mx-3 rounded-lg transition-all group"
                   >
                     <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#F27405] transition-colors shrink-0"></div>
@@ -103,19 +106,23 @@ export default function MenuLateral() {
         </div>
       </div>
 
-      {/* Footer do Menu: Perfil Dinâmico */}
-      <div className="p-6 mt-auto border-t border-gray-50 bg-gray-50/50">
-        <Link to="/perfil" className="flex items-center gap-3 hover:opacity-80 transition-opacity">
-          <div className="w-11 h-11 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-lg shadow-sm shrink-0">
-            {inicial}
-          </div>
-          <div className="overflow-hidden">
-            <p className="text-sm font-extrabold text-[#183E6C] truncate">{nomeUsuario}</p>
-            <p className="text-xs text-gray-500 font-medium mt-0.5 truncate">Minha Conta</p>
+      {/* Perfil na Base do Menu — leva ao próprio perfil (/usuarios/:id) */}
+      {meuPerfil && (
+        <Link
+          to={`/usuarios/${meuPerfil.id}`}
+          className="p-6 border-t border-gray-100 flex items-center justify-between hover:bg-gray-50 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center font-bold text-sm">
+              {iniciaisPerfil}
+            </div>
+            <div>
+              <p className="text-sm font-bold text-gray-900">{meuPerfil.nome}</p>
+              <p className="text-xs text-gray-500">{meuPerfil.curso?.nome ?? '—'}</p>
+            </div>
           </div>
         </Link>
-      </div>
-      
+      )}
     </aside>
   )
 }

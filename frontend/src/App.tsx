@@ -16,8 +16,11 @@ import PoliticaDePrivacidade from './pages/politicadeprivacidade'
 // 3. Importando as Telas Logadas (Dentro do sistema)
 import Dashboard from './pages/dashboard'
 import Projetos from './pages/projetos'
+import ExplorarPessoas from './pages/ExplorarPessoas';
 import DetalhesProjeto from './pages/detalhes-projeto'
 import Candidaturas from './pages/candidaturas'
+import EditarPerfil from './pages/EditarPerfil';
+import Perfil from './pages/Perfil';
 import CriarProjeto from './pages/criar-projeto'
 import EditarProjeto from './pages/editar-projeto'
 
@@ -33,29 +36,28 @@ export default function App() {
       <Routes>
         {/* Redireciona quem entra no site direto para a tela de Login */}
         <Route path="/" element={<Navigate to="/login" />} />
-        
+
         {/* ROTAS PÚBLICAS (Ocupam a tela toda, sem o menu) */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/termos-de-uso" element={<TermosDeUso />} />
         <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
-        
-        {/* ROTAS DA ÁREA LOGADA (exige token válido) */}
+
+        {/* ROTAS DA ÁREA LOGADA (exige token válido; o "LayoutBase" abraça todas essas telas) */}
         <Route element={<RotaProtegida />}>
           <Route element={<LayoutBase />}>
 
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/projetos" element={<Projetos />} />
+            <Route path="/pessoas" element={<ExplorarPessoas />} />
+            <Route path="/usuarios/:id" element={<Perfil />} />
+            <Route path="/usuarios/:id/editar" element={<EditarPerfil />} />
 
-            {/* ALTERADO AQUI: Adicionado o /:id para carregar o projeto certo */}
+            {/* ALTERADO AQUI: Adicionado o /:id para carregar o projeto */}
             <Route path="/detalhes/:id" element={<DetalhesProjeto />} />
 
             <Route path="/candidaturas" element={<Candidaturas />} />
 
-            {/* Telas que faremos no futuro (Aparece só um texto provisório por enquanto) */}
-            <Route path="/pessoas" element={
-              <div className="p-8 text-[#183E6C] font-bold text-xl">Tela "Explorar Pessoas" em construção...</div>
-            } />
             <Route path="/criar-projeto" element={<CriarProjeto />} />
             <Route path="/editar-projeto/:id" element={<EditarProjeto />} />
 
@@ -68,6 +70,26 @@ export default function App() {
             </Route>
 
           </Route>
+        </Route>
+
+        {/* ROTAS DA ÁREA LOGADA (O "LayoutBase" abraça todas essas telas) */}
+        <Route element={<LayoutBase />}>
+
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/projetos" element={<Projetos />} />
+          <Route path="/pessoas" element={<ExplorarPessoas />} />
+          <Route path="/usuarios/:id" element={<Perfil />} />
+
+          {/* ALTERADO AQUI: Adicionado o /:id para carregar o projeto certo */}
+          <Route path="/detalhes/:id" element={<DetalhesProjeto />} />
+
+          <Route path="/candidaturas" element={<Candidaturas />} />
+
+          <Route path="/usuarios/:id/editar" element={<EditarPerfil />} />
+          {/* Telas que faremos no futuro (Aparece só um texto provisório por enquanto) */}
+          <Route path="/criar-projeto" element={<CriarProjeto />} />
+          <Route path="/editar-projeto/:id" element={<EditarProjeto />} />
+
         </Route>
       </Routes>
     </BrowserRouter>

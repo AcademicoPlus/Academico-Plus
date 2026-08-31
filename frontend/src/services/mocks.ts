@@ -48,6 +48,36 @@ const HABILIDADES_MOCK: Habilidade[] = [
   { id: 'aaaaaaaa-0001-0001-0001-000000000004', nome: 'Python', categoria: 'Backend', descricao: null, usuariosCount: 5, projetosCount: 3, criadoEm: '2024-01-01T00:00:00Z' },
 ];
 
+type HabilidadeMock = { id: string; nome: string };
+
+// Catálogo fictício de habilidades, no mesmo formato do endpoint real
+// GET /habilidades (ver habilidadeService.ts). Usado tanto para preencher
+// o select de filtro em ExplorarPessoas quanto para dar às pessoas
+// fictícias abaixo (USUARIOS_MOCK) habilidades reais para exibir nos cards.
+const HABILIDADES_PESSOAS_MOCK: HabilidadeMock[] = [
+  { id: 'hab-java', nome: 'Java' },
+  { id: 'hab-spring', nome: 'Spring Boot' },
+  { id: 'hab-react', nome: 'React' },
+  { id: 'hab-docker', nome: 'Docker' },
+  { id: 'hab-marketing', nome: 'Marketing Digital' },
+  { id: 'hab-branding', nome: 'Branding' },
+  { id: 'hab-seo', nome: 'SEO' },
+  { id: 'hab-ads', nome: 'Google Ads' },
+  { id: 'hab-reactnative', nome: 'React Native' },
+  { id: 'hab-ts', nome: 'TypeScript' },
+  { id: 'hab-node', nome: 'Node.js' },
+  { id: 'hab-aws', nome: 'AWS' },
+  { id: 'hab-psico', nome: 'Psicologia' },
+  { id: 'hab-pesquisa', nome: 'Pesquisa' },
+  { id: 'hab-uxr', nome: 'UX Research' },
+  { id: 'hab-uiux', nome: 'UI/UX' },
+  { id: 'hab-figma', nome: 'Figma' },
+];
+
+// Atalho pra puxar uma habilidade do catálogo pelo id, sem repetir o
+// objeto inteiro toda vez que um usuário fictício precisa dela.
+const acha = (id: string) => HABILIDADES_PESSOAS_MOCK.find((h) => h.id === id)!;
+
 // Credenciais fixas pra testar o login sem backend.
 export const CREDENCIAIS_MOCK = {
   email: 'ana.silva@academico.edu.br',
@@ -99,7 +129,7 @@ const MARIA_COSTA_MOCK: UsuarioResumo = {
 
 // "Banco" em memória dos usuários — usado por GET /usuarios e mutado pelo
 // PATCH /usuarios/:id/nivel-acesso (tela admin-usuarios).
-const USUARIOS_MOCK: UsuarioResumo[] = [USUARIO_LOGADO_MOCK, LUCAS_MENDES_MOCK, MARIA_COSTA_MOCK];
+const USUARIOS_ADMIN_MOCK: UsuarioResumo[] = [USUARIO_LOGADO_MOCK, LUCAS_MENDES_MOCK, MARIA_COSTA_MOCK];
 
 // "Banco" em memória das denúncias pendentes — mutado pelo PATCH
 // /denuncias/:id/resolver (tela admin-denuncias).
@@ -145,6 +175,85 @@ const CANDIDATURAS_MOCK: Candidatura[] = [
   },
 ];
 
+type UsuarioMock = UsuarioResumo & { habilidades: HabilidadeMock[] };
+
+// Pessoas fictícias para a tela Explorar Pessoas — nomes, cursos e
+// habilidades variados de propósito, para testar busca, filtro por curso
+// e filtro por habilidade com resultados diferentes.
+const USUARIOS_MOCK: UsuarioMock[] = [
+  { id: 'usuario-mock-2', nome: 'Bruno Alves', curso: 'Ciência da Computação', fotoUrl: null, permission: 'ALUNO', periodo: 6, notaMedia: 4.8, totalAvaliacoes: 5, habilidades: [acha('hab-java'), acha('hab-spring'), acha('hab-react'), acha('hab-docker')] },
+  { id: 'usuario-mock-3', nome: 'Carla Mendes', curso: 'Design Gráfico', fotoUrl: null, permission: 'ALUNO', periodo: 3, notaMedia: 4.2, totalAvaliacoes: 2, habilidades: [acha('hab-marketing'), acha('hab-branding'), acha('hab-seo'), acha('hab-ads')] },
+  { id: 'usuario-mock-4', nome: 'Diego Santos', curso: 'Engenharia de Software', fotoUrl: null, permission: 'ALUNO', periodo: 5, notaMedia: 4.6, totalAvaliacoes: 8, habilidades: [acha('hab-reactnative'), acha('hab-ts'), acha('hab-node'), acha('hab-aws')] },
+  { id: 'usuario-mock-5', nome: 'Eduarda Lima', curso: 'Psicologia', fotoUrl: null, permission: 'ALUNO', periodo: 2, notaMedia: 4.9, totalAvaliacoes: 1, habilidades: [acha('hab-psico'), acha('hab-pesquisa'), acha('hab-uxr')] },
+  { id: 'usuario-mock-6', nome: 'Felipe Rocha', curso: 'Administração', fotoUrl: null, permission: 'PROFESSOR', periodo: null, notaMedia: null, totalAvaliacoes: null, habilidades: [acha('hab-uiux'), acha('hab-pesquisa')] },
+  { id: 'usuario-mock-7', nome: 'Giovana Ribeiro', curso: 'Ciência da Computação', fotoUrl: null, permission: 'ALUNO', periodo: 8, notaMedia: 4.7, totalAvaliacoes: 6, habilidades: [acha('hab-java'), acha('hab-react')] },
+];
+
+// Perfil completo (mutável) do usuário logado nos mocks. GET e PUT
+// /usuarios/me leem e escrevem neste mesmo objeto, para que as alterações
+// feitas em EditarPerfil realmente "persistam" enquanto o app está aberto
+// (sem isso, toda edição seria perdida ao recarregar a tela de perfil).
+let meuPerfilMock = {
+  id: 'usuario-mock-1',
+  email: CREDENCIAIS_MOCK.email,
+  nome: 'Ana Silva',
+  nivelAcesso: null,
+  curso: CURSOS_MOCK[0], // Ciência da Computação
+  periodo: 4,
+  bio: 'Designer apaixonada por UI/UX e design systems. Busco projetos que unam criatividade e impacto social. Tenho experiência com Figma, pesquisa com usuários e prototipagem de alta fidelidade.',
+  fotoUrl: null as string | null,
+  linkedinUrl: 'https://linkedin.com/in',
+  githubUrl: 'https://github.com',
+  habilidades: [
+    { id: 'perfil-hab-1', habilidade: acha('hab-uiux'), nivel: 'AVANCADO', endossado: true, endossadoPor: 'Prof. Carvalho' },
+    { id: 'perfil-hab-2', habilidade: acha('hab-figma'), nivel: 'EXPERT', endossado: true, endossadoPor: 'Prof. Carvalho' },
+    { id: 'perfil-hab-3', habilidade: acha('hab-react'), nivel: 'INTERMEDIARIO', endossado: false },
+    { id: 'perfil-hab-4', habilidade: acha('hab-marketing'), nivel: 'INICIANTE', endossado: false },
+    { id: 'perfil-hab-5', habilidade: acha('hab-uxr'), nivel: 'INTERMEDIARIO', endossado: false },
+  ],
+  notaMedia: 4.8,
+  totalAvaliacoes: 6,
+  termosAceitosEm: '2024-01-01T00:00:00Z',
+  ativo: true,
+  criadoEm: '2024-01-01T00:00:00Z',
+  atualizadoEm: '2024-01-01T00:00:00Z',
+};
+
+// Perfil completo de outro usuário (GET /usuarios/:id) — monta um
+// UsuarioPerfil a partir da entrada correspondente em USUARIOS_MOCK,
+// já que UsuarioResumo (usado no Explorar Pessoas) não tem bio/links/etc.
+function mockBuscarUsuarioPorId(id: string) {
+  const usuario = USUARIOS_MOCK.find((u) => u.id === id);
+  if (!usuario) {
+    return rejeitarComAtraso(new ApiError(404, 'Usuário não encontrado.'));
+  }
+  const curso = CURSOS_MOCK.find((c) => c.nome === usuario.curso) ?? null;
+  return resolverComAtraso({
+    id: usuario.id,
+    email: `${usuario.nome.toLowerCase().replace(/\s+/g, '.')}@academico.edu.br`,
+    nivelAcesso: null,
+    nome: usuario.nome,
+    curso,
+    periodo: usuario.periodo,
+    bio: null,
+    fotoUrl: usuario.fotoUrl,
+    linkedinUrl: null,
+    githubUrl: null,
+    habilidades: usuario.habilidades.map((h, i) => ({
+      id: `${usuario.id}-hab-${i}`,
+      habilidade: h,
+      nivel: 'INTERMEDIARIO',
+      endossado: false,
+    })),
+    notaMedia: usuario.notaMedia,
+    totalAvaliacoes: usuario.totalAvaliacoes,
+    termosAceitosEm: '2024-01-01T00:00:00Z',
+    ativo: true,
+    criadoEm: '2024-01-01T00:00:00Z',
+    atualizadoEm: '2024-01-01T00:00:00Z',
+  });
+}
+
 // Usar esse e-mail no cadastro simula "e-mail já cadastrado" (erro 400 com
 // erro de campo, igual ao que o backend devolve).
 const EMAIL_JA_CADASTRADO_MOCK = 'duplicado@academico.edu.br';
@@ -160,6 +269,8 @@ function habilidadeNecessariaMock(habilidadeId: string, obrigatoria: boolean) {
 
 // "Banco" em memória — começa com um seed e cresce a cada POST /projetos
 // simulado, pra dar pra criar um projeto e já ver ele aparecer no feed.
+// Esta é a ÚNICA lista de projetos do arquivo (Dashboard, Projetos,
+// DetalhesProjeto e a seção "Meus projetos" de Perfil usam todos ela).
 const PROJETOS_MOCK: ProjetoDetalhe[] = [
   {
     id: 'projeto-seed-1',
@@ -294,11 +405,60 @@ type MockOptions = {
   body?: unknown;
 };
 
-export function mockFetch<TResposta>(caminho: string, { method, body }: MockOptions): Promise<TResposta> {
-  const [caminhoSemQuery, query] = caminho.split('?');
-  const parametros = new URLSearchParams(query ?? '');
-  const rota = `${method} ${caminhoSemQuery}`;
+// Simula o comportamento de explorarPerfis (busca, filtro por curso e
+// paginação), já que essa rota tem query string variável e não cabe em
+// um `case` fixo do switch abaixo.
+function mockExplorarPerfis(query: URLSearchParams): Promise<PaginaResposta<UsuarioResumo>> {
+  const busca = query.get('busca')?.toLowerCase() ?? '';
+  const idCurso = query.get('idCurso') ?? '';
+  const page = Number(query.get('page') ?? '0');
+  const size = Number(query.get('size') ?? '10');
 
+  // idCurso vem como id (ver CadastroRequest), mas UsuarioResumo.curso é
+  // só o nome — então convertemos o id pro nome antes de filtrar.
+  const nomeCursoFiltro = idCurso
+    ? CURSOS_MOCK.find((curso) => curso.id === idCurso)?.nome
+    : undefined;
+
+  const filtrados = USUARIOS_MOCK.filter((usuario) => {
+    const bateBusca =
+      !busca ||
+      usuario.nome.toLowerCase().includes(busca) ||
+      (usuario.curso?.toLowerCase().includes(busca) ?? false);
+    const bateCurso = !nomeCursoFiltro || usuario.curso === nomeCursoFiltro;
+    return bateBusca && bateCurso;
+  });
+
+  const inicio = page * size;
+  const pagina = filtrados.slice(inicio, inicio + size);
+
+  const resposta: PaginaResposta<UsuarioResumo> = {
+    content: pagina,
+    totalElements: filtrados.length,
+    totalPages: Math.ceil(filtrados.length / size) || 1,
+    number: page,
+    size,
+    last: inicio + size >= filtrados.length,
+  };
+
+  return resolverComAtraso(resposta);
+}
+
+export function mockFetch<TResposta>(caminho: string, { method, body }: MockOptions): Promise<TResposta> {
+  const [caminhoBase, queryString] = caminho.split('?');
+  const parametros = new URLSearchParams(queryString ?? '');
+
+  if (method === 'GET' && caminhoBase === '/usuarios/explorar') {
+    return mockExplorarPerfis(parametros) as unknown as Promise<TResposta>;
+  }
+
+  // Perfil de outro usuário: GET /usuarios/usuario-mock-N (mas não /usuarios/me)
+  if (method === 'GET' && /^\/usuarios\/usuario-mock-\d+$/.test(caminhoBase)) {
+    const usuarioId = caminhoBase.split('/').pop()!;
+    return mockBuscarUsuarioPorId(usuarioId) as unknown as Promise<TResposta>;
+  }
+
+  const rota = `${method} ${caminhoBase}`;
   switch (rota) {
     case 'GET /cursos':
       return resolverComAtraso(CURSOS_MOCK as unknown as TResposta);
@@ -327,13 +487,44 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
     }
 
     case 'GET /usuarios':
-      return resolverComAtraso(clonar(USUARIOS_MOCK) as unknown as TResposta);
+      return resolverComAtraso(clonar(USUARIOS_ADMIN_MOCK) as unknown as TResposta); // não USUARIOS_MOCK
 
     case 'GET /niveis-acesso':
       return resolverComAtraso(NIVEIS_ACESSO_MOCK as unknown as TResposta);
 
     case 'GET /denuncias':
       return resolverComAtraso(paginar(clonar(DENUNCIAS_MOCK)) as unknown as TResposta);
+
+    case 'GET /habilidades?size=100':
+      return resolverComAtraso({
+        content: HABILIDADES_PESSOAS_MOCK,
+        totalElements: HABILIDADES_PESSOAS_MOCK.length,
+        totalPages: 1,
+        number: 0,
+        size: 100,
+        last: true,
+      } as unknown as TResposta);
+
+    case 'GET /usuarios/me':
+      return resolverComAtraso({ ...meuPerfilMock } as unknown as TResposta);
+
+    case 'PUT /usuarios/me': {
+      const dados = body as {
+        nome: string; idCurso?: string; bio?: string; linkedinUrl?: string; githubUrl?: string;
+      };
+      const cursoEscolhido = dados.idCurso
+        ? CURSOS_MOCK.find((c) => c.id === dados.idCurso) ?? meuPerfilMock.curso
+        : meuPerfilMock.curso;
+      meuPerfilMock = {
+        ...meuPerfilMock,
+        nome: dados.nome,
+        curso: cursoEscolhido,
+        bio: dados.bio ?? null,
+        linkedinUrl: dados.linkedinUrl ?? null,
+        githubUrl: dados.githubUrl ?? null,
+      };
+      return resolverComAtraso({ ...meuPerfilMock } as unknown as TResposta);
+    }
 
     case 'POST /candidaturas': {
       const dados = body as { projetoId: string; mensagem?: string };
@@ -497,7 +688,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
     default: {
       // Rotas com :id (ex.: "/projetos/abc123" ou "/projetos/abc123/membros") —
       // casadas por regex porque o id muda a cada projeto criado.
-      const matchMembros = method === 'GET' && caminhoSemQuery.match(/^\/projetos\/([^/]+)\/membros$/);
+      const matchMembros = method === 'GET' && caminhoBase.match(/^\/projetos\/([^/]+)\/membros$/);
       if (matchMembros) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchMembros[1]);
         if (!projeto) {
@@ -506,7 +697,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(membrosDoProjetoMock(projeto)) as unknown as TResposta);
       }
 
-      const matchProjeto = method === 'GET' && caminhoSemQuery.match(/^\/projetos\/([^/]+)$/);
+      const matchProjeto = method === 'GET' && caminhoBase.match(/^\/projetos\/([^/]+)$/);
       if (matchProjeto) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchProjeto[1]);
         if (!projeto) {
@@ -515,7 +706,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(projeto) as unknown as TResposta);
       }
 
-      const matchAtualizar = method === 'PUT' && caminhoSemQuery.match(/^\/projetos\/([^/]+)$/);
+      const matchAtualizar = method === 'PUT' && caminhoBase.match(/^\/projetos\/([^/]+)$/);
       if (matchAtualizar) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchAtualizar[1]);
         if (!projeto) {
@@ -541,7 +732,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(projeto) as unknown as TResposta);
       }
 
-      const matchStatus = method === 'PATCH' && caminhoSemQuery.match(/^\/projetos\/([^/]+)\/status$/);
+      const matchStatus = method === 'PATCH' && caminhoBase.match(/^\/projetos\/([^/]+)\/status$/);
       if (matchStatus) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchStatus[1]);
         if (!projeto) {
@@ -562,7 +753,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(projeto) as unknown as TResposta);
       }
 
-      const matchVincularHabilidade = method === 'POST' && caminhoSemQuery.match(/^\/projetos\/([^/]+)\/habilidades$/);
+      const matchVincularHabilidade = method === 'POST' && caminhoBase.match(/^\/projetos\/([^/]+)\/habilidades$/);
       if (matchVincularHabilidade) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchVincularHabilidade[1]);
         if (!projeto) {
@@ -578,7 +769,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
       }
 
       const matchAlterarObrigatoriedade =
-        method === 'PATCH' && caminhoSemQuery.match(/^\/projetos\/([^/]+)\/habilidades\/([^/]+)$/);
+        method === 'PATCH' && caminhoBase.match(/^\/projetos\/([^/]+)\/habilidades\/([^/]+)$/);
       if (matchAlterarObrigatoriedade) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchAlterarObrigatoriedade[1]);
         if (!projeto) {
@@ -595,7 +786,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
       }
 
       const matchDesvincularHabilidade =
-        method === 'DELETE' && caminhoSemQuery.match(/^\/projetos\/([^/]+)\/habilidades\/([^/]+)$/);
+        method === 'DELETE' && caminhoBase.match(/^\/projetos\/([^/]+)\/habilidades\/([^/]+)$/);
       if (matchDesvincularHabilidade) {
         const projeto = PROJETOS_MOCK.find((p) => p.id === matchDesvincularHabilidade[1]);
         if (!projeto) {
@@ -606,7 +797,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso({ sucesso: true, mensagem: 'Habilidade desvinculada.' } as unknown as TResposta);
       }
 
-      const matchAtualizarHabilidade = method === 'PUT' && caminhoSemQuery.match(/^\/habilidades\/([^/]+)$/);
+      const matchAtualizarHabilidade = method === 'PUT' && caminhoBase.match(/^\/habilidades\/([^/]+)$/);
       if (matchAtualizarHabilidade) {
         const habilidade = HABILIDADES_MOCK.find((h) => h.id === matchAtualizarHabilidade[1]);
         if (!habilidade) {
@@ -619,7 +810,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(habilidade) as unknown as TResposta);
       }
 
-      const matchExcluirHabilidade = method === 'DELETE' && caminhoSemQuery.match(/^\/habilidades\/([^/]+)$/);
+      const matchExcluirHabilidade = method === 'DELETE' && caminhoBase.match(/^\/habilidades\/([^/]+)$/);
       if (matchExcluirHabilidade) {
         const habilidade = HABILIDADES_MOCK.find((h) => h.id === matchExcluirHabilidade[1]);
         if (!habilidade) {
@@ -635,7 +826,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso({ sucesso: true, mensagem: 'Habilidade excluída.' } as unknown as TResposta);
       }
 
-      const matchNivelAcesso = method === 'PATCH' && caminhoSemQuery.match(/^\/usuarios\/([^/]+)\/nivel-acesso$/);
+      const matchNivelAcesso = method === 'PATCH' && caminhoBase.match(/^\/usuarios\/([^/]+)\/nivel-acesso$/);
       if (matchNivelAcesso) {
         const usuario = USUARIOS_MOCK.find((u) => u.id === matchNivelAcesso[1]);
         if (!usuario) {
@@ -669,7 +860,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(perfil as unknown as TResposta);
       }
 
-      const matchCancelarCandidatura = method === 'DELETE' && caminhoSemQuery.match(/^\/candidaturas\/([^/]+)$/);
+      const matchCancelarCandidatura = method === 'DELETE' && caminhoBase.match(/^\/candidaturas\/([^/]+)$/);
       if (matchCancelarCandidatura) {
         const candidatura = CANDIDATURAS_MOCK.find((c) => c.id === matchCancelarCandidatura[1]);
         if (!candidatura) {
@@ -684,7 +875,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso({ sucesso: true, mensagem: 'Candidatura cancelada com sucesso.' } as unknown as TResposta);
       }
 
-      const matchCandidaturasDoProjeto = method === 'GET' && caminhoSemQuery.match(/^\/candidaturas\/projeto\/([^/]+)$/);
+      const matchCandidaturasDoProjeto = method === 'GET' && caminhoBase.match(/^\/candidaturas\/projeto\/([^/]+)$/);
       if (matchCandidaturasDoProjeto) {
         const status = parametros.get('status');
         const doProjeto = CANDIDATURAS_MOCK.filter(
@@ -693,7 +884,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(paginar(clonar(doProjeto)) as unknown as TResposta);
       }
 
-      const matchAceitarCandidatura = method === 'PATCH' && caminhoSemQuery.match(/^\/candidaturas\/([^/]+)\/aceitar$/);
+      const matchAceitarCandidatura = method === 'PATCH' && caminhoBase.match(/^\/candidaturas\/([^/]+)\/aceitar$/);
       if (matchAceitarCandidatura) {
         const candidatura = CANDIDATURAS_MOCK.find((c) => c.id === matchAceitarCandidatura[1]);
         if (!candidatura) {
@@ -720,7 +911,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(candidatura) as unknown as TResposta);
       }
 
-      const matchRejeitarCandidatura = method === 'PATCH' && caminhoSemQuery.match(/^\/candidaturas\/([^/]+)\/rejeitar$/);
+      const matchRejeitarCandidatura = method === 'PATCH' && caminhoBase.match(/^\/candidaturas\/([^/]+)\/rejeitar$/);
       if (matchRejeitarCandidatura) {
         const candidatura = CANDIDATURAS_MOCK.find((c) => c.id === matchRejeitarCandidatura[1]);
         if (!candidatura) {
@@ -735,7 +926,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         return resolverComAtraso(clonar(candidatura) as unknown as TResposta);
       }
 
-      const matchResolverDenuncia = method === 'PATCH' && caminhoSemQuery.match(/^\/denuncias\/([^/]+)\/resolver$/);
+      const matchResolverDenuncia = method === 'PATCH' && caminhoBase.match(/^\/denuncias\/([^/]+)\/resolver$/);
       if (matchResolverDenuncia) {
         const denuncia = DENUNCIAS_MOCK.find((d) => d.id === matchResolverDenuncia[1]);
         if (!denuncia) {
