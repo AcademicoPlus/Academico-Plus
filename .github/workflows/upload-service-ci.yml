@@ -1,0 +1,45 @@
+name: Upload Service CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "academico-upload-service/**"
+      - ".github/workflows/upload-service-ci.yml"
+  pull_request:
+    paths:
+      - "academico-upload-service/**"
+      - ".github/workflows/upload-service-ci.yml"
+
+defaults:
+  run:
+    working-directory: academico-upload-service
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: academico-upload-service/pom.xml
+
+      - name: Garantir permissão de execução do mvnw
+        run: chmod +x ./mvnw
+
+      - name: Testes
+        run: ./mvnw -q test
+
+      - name: Publicar relatório de testes em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: upload-service-surefire-reports
+          path: academico-upload-service/target/surefire-reports/

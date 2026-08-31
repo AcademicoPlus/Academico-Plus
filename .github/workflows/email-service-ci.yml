@@ -1,0 +1,45 @@
+name: Email Service CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "academico-email-service/**"
+      - ".github/workflows/email-service-ci.yml"
+  pull_request:
+    paths:
+      - "academico-email-service/**"
+      - ".github/workflows/email-service-ci.yml"
+
+defaults:
+  run:
+    working-directory: academico-email-service
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configurar JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+          cache: maven
+          cache-dependency-path: academico-email-service/pom.xml
+
+      - name: Garantir permissão de execução do mvnw
+        run: chmod +x ./mvnw
+
+      - name: Testes
+        run: ./mvnw -q test
+
+      - name: Publicar relatório de testes em caso de falha
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: email-service-surefire-reports
+          path: academico-email-service/target/surefire-reports/

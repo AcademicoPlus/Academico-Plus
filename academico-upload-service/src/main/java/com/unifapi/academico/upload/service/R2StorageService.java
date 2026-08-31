@@ -1,10 +1,9 @@
-package com.unifapi.academico.service;
+package com.unifapi.academico.upload.service;
 
-import com.unifapi.academico.exception.RegraDeNegocioException;
+import com.unifapi.academico.upload.exception.UploadException;
 import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
@@ -20,14 +19,9 @@ import java.io.InputStream;
 import java.net.URI;
 import java.util.UUID;
 
-/**
- * Storage de produção: envia os arquivos para um bucket Cloudflare R2 (API
- * compatível com S3). Ativado com {@code app.storage.provider=r2}.
- */
 @Slf4j
 @Service
-@ConditionalOnProperty(name = "app.storage.provider", havingValue = "r2")
-public class R2StorageService implements StorageService {
+public class R2StorageService {
 
     @Value("${app.storage.r2.account-id}")
     private String accountId;
@@ -58,7 +52,6 @@ public class R2StorageService implements StorageService {
                 .build();
     }
 
-    @Override
     public String salvar(MultipartFile arquivo) {
         ImagemUploadValidator.validar(arquivo);
 
@@ -79,19 +72,18 @@ public class R2StorageService implements StorageService {
 
         } catch (IOException e) {
             log.error("Erro ao ler arquivo enviado: {}", e.getMessage());
-            throw new RegraDeNegocioException("Erro ao processar imagem enviada.");
+            throw new UploadException("Erro ao processar imagem enviada.");
         } catch (Exception e) {
             log.error("Erro ao enviar arquivo para o R2: {}", e.getMessage());
-            throw new RegraDeNegocioException("Erro ao salvar imagem no storage externo.");
+            throw new UploadException("Erro ao salvar imagem no storage externo.");
         }
     }
 
-    @Override
-    public void deletar(String nomeArquivo) {
-        if (nomeArquivo == null || nomeArquivo.isBlank()) return;
+    public void deletar(String urlOuChave) {
+        if (urlOuChave == null || urlOuChave.isBlank()) return;
 
         try {
-            String chave = extrairChave(nomeArquivo);
+            String chave = extrairChave(urlOuChave);
             s3Client.deleteObject(DeleteObjectRequest.builder()
                     .bucket(bucket)
                     .key(chave)

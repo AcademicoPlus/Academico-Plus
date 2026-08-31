@@ -67,7 +67,7 @@ class UsuarioServiceTest {
     @Mock
     private JwtTokenProvider jwtTokenProvider;
     @Mock
-    private StorageService storageService;
+    private FotoStorageClient fotoStorageClient;
 
     @InjectMocks
     private UsuarioService usuarioService;
@@ -399,14 +399,14 @@ class UsuarioServiceTest {
         usuario.setFotoUrl(null);
         MultipartFile arquivo = mock(MultipartFile.class);
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
-        when(storageService.salvar(arquivo)).thenReturn("http://storage/nova-foto.png");
+        when(fotoStorageClient.salvar(arquivo)).thenReturn("http://storage/nova-foto.png");
 
         UsuarioPerfilResponse response = usuarioService.atualizarFoto(usuario.getId(), arquivo);
 
         assertThat(usuario.getFotoUrl()).isEqualTo("http://storage/nova-foto.png");
         assertThat(response.fotoUrl()).isEqualTo("http://storage/nova-foto.png");
-        verify(storageService).salvar(arquivo);
-        verify(storageService, never()).deletar(anyString());
+        verify(fotoStorageClient).salvar(arquivo);
+        verify(fotoStorageClient, never()).deletar(anyString());
     }
 
     @Test
@@ -414,13 +414,13 @@ class UsuarioServiceTest {
         usuario.setFotoUrl("http://storage/foto-antiga.png");
         MultipartFile arquivo = mock(MultipartFile.class);
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
-        when(storageService.salvar(arquivo)).thenReturn("http://storage/nova-foto.png");
+        when(fotoStorageClient.salvar(arquivo)).thenReturn("http://storage/nova-foto.png");
 
         usuarioService.atualizarFoto(usuario.getId(), arquivo);
 
         assertThat(usuario.getFotoUrl()).isEqualTo("http://storage/nova-foto.png");
-        verify(storageService).salvar(arquivo);
-        verify(storageService).deletar("http://storage/foto-antiga.png");
+        verify(fotoStorageClient).salvar(arquivo);
+        verify(fotoStorageClient).deletar("http://storage/foto-antiga.png");
     }
 
     @Test
@@ -428,13 +428,13 @@ class UsuarioServiceTest {
         usuario.setFotoUrl("http://storage/foto-antiga.png");
         MultipartFile arquivo = mock(MultipartFile.class);
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
-        when(storageService.salvar(arquivo)).thenThrow(new RegraDeNegocioException("Falha ao salvar imagem."));
+        when(fotoStorageClient.salvar(arquivo)).thenThrow(new RegraDeNegocioException("Falha ao salvar imagem."));
 
         assertThatThrownBy(() -> usuarioService.atualizarFoto(usuario.getId(), arquivo))
                 .isInstanceOf(RegraDeNegocioException.class);
 
         assertThat(usuario.getFotoUrl()).isEqualTo("http://storage/foto-antiga.png");
-        verify(storageService, never()).deletar(anyString());
+        verify(fotoStorageClient, never()).deletar(anyString());
     }
 
     // ============================================

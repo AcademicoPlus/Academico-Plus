@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react'
 import { recomendarProjetos, type ProjetoRecomendado } from '../services/recomendacaoService'
 import { listarMeusProjetos, type Projeto } from '../services/projetoService'
 import { obterMeuPerfil } from '../services/usuarioService'
+import { listarMinhasCandidaturas } from '../services/candidaturaService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
 
 export default function Dashboard() {
@@ -11,6 +12,7 @@ export default function Dashboard() {
   const [carregandoMeusProjetos, setCarregandoMeusProjetos] = useState(true);
   const [recomendados, setRecomendados] = useState<ProjetoRecomendado[]>([]);
   const [carregandoRecomendados, setCarregandoRecomendados] = useState(true);
+  const [totalCandidaturasPendentes, setTotalCandidaturasPendentes] = useState<number | null>(null);
 
   useEffect(() => {
     obterMeuPerfil()
@@ -26,6 +28,10 @@ export default function Dashboard() {
       .then(setRecomendados)
       .catch(() => {})
       .finally(() => setCarregandoRecomendados(false));
+
+    listarMinhasCandidaturas({ status: 'PENDENTE', tamanho: 1 })
+      .then((pagina) => setTotalCandidaturasPendentes(pagina.totalElements))
+      .catch(() => {});
   }, []);
 
   const primeiroNome = nome?.split(' ')[0];
@@ -53,7 +59,7 @@ export default function Dashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {[
           { label: 'Projetos ativos', value: '1', border: 'border-blue-200' },
-          { label: 'Candidaturas', value: '1', border: 'border-orange-200' },
+          { label: 'Candidaturas', value: totalCandidaturasPendentes?.toString() ?? '—', border: 'border-orange-200' },
           { label: 'Recomendações', value: recomendados.length.toString(), border: 'border-green-200' },
         ].map((item, i) => (
           <div key={i} className={`bg-white p-5 rounded-2xl border-l-4 ${item.border} border-y border-r border-gray-100 shadow-sm flex items-center justify-between`}>

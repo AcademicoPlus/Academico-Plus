@@ -10,7 +10,7 @@ export default function MenuLateral() {
   const [meuPerfil, setMeuPerfil] = useState<UsuarioPerfil | null>(null);
 
   useEffect(() => {
-    // 1. Busca o nome do usuário logado
+    // 1. Busca o nome (e o nível de acesso) do usuário logado
     obterMeuPerfil()
       .then(setMeuPerfil)
       .catch(() => {/* menu mostra o estado padrão se a busca falhar */ });
@@ -21,6 +21,9 @@ export default function MenuLateral() {
       .catch(() => { })
       .finally(() => setCarregandoProjetos(false));
   }, []);
+
+  // Verifica se o usuário é administrador
+  const ehAdmin = meuPerfil?.nivelAcesso?.nome?.toUpperCase() === 'ADMIN';
 
   // Estilos padronizados do Design System
   const activeClass = "bg-[#183E6C] text-white shadow-md font-bold";
@@ -58,6 +61,13 @@ export default function MenuLateral() {
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
             Encontrar Pessoas
           </Link>
+
+          {ehAdmin && (
+            <Link to="/admin" className={`flex items-center gap-3 px-4 py-3.5 rounded-xl ${location.pathname.startsWith('/admin') ? activeClass : inactiveClass}`}>
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15a3 3 0 100-6 3 3 0 000 6z"></path><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33H9a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82V9a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"></path></svg>
+              Administração
+            </Link>
+          )}
         </nav>
 
         {/* Divisor */}

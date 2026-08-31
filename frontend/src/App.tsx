@@ -3,6 +3,10 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 // 1. Importando o "Esqueleto" (Header e Menu)
 import LayoutBase from './components/layout-base'
 
+// Guards de rota
+import RotaProtegida from './routes/rotaprotegida'
+import RotaAdmin from './routes/rotaadmin'
+
 // 2. Importando as Telas Públicas (Fora do sistema)
 import Login from './pages/login'
 import Cadastro from './pages/cadastro'
@@ -20,6 +24,12 @@ import Perfil from './pages/Perfil';
 import CriarProjeto from './pages/criar-projeto'
 import EditarProjeto from './pages/editar-projeto'
 
+// 4. Telas de Administrador
+import Admin from './pages/admin'
+import AdminUsuarios from './pages/admin-usuarios'
+import AdminHabilidades from './pages/admin-habilidades'
+import AdminDenuncias from './pages/admin-denuncias'
+
 export default function App() {
   return (
     <BrowserRouter>
@@ -32,6 +42,35 @@ export default function App() {
         <Route path="/cadastro" element={<Cadastro />} />
         <Route path="/termos-de-uso" element={<TermosDeUso />} />
         <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
+
+        {/* ROTAS DA ÁREA LOGADA (exige token válido; o "LayoutBase" abraça todas essas telas) */}
+        <Route element={<RotaProtegida />}>
+          <Route element={<LayoutBase />}>
+
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/projetos" element={<Projetos />} />
+            <Route path="/pessoas" element={<ExplorarPessoas />} />
+            <Route path="/usuarios/:id" element={<Perfil />} />
+            <Route path="/usuarios/:id/editar" element={<EditarPerfil />} />
+
+            {/* ALTERADO AQUI: Adicionado o /:id para carregar o projeto */}
+            <Route path="/detalhes/:id" element={<DetalhesProjeto />} />
+
+            <Route path="/candidaturas" element={<Candidaturas />} />
+
+            <Route path="/criar-projeto" element={<CriarProjeto />} />
+            <Route path="/editar-projeto/:id" element={<EditarProjeto />} />
+
+            {/* ROTAS DE ADMINISTRADOR (exige nivelAcesso ADMIN) */}
+            <Route element={<RotaAdmin />}>
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/admin/usuarios" element={<AdminUsuarios />} />
+              <Route path="/admin/habilidades" element={<AdminHabilidades />} />
+              <Route path="/admin/denuncias" element={<AdminDenuncias />} />
+            </Route>
+
+          </Route>
+        </Route>
 
         {/* ROTAS DA ÁREA LOGADA (O "LayoutBase" abraça todas essas telas) */}
         <Route element={<LayoutBase />}>

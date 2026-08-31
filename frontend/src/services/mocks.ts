@@ -12,10 +12,14 @@
 import { ApiError, type ErroCampo } from './apiError';
 import type { CadastroRequest, CadastroResponse, LoginRequest, LoginResponse, UsuarioResumo } from './authService';
 import type { Curso } from './cursoService';
-import type { Habilidade } from './habilidadeService';
+import type { Habilidade, SalvarHabilidadeRequest } from './habilidadeService';
 import type { AtualizarProjetoRequest, CriarProjetoRequest, Projeto, ProjetoDetalhe, StatusProjeto } from './projetoService';
 import type { ProjetoMembro } from './projetoMembroService';
 import type { ProjetoRecomendado } from './recomendacaoService';
+import type { UsuarioPerfil } from './usuarioService';
+import type { NivelAcesso } from './nivelAcessoService';
+import type { Denuncia } from './denunciaService';
+import type { Candidatura } from './candidaturaService';
 import type { PaginaResposta } from './apiClient';
 
 // Latência artificial pra tela de fato passar pelo estado de "carregando".
@@ -80,13 +84,22 @@ export const CREDENCIAIS_MOCK = {
   senha: 'senha123',
 };
 
+// Níveis de acesso — ADMIN é o nível do USUARIO_LOGADO_MOCK, pra dar pra
+// navegar nas telas de administrador (/admin/*) sem precisar do backend.
+const NIVEIS_ACESSO_MOCK: NivelAcesso[] = [
+  { id: 'nivel-mock-aluno', nome: 'ALUNO', descricao: 'Estudante da instituição.' },
+  { id: 'nivel-mock-professor', nome: 'PROFESSOR', descricao: 'Docente da instituição.' },
+  { id: 'nivel-mock-admin', nome: 'ADMIN', descricao: 'Administrador da plataforma.' },
+];
+
 // "Usuário logado" nos mocks — mesma pessoa que o login mock devolve.
+// permission = ADMIN pra dar pra testar as telas /admin/* sem backend.
 const USUARIO_LOGADO_MOCK: UsuarioResumo = {
   id: 'usuario-mock-1',
   nome: 'Ana Silva',
   curso: 'Ciência da Computação',
   fotoUrl: null,
-  permission: 'ALUNO',
+  permission: 'ADMIN',
   periodo: 4,
   notaMedia: 4.5,
   totalAvaliacoes: 3,
@@ -113,6 +126,54 @@ const MARIA_COSTA_MOCK: UsuarioResumo = {
   notaMedia: 4.2,
   totalAvaliacoes: 2,
 };
+
+// "Banco" em memória dos usuários — usado por GET /usuarios e mutado pelo
+// PATCH /usuarios/:id/nivel-acesso (tela admin-usuarios).
+const USUARIOS_ADMIN_MOCK: UsuarioResumo[] = [USUARIO_LOGADO_MOCK, LUCAS_MENDES_MOCK, MARIA_COSTA_MOCK];
+
+// "Banco" em memória das denúncias pendentes — mutado pelo PATCH
+// /denuncias/:id/resolver (tela admin-denuncias).
+const DENUNCIAS_MOCK: Denuncia[] = [
+  {
+    id: 'denuncia-mock-1',
+    avaliacaoId: 'avaliacao-mock-1',
+    avaliador: LUCAS_MENDES_MOCK,
+    notaAvaliacao: 1,
+    comentarioAvaliacao: 'Não entregou nada e ainda me xingou no grupo do projeto.',
+    denunciante: MARIA_COSTA_MOCK,
+    motivo: 'Avaliação com linguagem ofensiva e sem relação com o desempenho no projeto.',
+    status: 'PENDENTE',
+    criadoEm: '2024-04-01T10:00:00Z',
+    analisadoEm: null,
+  },
+];
+
+// "Banco" em memória das candidaturas — mutado por POST /candidaturas,
+// DELETE /candidaturas/:id e pelos PATCH de aceitar/rejeitar. Um seed em
+// cada status/direção pra dar pra testar as duas visões (candidato e
+// criador do projeto) sem precisar candidatar-se do zero.
+const CANDIDATURAS_MOCK: Candidatura[] = [
+  {
+    id: 'candidatura-mock-1',
+    projeto: { id: 'projeto-seed-2', titulo: 'Sistema Inteligente de Proteção Web', status: 'EM_ANDAMENTO' },
+    usuario: MARIA_COSTA_MOCK,
+    status: 'PENDENTE',
+    mensagem: 'Tenho experiência com Node e adoraria contribuir!',
+    motivoRejeicao: null,
+    dataCandidatura: '2024-04-05T10:00:00Z',
+    dataResposta: null,
+  },
+  {
+    id: 'candidatura-mock-2',
+    projeto: { id: 'projeto-seed-1', titulo: 'App de Saúde Mental para Universitários', status: 'ABERTO' },
+    usuario: USUARIO_LOGADO_MOCK,
+    status: 'PENDENTE',
+    mensagem: 'Adoro esse tema, quero muito ajudar!',
+    motivoRejeicao: null,
+    dataCandidatura: '2024-04-06T10:00:00Z',
+    dataResposta: null,
+  },
+];
 
 type UsuarioMock = UsuarioResumo & { habilidades: HabilidadeMock[] };
 
@@ -405,8 +466,35 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
     case 'GET /habilidades':
       return resolverComAtraso(paginar(HABILIDADES_MOCK) as unknown as TResposta);
 
-    // Catálogo usado pelo select "Todas as habilidades" em ExplorarPessoas
-    // (ver ExplorarPessoas.tsx, useEffect que carrega habilidadesCatalogo).
+    case 'GET /habilidades/categorias': {
+      const categorias = [...new Set(HABILIDADES_MOCK.map((h) => h.categoria))];
+      return resolverComAtraso(categorias as unknown as TResposta);
+    }
+
+    case 'POST /habilidades': {
+      const dados = body as SalvarHabilidadeRequest;
+      const nova: Habilidade = {
+        id: `habilidade-mock-${Date.now()}`,
+        nome: dados.nome,
+        categoria: dados.categoria ?? 'Geral',
+        descricao: dados.descricao ?? null,
+        usuariosCount: 0,
+        projetosCount: 0,
+        criadoEm: new Date().toISOString(),
+      };
+      HABILIDADES_MOCK.push(nova);
+      return resolverComAtraso(clonar(nova) as unknown as TResposta);
+    }
+
+    case 'GET /usuarios':
+      return resolverComAtraso(clonar(USUARIOS_ADMIN_MOCK) as unknown as TResposta); // não USUARIOS_MOCK
+
+    case 'GET /niveis-acesso':
+      return resolverComAtraso(NIVEIS_ACESSO_MOCK as unknown as TResposta);
+
+    case 'GET /denuncias':
+      return resolverComAtraso(paginar(clonar(DENUNCIAS_MOCK)) as unknown as TResposta);
+
     case 'GET /habilidades?size=100':
       return resolverComAtraso({
         content: HABILIDADES_PESSOAS_MOCK,
@@ -438,13 +526,63 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
       return resolverComAtraso({ ...meuPerfilMock } as unknown as TResposta);
     }
 
-    case 'POST /usuarios/me/foto': {
-      const formData = body as FormData;
-      const arquivo = formData.get('foto') as File | null;
-      if (arquivo) {
-        meuPerfilMock = { ...meuPerfilMock, fotoUrl: URL.createObjectURL(arquivo) };
+    case 'POST /candidaturas': {
+      const dados = body as { projetoId: string; mensagem?: string };
+      const projeto = PROJETOS_MOCK.find((p) => p.id === dados.projetoId);
+      if (!projeto) {
+        return rejeitarComAtraso(new ApiError(404, 'Projeto não encontrado.'));
       }
-      return resolverComAtraso({ ...meuPerfilMock } as unknown as TResposta);
+      if (projeto.criador?.id === USUARIO_LOGADO_MOCK.id) {
+        return rejeitarComAtraso(new ApiError(400, 'Você não pode se candidatar ao seu próprio projeto.'));
+      }
+      if (CANDIDATURAS_MOCK.some((c) => c.projeto.id === dados.projetoId && c.usuario?.id === USUARIO_LOGADO_MOCK.id)) {
+        return rejeitarComAtraso(new ApiError(400, 'Você já se candidatou a este projeto.'));
+      }
+      const agora = new Date().toISOString();
+      const nova: Candidatura = {
+        id: `candidatura-mock-${Date.now()}`,
+        projeto: { id: projeto.id, titulo: projeto.titulo, status: projeto.status },
+        usuario: USUARIO_LOGADO_MOCK,
+        status: 'PENDENTE',
+        mensagem: dados.mensagem ?? null,
+        motivoRejeicao: null,
+        dataCandidatura: agora,
+        dataResposta: null,
+      };
+      CANDIDATURAS_MOCK.push(nova);
+      projeto.totalCandidaturasPendentes += 1;
+      return resolverComAtraso(clonar(nova) as unknown as TResposta);
+    }
+
+    case 'GET /candidaturas/minhas': {
+      const status = parametros.get('status');
+      const minhas = CANDIDATURAS_MOCK.filter(
+        (c) => c.usuario?.id === USUARIO_LOGADO_MOCK.id && (!status || c.status === status),
+      );
+      return resolverComAtraso(paginar(clonar(minhas)) as unknown as TResposta);
+    }
+
+    case 'GET /usuarios/me': {
+      const perfil: UsuarioPerfil = {
+        id: USUARIO_LOGADO_MOCK.id,
+        email: CREDENCIAIS_MOCK.email,
+        nome: USUARIO_LOGADO_MOCK.nome,
+        nivelAcesso: NIVEIS_ACESSO_MOCK.find((nivel) => nivel.nome === USUARIO_LOGADO_MOCK.permission) ?? null,
+        curso: CURSOS_MOCK[0],
+        periodo: USUARIO_LOGADO_MOCK.periodo,
+        bio: null,
+        fotoUrl: USUARIO_LOGADO_MOCK.fotoUrl,
+        linkedinUrl: null,
+        githubUrl: null,
+        habilidades: [],
+        notaMedia: USUARIO_LOGADO_MOCK.notaMedia,
+        totalAvaliacoes: USUARIO_LOGADO_MOCK.totalAvaliacoes,
+        termosAceitosEm: '2024-01-01T00:00:00Z',
+        ativo: true,
+        criadoEm: '2024-01-01T00:00:00Z',
+        atualizadoEm: '2024-01-01T00:00:00Z',
+      };
+      return resolverComAtraso(perfil as unknown as TResposta);
     }
 
     case 'GET /projetos': {
@@ -657,6 +795,149 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         const habilidadeId = matchDesvincularHabilidade[2];
         projeto.habilidadesNecessarias = projeto.habilidadesNecessarias.filter((h) => h.habilidade.id !== habilidadeId);
         return resolverComAtraso({ sucesso: true, mensagem: 'Habilidade desvinculada.' } as unknown as TResposta);
+      }
+
+      const matchAtualizarHabilidade = method === 'PUT' && caminhoBase.match(/^\/habilidades\/([^/]+)$/);
+      if (matchAtualizarHabilidade) {
+        const habilidade = HABILIDADES_MOCK.find((h) => h.id === matchAtualizarHabilidade[1]);
+        if (!habilidade) {
+          return rejeitarComAtraso(new ApiError(404, 'Habilidade não encontrada.'));
+        }
+        const dados = body as SalvarHabilidadeRequest;
+        habilidade.nome = dados.nome;
+        habilidade.categoria = dados.categoria ?? habilidade.categoria;
+        habilidade.descricao = dados.descricao ?? null;
+        return resolverComAtraso(clonar(habilidade) as unknown as TResposta);
+      }
+
+      const matchExcluirHabilidade = method === 'DELETE' && caminhoBase.match(/^\/habilidades\/([^/]+)$/);
+      if (matchExcluirHabilidade) {
+        const habilidade = HABILIDADES_MOCK.find((h) => h.id === matchExcluirHabilidade[1]);
+        if (!habilidade) {
+          return rejeitarComAtraso(new ApiError(404, 'Habilidade não encontrada.'));
+        }
+        if (habilidade.usuariosCount > 0 || habilidade.projetosCount > 0) {
+          return rejeitarComAtraso(
+            new ApiError(400, 'Não é possível excluir uma habilidade que já está em uso.'),
+          );
+        }
+        const indice = HABILIDADES_MOCK.indexOf(habilidade);
+        HABILIDADES_MOCK.splice(indice, 1);
+        return resolverComAtraso({ sucesso: true, mensagem: 'Habilidade excluída.' } as unknown as TResposta);
+      }
+
+      const matchNivelAcesso = method === 'PATCH' && caminhoBase.match(/^\/usuarios\/([^/]+)\/nivel-acesso$/);
+      if (matchNivelAcesso) {
+        const usuario = USUARIOS_MOCK.find((u) => u.id === matchNivelAcesso[1]);
+        if (!usuario) {
+          return rejeitarComAtraso(new ApiError(404, 'Usuário não encontrado.'));
+        }
+        const idNivel = parametros.get('idNivel');
+        const nivel = NIVEIS_ACESSO_MOCK.find((n) => n.id === idNivel);
+        if (!nivel) {
+          return rejeitarComAtraso(new ApiError(404, 'Nível de acesso não encontrado.'));
+        }
+        usuario.permission = nivel.nome;
+        const perfil: UsuarioPerfil = {
+          id: usuario.id,
+          email: `${usuario.nome.toLowerCase().replace(/\s+/g, '.')}@academico.edu.br`,
+          nome: usuario.nome,
+          nivelAcesso: nivel,
+          curso: CURSOS_MOCK.find((c) => c.nome === usuario.curso) ?? null,
+          periodo: usuario.periodo,
+          bio: null,
+          fotoUrl: usuario.fotoUrl,
+          linkedinUrl: null,
+          githubUrl: null,
+          habilidades: [],
+          notaMedia: usuario.notaMedia,
+          totalAvaliacoes: usuario.totalAvaliacoes,
+          termosAceitosEm: '2024-01-01T00:00:00Z',
+          ativo: true,
+          criadoEm: '2024-01-01T00:00:00Z',
+          atualizadoEm: new Date().toISOString(),
+        };
+        return resolverComAtraso(perfil as unknown as TResposta);
+      }
+
+      const matchCancelarCandidatura = method === 'DELETE' && caminhoBase.match(/^\/candidaturas\/([^/]+)$/);
+      if (matchCancelarCandidatura) {
+        const candidatura = CANDIDATURAS_MOCK.find((c) => c.id === matchCancelarCandidatura[1]);
+        if (!candidatura) {
+          return rejeitarComAtraso(new ApiError(404, 'Candidatura não encontrada.'));
+        }
+        if (candidatura.status !== 'PENDENTE') {
+          return rejeitarComAtraso(new ApiError(400, 'Só é possível cancelar candidaturas pendentes.'));
+        }
+        const projeto = PROJETOS_MOCK.find((p) => p.id === candidatura.projeto.id);
+        if (projeto) projeto.totalCandidaturasPendentes = Math.max(0, projeto.totalCandidaturasPendentes - 1);
+        CANDIDATURAS_MOCK.splice(CANDIDATURAS_MOCK.indexOf(candidatura), 1);
+        return resolverComAtraso({ sucesso: true, mensagem: 'Candidatura cancelada com sucesso.' } as unknown as TResposta);
+      }
+
+      const matchCandidaturasDoProjeto = method === 'GET' && caminhoBase.match(/^\/candidaturas\/projeto\/([^/]+)$/);
+      if (matchCandidaturasDoProjeto) {
+        const status = parametros.get('status');
+        const doProjeto = CANDIDATURAS_MOCK.filter(
+          (c) => c.projeto.id === matchCandidaturasDoProjeto[1] && (!status || c.status === status),
+        );
+        return resolverComAtraso(paginar(clonar(doProjeto)) as unknown as TResposta);
+      }
+
+      const matchAceitarCandidatura = method === 'PATCH' && caminhoBase.match(/^\/candidaturas\/([^/]+)\/aceitar$/);
+      if (matchAceitarCandidatura) {
+        const candidatura = CANDIDATURAS_MOCK.find((c) => c.id === matchAceitarCandidatura[1]);
+        if (!candidatura) {
+          return rejeitarComAtraso(new ApiError(404, 'Candidatura não encontrada.'));
+        }
+        const projeto = PROJETOS_MOCK.find((p) => p.id === candidatura.projeto.id);
+        if (projeto) {
+          projeto.vagasPreenchidas += 1;
+          projeto.vagasDisponiveis = Math.max(0, projeto.vagas - projeto.vagasPreenchidas);
+          projeto.totalMembros += 1;
+          projeto.totalCandidaturasPendentes = Math.max(0, projeto.totalCandidaturasPendentes - 1);
+          const { funcao } = (body as { funcao?: string }) ?? {};
+          const membrosDoProjeto = MEMBROS_MOCK[projeto.id] ?? (MEMBROS_MOCK[projeto.id] = membrosDoProjetoMock(projeto));
+          membrosDoProjeto.push({
+            id: `membro-mock-${Date.now()}`,
+            projeto: null,
+            usuario: candidatura.usuario,
+            funcao: funcao ?? null,
+            dataAdesao: new Date().toISOString(),
+          });
+        }
+        candidatura.status = 'ACEITO';
+        candidatura.dataResposta = new Date().toISOString();
+        return resolverComAtraso(clonar(candidatura) as unknown as TResposta);
+      }
+
+      const matchRejeitarCandidatura = method === 'PATCH' && caminhoBase.match(/^\/candidaturas\/([^/]+)\/rejeitar$/);
+      if (matchRejeitarCandidatura) {
+        const candidatura = CANDIDATURAS_MOCK.find((c) => c.id === matchRejeitarCandidatura[1]);
+        if (!candidatura) {
+          return rejeitarComAtraso(new ApiError(404, 'Candidatura não encontrada.'));
+        }
+        const { motivoRejeicao } = body as { motivoRejeicao: string };
+        candidatura.status = 'REJEITADO';
+        candidatura.motivoRejeicao = motivoRejeicao;
+        candidatura.dataResposta = new Date().toISOString();
+        const projeto = PROJETOS_MOCK.find((p) => p.id === candidatura.projeto.id);
+        if (projeto) projeto.totalCandidaturasPendentes = Math.max(0, projeto.totalCandidaturasPendentes - 1);
+        return resolverComAtraso(clonar(candidatura) as unknown as TResposta);
+      }
+
+      const matchResolverDenuncia = method === 'PATCH' && caminhoBase.match(/^\/denuncias\/([^/]+)\/resolver$/);
+      if (matchResolverDenuncia) {
+        const denuncia = DENUNCIAS_MOCK.find((d) => d.id === matchResolverDenuncia[1]);
+        if (!denuncia) {
+          return rejeitarComAtraso(new ApiError(404, 'Denúncia não encontrada.'));
+        }
+        const procedente = parametros.get('procedente') === 'true';
+        denuncia.status = procedente ? 'PROCEDENTE' : 'IMPROCEDENTE';
+        denuncia.analisadoEm = new Date().toISOString();
+        const indice = DENUNCIAS_MOCK.indexOf(denuncia);
+        DENUNCIAS_MOCK.splice(indice, 1);
+        return resolverComAtraso(clonar(denuncia) as unknown as TResposta);
       }
 
       return rejeitarComAtraso(
