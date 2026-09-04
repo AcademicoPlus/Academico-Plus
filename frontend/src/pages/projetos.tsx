@@ -68,7 +68,7 @@ export default function Projetos() {
         <select 
           value={status}
           onChange={(e) => { setStatus(e.target.value as StatusProjeto | ''); setCarregando(true); }}
-          className="px-6 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer min-w-[200px]"
+          className="px-6 py-4 bg-white border border-gray-200 rounded-2xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer min-w-50"
         >
           <option value="">Todos os status</option>
           {OPCOES_STATUS.map((opcao) => (
@@ -101,7 +101,7 @@ export default function Projetos() {
                   alt="Capa do projeto" 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0B1D33]/90 via-[#0B1D33]/20 to-transparent"></div>
+                <div className="absolute inset-0 bg-linear-to-t from-[#0B1D33]/90 via-[#0B1D33]/20 to-transparent"></div>
                 
                 <div className="absolute top-4 right-4">
                   <span className={`bg-white/95 backdrop-blur-sm px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${STATUS_PROJETO_BADGE[proj.status]}`}>

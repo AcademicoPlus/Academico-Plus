@@ -5,7 +5,7 @@ import { Link } from 'react-router-dom';
 export default function PoliticaDePrivacidade() {
   return (
     <div className="min-h-screen w-full bg-[#F8F9FA] font-sans py-10 px-6">
-      <div className="max-w-2xl mx-auto bg-white rounded-[24px] shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
+      <div className="max-w-2xl mx-auto bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
         <Link to="/cadastro" className="text-[#1472dd] text-sm font-semibold hover:underline">
           ← Voltar para o cadastro
         </Link>

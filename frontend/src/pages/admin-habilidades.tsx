@@ -255,7 +255,7 @@ export default function AdminHabilidades() {
         <select
           value={categoriaFiltro}
           onChange={(e) => { setCategoriaFiltro(e.target.value); setPagina(0); }}
-          className="px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer min-w-[200px]"
+          className="px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer min-w-50"
         >
           <option value="">Todas as categorias</option>
           {categorias.map((categoria) => <option key={categoria} value={categoria}>{categoria}</option>)}

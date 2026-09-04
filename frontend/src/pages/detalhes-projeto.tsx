@@ -188,7 +188,7 @@ function DetalhesProjeto({ id }: { id: string }) {
         {/* Capa do Projeto (Hero Section) */}
         <div className="h-64 sm:h-80 w-full relative bg-gray-100">
           <img src={`https://picsum.photos/seed/${projeto.id}projeto/1200/400`} alt="Capa" className="w-full h-full object-cover" />
-          <div className="absolute inset-0 bg-gradient-to-t from-[#0B1D33]/90 via-[#0B1D33]/40 to-transparent"></div>
+          <div className="absolute inset-0 bg-linear-to-t from-[#0B1D33]/90 via-[#0B1D33]/40 to-transparent"></div>
           <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 pr-6">
             <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider mb-4 inline-block shadow-sm ${STATUS_PROJETO_BADGE[projeto.status]}`}>
               ● {STATUS_PROJETO_LABEL[projeto.status]}
