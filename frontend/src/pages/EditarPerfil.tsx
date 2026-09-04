@@ -22,7 +22,9 @@ import {
 import { listarCursos, type Curso } from '../services/cursoService';
 import {
   adicionarHabilidadeAoPerfil,
+  atualizarNivelHabilidade,
   removerHabilidadeDoPerfil,
+  type NivelHabilidade,
 } from '../services/usuarioHabilidadeService';
 
 import Input from '../components/Input';
@@ -32,13 +34,20 @@ import Input from '../components/Input';
 type HabilidadeNoPerfil = {
   id: string;
   habilidade: { id: string; nome: string };
-  nivel: string;
+  nivel: NivelHabilidade;
 };
 
 type HabilidadeResumo = {
   id: string;
   nome: string;
 };
+
+const NIVEIS_HABILIDADE: { valor: NivelHabilidade; label: string }[] = [
+  { valor: 'INICIANTE', label: 'Iniciante' },
+  { valor: 'INTERMEDIARIO', label: 'Intermediário' },
+  { valor: 'AVANCADO', label: 'Avançado' },
+  { valor: 'EXPERT', label: 'Expert' },
+];
 
 // ─── Utilitários ──────────────────────────────────────────────────────────────
 
@@ -94,10 +103,12 @@ export default function EditarPerfil() {
   // ── Habilidades ────────────────────────────────────────────────────────────
   const [habilidades, setHabilidades] = useState<HabilidadeNoPerfil[]>([]);
   const [buscaHabilidade, setBuscaHabilidade] = useState('');
+  const [nivelParaAdicionar, setNivelParaAdicionar] = useState<NivelHabilidade>('INICIANTE');
   const [sugestoes, setSugestoes] = useState<HabilidadeResumo[]>([]);
   const [carregandoSugestoes, setCarregandoSugestoes] = useState(false);
   const [removendo, setRemovendo] = useState<string | null>(null);
   const [adicionando, setAdicionando] = useState(false);
+  const [atualizandoNivel, setAtualizandoNivel] = useState<string | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   // ── Estados de submissão ───────────────────────────────────────────────────
@@ -229,10 +240,11 @@ export default function EditarPerfil() {
     setAdicionando(true);
     setErroGeral(null);
     try {
-      const nova = await adicionarHabilidadeAoPerfil(h.id);
+      const nova = await adicionarHabilidadeAoPerfil(h.id, nivelParaAdicionar);
       const novasHabilidades = [...habilidades, nova as HabilidadeNoPerfil];
       setHabilidades(novasHabilidades);
       setBuscaHabilidade('');
+      setNivelParaAdicionar('INICIANTE');
       setSugestoes([]);
       atualizarHabilidadesNoCacheMeuPerfil(novasHabilidades as unknown as UsuarioPerfil['habilidades']);
     } catch (e) {
@@ -242,12 +254,32 @@ export default function EditarPerfil() {
     }
   }
 
-  async function handleRemover(habilidadeId: string) {
-    setRemovendo(habilidadeId);
+  async function handleAlterarNivel(item: HabilidadeNoPerfil, nivel: NivelHabilidade) {
+    setAtualizandoNivel(item.id);
     setErroGeral(null);
     try {
-      await removerHabilidadeDoPerfil(habilidadeId);
-      const novasHabilidades = habilidades.filter((h) => h.id !== habilidadeId);
+      // A rota espera o id da habilidade no catálogo (item.habilidade.id), não
+      // o id do vínculo (item.id) — ver UsuarioHabilidadeService.obterVinculo,
+      // que busca por usuario_id + habilidade_id.
+      const atualizada = await atualizarNivelHabilidade(item.habilidade.id, nivel);
+      const novasHabilidades = habilidades.map((h) =>
+        h.id === item.id ? { ...h, nivel: atualizada.nivel } : h,
+      );
+      setHabilidades(novasHabilidades);
+      atualizarHabilidadesNoCacheMeuPerfil(novasHabilidades as unknown as UsuarioPerfil['habilidades']);
+    } catch (e) {
+      setErroGeral(e instanceof ApiError ? e.message : 'Erro ao atualizar nível da habilidade.');
+    } finally {
+      setAtualizandoNivel(null);
+    }
+  }
+
+  async function handleRemover(item: HabilidadeNoPerfil) {
+    setRemovendo(item.id);
+    setErroGeral(null);
+    try {
+      await removerHabilidadeDoPerfil(item.habilidade.id);
+      const novasHabilidades = habilidades.filter((h) => h.id !== item.id);
       setHabilidades(novasHabilidades);
       atualizarHabilidadesNoCacheMeuPerfil(novasHabilidades as unknown as UsuarioPerfil['habilidades']);
     } catch (e) {
@@ -527,22 +559,37 @@ export default function EditarPerfil() {
             Habilidades
           </label>
 
-          {/* Campo de busca com botão + */}
+          {/* Campo de busca + seletor de nível para a próxima habilidade a adicionar */}
           <div className="relative" ref={dropdownRef}>
-            <div className="relative flex items-center">
-              <input
-                type="text"
-                value={buscaHabilidade}
-                onChange={(e) => handleBuscaHabilidadeChange(e.target.value)}
-                placeholder="Adicionar habilidade..."
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 pr-10
-                           text-sm text-gray-800 placeholder:text-gray-400 outline-none
-                           focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-500
-                           transition-colors duration-150"
-              />
-              <span className="absolute right-3 text-violet-600 font-bold text-lg pointer-events-none select-none">
-                +
-              </span>
+            <div className="flex items-center gap-2">
+              <div className="relative flex items-center flex-1">
+                <input
+                  type="text"
+                  value={buscaHabilidade}
+                  onChange={(e) => handleBuscaHabilidadeChange(e.target.value)}
+                  placeholder="Adicionar habilidade..."
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 pr-10
+                             text-sm text-gray-800 placeholder:text-gray-400 outline-none
+                             focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-500
+                             transition-colors duration-150"
+                />
+                <span className="absolute right-3 text-violet-600 font-bold text-lg pointer-events-none select-none">
+                  +
+                </span>
+              </div>
+
+              <select
+                value={nivelParaAdicionar}
+                onChange={(e) => setNivelParaAdicionar(e.target.value as NivelHabilidade)}
+                title="Nível de experiência da habilidade a adicionar"
+                className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700
+                           outline-none focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-500
+                           transition-colors duration-150 shrink-0"
+              >
+                {NIVEIS_HABILIDADE.map((n) => (
+                  <option key={n.valor} value={n.valor}>{n.label}</option>
+                ))}
+              </select>
             </div>
 
             {/* Dropdown de sugestões */}
@@ -574,22 +621,37 @@ export default function EditarPerfil() {
             )}
           </div>
 
-          {/* Badges das habilidades atuais */}
+          {/* Badges das habilidades atuais, com seletor de nível inline */}
           {habilidades.length > 0 ? (
             <div className="flex flex-wrap gap-2 pt-1">
               {habilidades.map((h) => {
                 const estaRemovendo = removendo === h.id;
+                const estaAtualizandoNivel = atualizandoNivel === h.id;
 
                 return (
                   <span
                     key={h.id}
-                    className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100"
+                    className="inline-flex items-center gap-1.5 rounded-full pl-3 pr-1 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100"
                   >
                     <span>{h.habilidade.nome}</span>
 
+                    <select
+                      value={h.nivel}
+                      onChange={(e) => handleAlterarNivel(h, e.target.value as NivelHabilidade)}
+                      disabled={estaAtualizandoNivel || estaRemovendo}
+                      aria-label={`Nível de experiência em ${h.habilidade.nome}`}
+                      className="rounded-full bg-white border border-indigo-200 text-indigo-700 text-[11px]
+                                 font-medium pl-1.5 pr-1 py-0.5 outline-none focus:ring-1 focus:ring-violet-500
+                                 disabled:opacity-50"
+                    >
+                      {NIVEIS_HABILIDADE.map((n) => (
+                        <option key={n.valor} value={n.valor}>{n.label}</option>
+                      ))}
+                    </select>
+
                     <button
                       type="button"
-                      onClick={() => handleRemover(h.id)}
+                      onClick={() => handleRemover(h)}
                       disabled={estaRemovendo || adicionando}
                       aria-label={`Remover ${h.habilidade.nome}`}
                       className="ml-0.5 rounded-full p-0.5 text-indigo-400 hover:text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-40"
