@@ -222,7 +222,7 @@ export default function ExplorarPessoas() {
           className="rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-3 text-sm
                      text-gray-700 outline-none focus:border-indigo-400 focus:ring-2
                      focus:ring-indigo-500 focus:bg-white transition-colors duration-150
-                     min-w-[170px]"
+                     min-w-42.5"
         >
           <option value="">Todos os cursos</option>
           {cursos.map((c) => (
@@ -237,7 +237,7 @@ export default function ExplorarPessoas() {
           className="rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-3 text-sm
                      text-gray-700 outline-none focus:border-indigo-400 focus:ring-2
                      focus:ring-indigo-500 focus:bg-white transition-colors duration-150
-                     min-w-[170px]"
+                     min-w-42.5"
         >
           <option value="">Todas as habilidades</option>
           {habilidadesCatalogo.map((h) => (

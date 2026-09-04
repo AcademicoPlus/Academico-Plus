@@ -167,7 +167,7 @@ export default function AdminUsuarios() {
                           ))}
                         </select>
                         {erroLinha[usuario.id] && (
-                          <p className="text-xs text-red-500 mt-1.5 max-w-[200px]">{erroLinha[usuario.id]}</p>
+                          <p className="text-xs text-red-500 mt-1.5 max-w-50">{erroLinha[usuario.id]}</p>
                         )}
                       </td>
                       <td className="px-6 py-4">

@@ -318,7 +318,7 @@ export default function Perfil() {
       {/* Card Principal de Perfil com Banner */}
       <Card className="overflow-hidden p-0 border border-gray-100 shadow-sm">
         {/* Banner Decorativo no Topo */}
-        <div className="h-36 sm:h-44 w-full bg-gradient-to-r from-gray-100 via-gray-200 to-gray-300 relative" />
+        <div className="h-36 sm:h-44 w-full bg-linear-to-r from-gray-100 via-gray-200 to-gray-300 relative" />
 
         {/* Informações do Usuário com Avatar Sobreposto */}
         <div className="px-6 sm:px-8 pb-6 pt-0">
