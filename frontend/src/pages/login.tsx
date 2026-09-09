@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useState, type FormEvent } from 'react';
 import logo from '../assets/logo.png'
 import { login } from '../services/authService';
@@ -147,7 +147,7 @@ export default function Login() {
                   <input type="checkbox" defaultChecked className="w-4 h-4 rounded text-[#F27405] border-gray-300 focus:ring-[#F27405]" />
                   <span className="ml-2 text-sm text-gray-500">Lembrar-me</span>
                 </label>
-                <a href="#" className="text-sm text-[#F27405] hover:underline font-medium">Esqueci a senha</a>
+                <Link to="/esqueci-senha" className="text-sm text-[#F27405] hover:underline font-medium">Esqueci a senha</Link>
               </div>
 
               {/* Botão Laranja */}

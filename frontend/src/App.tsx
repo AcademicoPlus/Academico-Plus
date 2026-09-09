@@ -10,6 +10,7 @@ import RotaAdmin from './routes/rotaadmin'
 // 2. Importando as Telas Públicas (Fora do sistema)
 import Login from './pages/login'
 import Cadastro from './pages/cadastro'
+import EsqueciSenha from './pages/esqueci-senha'
 import TermosDeUso from './pages/termosdeuso'
 import PoliticaDePrivacidade from './pages/politicadeprivacidade'
 
@@ -40,6 +41,7 @@ export default function App() {
         {/* ROTAS PÚBLICAS (Ocupam a tela toda, sem o menu) */}
         <Route path="/login" element={<Login />} />
         <Route path="/cadastro" element={<Cadastro />} />
+        <Route path="/esqueci-senha" element={<EsqueciSenha />} />
         <Route path="/termos-de-uso" element={<TermosDeUso />} />
         <Route path="/politica-de-privacidade" element={<PoliticaDePrivacidade />} />
 

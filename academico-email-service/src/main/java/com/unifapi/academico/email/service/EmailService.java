@@ -21,7 +21,7 @@ public class EmailService {
     @Value("${app.resend.api-url:https://api.resend.com/emails}")
     private String resendApiUrl;
 
-    @Value("${app.email.from:Atelier <nao-responda@resend.dev>}")
+    @Value("${app.email.from:Academico+ <nao-responda@resend.dev>}")
     private String emailFrom;
 
     private final RestClient restClient;
