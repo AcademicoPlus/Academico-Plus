@@ -67,16 +67,9 @@ export default function Login() {
             Crie projetos, recrute colaboradores por habilidades e faça parte de algo maior com colegas de outros cursos.
           </p>
 
-          {/* Estatísticas */}
+          
           <div className="flex gap-10">
-            <div>
-            </div>
-            <div>
-
-            </div>
-            <div>
-
-            </div>
+          
           </div>
         </div>
       </div>
@@ -85,7 +78,7 @@ export default function Login() {
       <div className="w-full lg:w-1/2 flex flex-col justify-center items-center p-6">
         <div className="w-full max-w-md">
 
-          {/* Logo movida para cá, em cima do título! */}
+          {/* Logo */}
           <div className="mb-8 px-2">
             <img src={logo} alt="Logo Acadêmico+" className="h-12 object-contain" />
           </div>
@@ -95,11 +88,7 @@ export default function Login() {
               <h2 className="text-3xl font-bold text-[#183E6C]">Bem-vindo de volta</h2>
               <p className="text-gray-500 mt-1">Entre na sua conta institucional</p>
             </div>
-            <button className="p-2.5 bg-gray-100 rounded-full text-gray-500 hover:bg-gray-200 transition-colors">
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"></path>
-              </svg>
-            </button>
+            
           </div>
 
           <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
