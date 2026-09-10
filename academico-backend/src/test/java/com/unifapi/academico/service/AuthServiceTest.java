@@ -359,14 +359,15 @@ class AuthServiceTest {
     // ============================================
 
     @Test
-    void deveLancarExcecaoQuandoUsuarioNaoExisteAoPreverReset() {
+    void deveRetornarRespostaGenericaQuandoUsuarioNaoExisteAoPreverReset() {
         String email = "fantasma@unifapi.edu.br";
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        // Ao contrário de solicitarResetSenha, este método É um oráculo deliberado de enumeração.
-        assertThatThrownBy(() -> authService.previewResetTarget(email))
-                .isInstanceOf(RecursoNaoEncontradoException.class)
-                .hasMessageContaining("Nenhum usuário encontrado");
+        // Mesma proteção anti-enumeração do solicitarResetSenha: nunca revela se o e-mail existe.
+        ResetPreviewResponse response = authService.previewResetTarget(email);
+
+        assertThat(response.sucesso()).isTrue();
+        assertThat(response.emailPreview()).isEqualTo("fa******@unifapi.edu.br");
     }
 
     @Test
