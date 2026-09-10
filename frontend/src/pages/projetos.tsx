@@ -53,7 +53,7 @@ export default function Projetos() {
         </Link>
       </header>
 
-      {/* Filtros de Busca (Modernizados) */}
+      {/* Filtros de Busca */}
       <section className="flex flex-col md:flex-row gap-4 mb-10">
         <div className="flex-1 relative">
           <input 
@@ -94,16 +94,16 @@ export default function Projetos() {
           {projetos.map((proj) => (
             <div key={proj.id} className="bg-white rounded-3xl border border-gray-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden group hover:shadow-[0_15px_40px_rgb(0,0,0,0.08)] transition-all duration-300">
               
-              {/* Capa do Card */}
-              <div className="relative h-56 overflow-hidden bg-gray-100">
+              {/* Capa do Card Clicável */}
+              <Link to={`/detalhes/${proj.id}`} className="relative h-56 overflow-hidden bg-gray-100 block cursor-pointer">
                 <img 
                   src={`https://picsum.photos/seed/${proj.id}projeto/800/400`} 
-                  alt="Capa do projeto" 
+                  alt={`Capa do projeto ${proj.titulo}`} 
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
                 />
                 <div className="absolute inset-0 bg-linear-to-t from-[#0B1D33]/90 via-[#0B1D33]/20 to-transparent"></div>
                 
-                <div className="absolute top-4 right-4">
+                <div className="absolute top-4 right-4 z-10">
                   <span className={`bg-white/95 backdrop-blur-sm px-3.5 py-1.5 rounded-xl text-[10px] font-black uppercase tracking-wider shadow-sm ${STATUS_PROJETO_BADGE[proj.status]}`}>
                     {STATUS_PROJETO_LABEL[proj.status]}
                   </span>
@@ -112,7 +112,7 @@ export default function Projetos() {
                 <h3 className="absolute bottom-4 left-6 right-6 font-extrabold text-2xl text-white leading-tight drop-shadow-md">
                   {proj.titulo}
                 </h3>
-              </div>
+              </Link>
               
               <div className="p-6 md:p-8 flex flex-col flex-1">
                 <p className="text-gray-500 mb-6 line-clamp-3 leading-relaxed">
