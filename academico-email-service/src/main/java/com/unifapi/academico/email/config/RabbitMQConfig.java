@@ -74,6 +74,9 @@ public class RabbitMQConfig {
         Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
         DefaultClassMapper classMapper = new DefaultClassMapper();
         classMapper.setIdClassMapping(Map.of("codigoVerificacao", CodigoVerificacaoMessage.class));
+        // Mesmo cuidado do lado do backend: sem afterPropertiesSet() o mapa reverso usado ao
+        // publicar (fromClass) fica vazio e o __TypeId__ sairia como o FQN da classe.
+        classMapper.afterPropertiesSet();
         converter.setClassMapper(classMapper);
         return converter;
     }

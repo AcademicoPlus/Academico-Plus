@@ -36,6 +36,11 @@ public class RabbitMQConfig {
         Jackson2JsonMessageConverter converter = new Jackson2JsonMessageConverter();
         DefaultClassMapper classMapper = new DefaultClassMapper();
         classMapper.setIdClassMapping(Map.of("codigoVerificacao", CodigoVerificacaoMessage.class));
+        // setIdClassMapping só popula o mapa idClassMapping (usado para desserializar); o mapa
+        // reverso usado ao publicar (fromClass) só é montado em afterPropertiesSet(), que o Spring
+        // não chama sozinho porque este DefaultClassMapper não é um bean gerenciado. Sem chamar
+        // manualmente, o header __TypeId__ sai como o FQN da classe em vez do id lógico combinado.
+        classMapper.afterPropertiesSet();
         converter.setClassMapper(classMapper);
         return converter;
     }

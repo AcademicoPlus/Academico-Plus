@@ -152,16 +152,21 @@ public class AuthService {
         return new MensagemResponse(true, mensagemGenerica);
     }
 
-    /** Só expõe a versão mascarada do e-mail: o valor completo nunca deve voltar na resposta. */
+    /**
+     * Só expõe a versão mascarada do e-mail: o valor completo nunca deve voltar na resposta.
+     * Nunca lança 404 pra e-mail não cadastrado — mesma regra do solicitarResetSenha: revelar
+     * a existência da conta aqui destruiria a proteção anti-enumeração daquele endpoint, já que
+     * o front chama os dois em sequência no mesmo passo do fluxo.
+     */
     @Transactional(readOnly = true)
     public ResetPreviewResponse previewResetTarget(String email) {
         String emailNorm = email.trim().toLowerCase();
 
-        Usuario usuario = usuarioRepository.findByEmail(emailNorm)
-                .orElseThrow(() -> new RecursoNaoEncontradoException("Nenhum usuário encontrado para este e-mail."));
+        Usuario usuario = usuarioRepository.findByEmail(emailNorm).orElse(null);
+        String emailParaMascarar = usuario != null ? usuario.getEmail() : emailNorm;
 
-        return new ResetPreviewResponse(true, "Usuário encontrado para recuperação.",
-                mascararEmail(usuario.getEmail()));
+        return new ResetPreviewResponse(true, "Se este e-mail estiver cadastrado, um código foi enviado.",
+                mascararEmail(emailParaMascarar));
     }
 
     @Transactional

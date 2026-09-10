@@ -12,6 +12,7 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -20,6 +21,18 @@ export default function Login() {
 
     try {
       const resposta = await login({ email, senha });
+
+      // O backend responde 200 OK mesmo em credenciais inválidas ou conta
+      // desativada (contrato consistente entre as duas falhas de login) — só
+      // o campo "sucesso" indica se realmente autenticou. Sem essa checagem,
+      // "token: null" seria salvo como a string "null" no localStorage e o
+      // app trataria isso como sessão válida, levando pro dashboard sem
+      // token de verdade (todas as chamadas subsequentes voltam 401).
+      if (!resposta.sucesso || !resposta.token) {
+        setErro(resposta.mensagem);
+        return;
+      }
+
       salvarToken(resposta.token);
       navigate('/dashboard');
     } catch (erroCapturado) {
@@ -126,19 +139,24 @@ export default function Login() {
                     </svg>
                   </div>
                   <input
-                    type="password"
+                    type={mostrarSenha ? 'text' : 'password'}
                     placeholder="········"
                     value={senha}
                     onChange={(e) => setSenha(e.target.value)}
                     required
                     className="w-full pl-11 pr-12 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 font-mono tracking-widest"
                   />
-                  <div className="absolute inset-y-0 right-0 pr-4 flex items-center cursor-pointer">
-                    <svg className="h-5 w-5 text-gray-400 hover:text-[#F27405] transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <button
+                    type="button"
+                    onClick={() => setMostrarSenha((valor) => !valor)}
+                    aria-label={mostrarSenha ? 'Ocultar senha' : 'Mostrar senha'}
+                    className="absolute inset-y-0 right-0 pr-4 flex items-center text-gray-400 hover:text-[#F27405] transition-colors"
+                  >
+                    <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
                     </svg>
-                  </div>
+                  </button>
                 </div>
               </div>
 
