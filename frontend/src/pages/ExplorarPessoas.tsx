@@ -39,11 +39,11 @@ function iniciais(nome: string): string {
 }
 
 const avatarPalette = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
 ];
 
 function avatarColor(nome: string): string {
@@ -56,18 +56,18 @@ function avatarColor(nome: string): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col gap-3 animate-pulse">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3 animate-pulse">
       <div className="flex items-center gap-3">
-        <div className="h-11 w-11 rounded-full bg-gray-200 shrink-0" />
+        <div className="h-11 w-11 rounded-full bg-gray-200 dark:bg-slate-700 shrink-0" />
         <div className="flex-1 flex flex-col gap-2">
-          <div className="h-3.5 w-3/5 rounded bg-gray-200" />
-          <div className="h-3 w-2/5 rounded bg-gray-100" />
+          <div className="h-3.5 w-3/5 rounded bg-gray-200 dark:bg-slate-700" />
+          <div className="h-3 w-2/5 rounded bg-gray-100 dark:bg-slate-800" />
         </div>
       </div>
       <div className="flex gap-2">
-        <div className="h-5 w-16 rounded-full bg-gray-100" />
-        <div className="h-5 w-20 rounded-full bg-gray-100" />
-        <div className="h-5 w-14 rounded-full bg-gray-100" />
+        <div className="h-5 w-16 rounded-full bg-gray-100 dark:bg-slate-800" />
+        <div className="h-5 w-20 rounded-full bg-gray-100 dark:bg-slate-800" />
+        <div className="h-5 w-14 rounded-full bg-gray-100 dark:bg-slate-800" />
       </div>
     </div>
   );
@@ -187,8 +187,8 @@ export default function ExplorarPessoas() {
 
       {/* Cabeçalho */}
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Explorar Pessoas</h1>
-        <p className="text-sm text-gray-500 mt-0.5">{subtitulo}</p>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Explorar Pessoas</h1>
+        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">{subtitulo}</p>
       </div>
 
       {/* Barra de busca + filtros */}
@@ -196,7 +196,7 @@ export default function ExplorarPessoas() {
 
         {/* Campo de busca */}
         <div className="relative flex-1">
-          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
+          <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400 dark:text-gray-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none"
               viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
               <path strokeLinecap="round" strokeLinejoin="round"
@@ -208,9 +208,9 @@ export default function ExplorarPessoas() {
             value={busca}
             onChange={(e) => handleBusca(e.target.value)}
             placeholder="Buscar por nome ou curso..."
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 py-2.5 pl-9 pr-4
-                       text-sm text-gray-800 placeholder:text-gray-400 outline-none
-                       focus:bg-white focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 py-2.5 pl-9 pr-4
+                       text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none
+                       focus:bg-white dark:focus:bg-slate-800 focus:border-indigo-400 focus:ring-2 focus:ring-indigo-500
                        transition-colors duration-150"
           />
         </div>
@@ -219,9 +219,9 @@ export default function ExplorarPessoas() {
         <select
           value={idCursoSelecionado}
           onChange={(e) => handleCurso(e.target.value)}
-          className="rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-3 text-sm
-                     text-gray-700 outline-none focus:border-indigo-400 focus:ring-2
-                     focus:ring-indigo-500 focus:bg-white transition-colors duration-150
+          className="rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 py-2.5 px-3 text-sm
+                     text-gray-700 dark:text-gray-200 outline-none focus:border-indigo-400 focus:ring-2
+                     focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-colors duration-150
                      min-w-42.5"
         >
           <option value="">Todos os cursos</option>
@@ -234,9 +234,9 @@ export default function ExplorarPessoas() {
         <select
           value={idHabilidadeSelecionada}
           onChange={(e) => handleHabilidade(e.target.value)}
-          className="rounded-xl border border-gray-200 bg-gray-50 py-2.5 px-3 text-sm
-                     text-gray-700 outline-none focus:border-indigo-400 focus:ring-2
-                     focus:ring-indigo-500 focus:bg-white transition-colors duration-150
+          className="rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 py-2.5 px-3 text-sm
+                     text-gray-700 dark:text-gray-200 outline-none focus:border-indigo-400 focus:ring-2
+                     focus:ring-indigo-500 focus:bg-white dark:focus:bg-slate-800 transition-colors duration-150
                      min-w-42.5"
         >
           <option value="">Todas as habilidades</option>
@@ -249,7 +249,7 @@ export default function ExplorarPessoas() {
       {/* Erro */}
       {erro && (
         <p role="alert"
-          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
           {erro}
         </p>
       )}
@@ -262,8 +262,8 @@ export default function ExplorarPessoas() {
       ) : usuariosFiltrados.length === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
           <span className="text-4xl">🔍</span>
-          <p className="text-gray-500 text-sm">Nenhuma pessoa encontrada.</p>
-          <p className="text-gray-400 text-xs">Tente outros termos ou remova os filtros.</p>
+          <p className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma pessoa encontrada.</p>
+          <p className="text-gray-400 dark:text-gray-500 text-xs">Tente outros termos ou remova os filtros.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -290,8 +290,8 @@ export default function ExplorarPessoas() {
                   )}
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-semibold text-gray-900 truncate">{u.nome}</p>
-                    <p className="text-xs text-gray-500 truncate">{u.curso ?? '—'}</p>
+                    <p className="text-sm font-semibold text-gray-900 dark:text-gray-100 truncate">{u.nome}</p>
+                    <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{u.curso ?? '—'}</p>
                   </div>
                 </div>
 
@@ -299,7 +299,7 @@ export default function ExplorarPessoas() {
                 {u.permission === 'PROFESSOR' && (
                   <div>
                     <span className="inline-flex items-center rounded-full px-2.5 py-0.5
-                                     text-xs font-medium bg-indigo-100 text-indigo-700">
+                                     text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
                       Professor
                     </span>
                   </div>
@@ -312,7 +312,7 @@ export default function ExplorarPessoas() {
                       <Badge key={h.id} variant="skill">{h.nome}</Badge>
                     ))}
                     {(u.habilidades ?? []).length > 4 && (
-                      <span className="text-xs text-gray-400 self-center">
+                      <span className="text-xs text-gray-400 dark:text-gray-500 self-center">
                         +{(u.habilidades ?? []).length - 4}
                       </span>
                     )}

@@ -86,8 +86,8 @@ export default function AdminUsuarios() {
     <div className="pb-12 max-w-7xl mx-auto">
       <header className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-extrabold text-[#183E6C] tracking-tight">Usuários</h1>
-          <p className="text-gray-500 mt-1 font-medium">{usuarios.length} usuários cadastrados</p>
+          <h1 className="text-2xl md:text-3xl font-extrabold text-[#183E6C] dark:text-blue-300 tracking-tight">Usuários</h1>
+          <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{usuarios.length} usuários cadastrados</p>
         </div>
         <div className="relative w-full md:w-80">
           <input
@@ -95,30 +95,30 @@ export default function AdminUsuarios() {
             placeholder="Buscar por nome ou curso..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 text-gray-700 shadow-sm transition-all"
+            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 text-gray-700 dark:text-gray-200 shadow-sm transition-all"
           />
-          <svg className="w-5 h-5 text-gray-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
       </header>
 
       {erro && (
-        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm">
+        <div className="mb-6 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-6 py-4 text-sm font-semibold text-red-600 dark:text-red-400 shadow-sm">
           {erro}
         </div>
       )}
 
       {carregando ? (
-        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 animate-pulse">Carregando usuários...</p></div>
+        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Carregando usuários...</p></div>
       ) : usuariosFiltrados.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-lg text-gray-500 font-medium">Nenhum usuário encontrado.</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
+          <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Nenhum usuário encontrado.</p>
         </div>
       ) : (
-        <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left">
               <thead>
-                <tr className="border-b border-gray-100 text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
+                <tr className="border-b border-gray-100 dark:border-slate-700 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                   <th className="px-6 py-4">Usuário</th>
                   <th className="px-6 py-4">Curso</th>
                   <th className="px-6 py-4">Período</th>
@@ -135,21 +135,21 @@ export default function AdminUsuarios() {
                   const ehEuMesmo = usuario.id === meuId;
 
                   return (
-                    <tr key={usuario.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                    <tr key={usuario.id} className="border-b border-gray-50 dark:border-slate-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-3">
-                          <div className="w-10 h-10 rounded-full bg-orange-50 text-[#F27405] flex items-center justify-center font-black border border-orange-100 shrink-0">
+                          <div className="w-10 h-10 rounded-full bg-orange-50 dark:bg-orange-950/40 text-[#F27405] flex items-center justify-center font-black border border-orange-100 dark:border-orange-900/50 shrink-0">
                             {iniciaisDoNome(usuario.nome)}
                           </div>
                           <div>
-                            <p className="font-bold text-[#183E6C]">{usuario.nome}</p>
-                            {ehEuMesmo && <p className="text-[11px] text-gray-400 font-semibold">Você</p>}
+                            <p className="font-bold text-[#183E6C] dark:text-blue-300">{usuario.nome}</p>
+                            {ehEuMesmo && <p className="text-[11px] text-gray-400 dark:text-gray-500 font-semibold">Você</p>}
                           </div>
                         </div>
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{usuario.curso ?? '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{usuario.periodo ?? '—'}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-medium">{usuario.curso ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-medium">{usuario.periodo ?? '—'}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-medium">
                         {usuario.notaMedia != null ? usuario.notaMedia.toFixed(1) : '—'}
                       </td>
                       <td className="px-6 py-4">
@@ -159,7 +159,7 @@ export default function AdminUsuarios() {
                           onChange={(e) =>
                             setPendentes((atual) => ({ ...atual, [usuario.id]: e.target.value }))
                           }
-                          className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 text-sm font-medium text-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                          className="px-3 py-2 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 text-sm font-medium text-gray-700 dark:text-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                           {!nivelAtualId && <option value="">{usuario.permission ?? '—'}</option>}
                           {niveis.map((nivel) => (
@@ -167,7 +167,7 @@ export default function AdminUsuarios() {
                           ))}
                         </select>
                         {erroLinha[usuario.id] && (
-                          <p className="text-xs text-red-500 mt-1.5 max-w-50">{erroLinha[usuario.id]}</p>
+                          <p className="text-xs text-red-500 dark:text-red-400 mt-1.5 max-w-50">{erroLinha[usuario.id]}</p>
                         )}
                       </td>
                       <td className="px-6 py-4">

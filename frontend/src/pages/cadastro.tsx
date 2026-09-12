@@ -62,7 +62,7 @@ export default function Cadastro() {
   }
 
   return (
-    <div className="flex min-h-screen w-full bg-[#F8F9FA] font-sans">
+    <div className="flex min-h-screen w-full bg-[#F8F9FA] dark:bg-slate-950 font-sans">
 
       {/* Lado Esquerdo (Azul Marinho) */}
       <div className="hidden lg:flex w-1/2 bg-[#183E6C] relative flex-col justify-center px-16 xl:px-24 overflow-hidden">
@@ -93,16 +93,16 @@ export default function Cadastro() {
 
           <div className="flex justify-between items-start mb-6 px-2">
             <div>
-              <h2 className="text-3xl font-bold text-[#183E6C]">Crie sua conta</h2>
-              <p className="text-gray-500 mt-1">Preencha seus dados institucionais</p>
+              <h2 className="text-3xl font-bold text-[#183E6C] dark:text-blue-300">Crie sua conta</h2>
+              <p className="text-gray-500 dark:text-gray-300 mt-1">Preencha seus dados institucionais</p>
             </div>
             
           </div>
 
-          <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-8">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 p-8">
 
             {erro && (
-              <div className="mb-5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+              <div className="mb-5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-4 py-3 text-sm text-red-600 dark:text-red-400">
                 {erro}
               </div>
             )}
@@ -110,10 +110,10 @@ export default function Cadastro() {
             <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
 
               <div>
-                <label className="block text-sm font-medium text-[#183E6C] mb-2">Nome Completo</label>
+                <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Nome Completo</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path>
                     </svg>
                   </div>
@@ -123,16 +123,16 @@ export default function Cadastro() {
                     value={nome}
                     onChange={(e) => setNome(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-100"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#183E6C] mb-2">E-mail institucional</label>
+                <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">E-mail institucional</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                     </svg>
                   </div>
@@ -142,16 +142,16 @@ export default function Cadastro() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     required
-                    className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
+                    className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-100"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#183E6C] mb-2">Curso</label>
+                <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Curso</label>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l9-5-9-5-9 5 9 5z"></path>
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z"></path>
                     </svg>
@@ -162,7 +162,7 @@ export default function Cadastro() {
                     onChange={(e) => setIdCurso(e.target.value)}
                     disabled={carregandoCursos}
                     required
-                    className="w-full pl-11 pr-10 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 appearance-none cursor-pointer disabled:cursor-not-allowed"
+                    className="w-full pl-11 pr-10 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-100 appearance-none cursor-pointer disabled:cursor-not-allowed"
                   >
                     <option value="" disabled hidden>
                       {carregandoCursos ? 'Carregando cursos...' : 'Selecione o seu curso'}
@@ -173,7 +173,7 @@ export default function Cadastro() {
                   </select>
 
                   <div className="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
                     </svg>
                   </div>
@@ -181,23 +181,23 @@ export default function Cadastro() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#183E6C] mb-2">Período (opcional)</label>
+                <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Período (opcional)</label>
                 <input
                   type="number"
                   min={1}
                   placeholder="Ex.: 3"
                   value={periodo}
                   onChange={(e) => setPeriodo(e.target.value)}
-                  className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
+                  className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-100"
                 />
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-[#183E6C] mb-2">Senha</label>
+                  <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Senha</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
                       </svg>
                     </div>
@@ -208,16 +208,16 @@ export default function Cadastro() {
                       onChange={(e) => setSenha(e.target.value)}
                       minLength={8}
                       required
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-100"
                     />
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-[#183E6C] mb-2">Confirmar Senha</label>
+                  <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Confirmar Senha</label>
                   <div className="relative">
                     <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                      <svg className="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-5 w-5 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"></path>
                       </svg>
                     </div>
@@ -228,7 +228,7 @@ export default function Cadastro() {
                       onChange={(e) => setConfirmarSenha(e.target.value)}
                       minLength={8}
                       required
-                      className="w-full pl-11 pr-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
+                      className="w-full pl-11 pr-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-100"
                     />
                   </div>
                 </div>
@@ -243,7 +243,7 @@ export default function Cadastro() {
                   required
                   className="mt-1 h-4 w-4 rounded border-gray-300 text-[#1472dd] focus:ring-[#1472dd]/20"
                 />
-                <label htmlFor="aceitouTermos" className="text-sm text-gray-600">
+                <label htmlFor="aceitouTermos" className="text-sm text-gray-600 dark:text-gray-300">
                   Li e aceito os{' '}
                   <Link to="/termos-de-uso" target="_blank" rel="noopener noreferrer" className="text-[#1472dd] hover:underline">
                     Termos de Uso
@@ -265,12 +265,12 @@ export default function Cadastro() {
               </button>
             </form>
 
-            <p className="text-center text-sm text-gray-500 mt-6">
+            <p className="text-center text-sm text-gray-500 dark:text-gray-300 mt-6">
               Já tem uma conta? <a href="/login" className="text-[#F27405] font-semibold hover:underline">Fazer login</a>
             </p>
           </div>
 
-          <p className="text-center text-xs text-gray-400 mt-8 font-medium tracking-wide">
+          <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-8 font-medium tracking-wide">
             UNIFAPI 
           </p>
 

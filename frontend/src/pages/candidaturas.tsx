@@ -66,22 +66,22 @@ export default function Candidaturas() {
         <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">
           Minhas Candidaturas
         </h1>
-        <p className="text-gray-500 text-sm mt-1">{candidaturas.length} candidatura(s) no total</p>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{candidaturas.length} candidatura(s) no total</p>
       </div>
 
       {/* Cards de Status */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
-          <p className="text-3xl font-bold text-gray-900">{contagem.PENDENTE}</p>
-          <p className="text-sm font-bold text-orange-500 bg-orange-50 w-fit mx-auto px-3 py-1 rounded-full mt-2">🕒 Pendente</p>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm text-center">
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{contagem.PENDENTE}</p>
+          <p className="text-sm font-bold text-orange-500 bg-orange-50 dark:bg-orange-950/40 w-fit mx-auto px-3 py-1 rounded-full mt-2">🕒 Pendente</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
-          <p className="text-3xl font-bold text-gray-900">{contagem.ACEITO}</p>
-          <p className="text-sm font-bold text-green-600 bg-green-50 w-fit mx-auto px-3 py-1 rounded-full mt-2">✓ Aceito</p>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm text-center">
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{contagem.ACEITO}</p>
+          <p className="text-sm font-bold text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/40 w-fit mx-auto px-3 py-1 rounded-full mt-2">✓ Aceito</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-center">
-          <p className="text-3xl font-bold text-gray-900">{contagem.REJEITADO}</p>
-          <p className="text-sm font-bold text-red-500 bg-red-50 w-fit mx-auto px-3 py-1 rounded-full mt-2">✕ Rejeitado</p>
+        <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm text-center">
+          <p className="text-3xl font-bold text-gray-900 dark:text-gray-100">{contagem.REJEITADO}</p>
+          <p className="text-sm font-bold text-red-500 dark:text-red-400 bg-red-50 dark:bg-red-950/40 w-fit mx-auto px-3 py-1 rounded-full mt-2">✕ Rejeitado</p>
         </div>
       </div>
 
@@ -90,7 +90,7 @@ export default function Candidaturas() {
         <select
           value={filtroStatus}
           onChange={(e) => setFiltroStatus(e.target.value as StatusCandidatura | '')}
-          className="px-5 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer"
+          className="px-5 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 dark:text-gray-200 shadow-sm cursor-pointer"
         >
           <option value="">Todos os status</option>
           {OPCOES_STATUS.map((status) => (
@@ -100,26 +100,26 @@ export default function Candidaturas() {
       </div>
 
       {erro && (
-        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm">
+        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
           {erro}
         </div>
       )}
 
       {carregando ? (
-        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 animate-pulse">Carregando candidaturas...</p></div>
+        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Carregando candidaturas...</p></div>
       ) : candidaturas.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-lg text-gray-500 font-medium mb-2">Você ainda não se candidatou a nenhum projeto.</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
+          <p className="text-lg text-gray-500 dark:text-gray-400 font-medium mb-2">Você ainda não se candidatou a nenhum projeto.</p>
           <Link to="/projetos" className="text-[#F27405] font-bold hover:underline">Explorar projetos →</Link>
         </div>
       ) : (
         <div className="flex flex-col gap-6">
           {candidaturas.map((candidatura) => (
-            <div key={candidatura.id} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
+            <div key={candidatura.id} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
               <div className="flex justify-between items-start mb-4 gap-4">
                 <Link to={`/detalhes/${candidatura.projeto.id}`} className="min-w-0">
-                  <h3 className="font-bold text-lg text-[#183E6C] hover:text-[#F27405] transition-colors truncate">{candidatura.projeto.titulo}</h3>
-                  <p className="text-sm font-medium text-gray-500">Candidatou-se em {formatarData(candidatura.dataCandidatura)}</p>
+                  <h3 className="font-bold text-lg text-[#183E6C] dark:text-blue-300 hover:text-[#F27405] transition-colors truncate">{candidatura.projeto.titulo}</h3>
+                  <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Candidatou-se em {formatarData(candidatura.dataCandidatura)}</p>
                 </Link>
                 <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${STATUS_CANDIDATURA_BADGE[candidatura.status]}`}>
                   {STATUS_CANDIDATURA_LABEL[candidatura.status]}
@@ -127,16 +127,16 @@ export default function Candidaturas() {
               </div>
 
               {candidatura.mensagem && (
-                <div className="bg-gray-50 p-4 rounded-xl mt-4 border border-gray-100">
-                  <p className="text-xs font-bold text-gray-400 mb-2 uppercase tracking-wider">Sua Mensagem</p>
-                  <p className="text-sm text-gray-600 italic">{candidatura.mensagem}</p>
+                <div className="bg-gray-50 dark:bg-slate-800 p-4 rounded-xl mt-4 border border-gray-100 dark:border-slate-700">
+                  <p className="text-xs font-bold text-gray-400 dark:text-gray-500 mb-2 uppercase tracking-wider">Sua Mensagem</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300 italic">{candidatura.mensagem}</p>
                 </div>
               )}
 
               {candidatura.status === 'REJEITADO' && candidatura.motivoRejeicao && (
-                <div className="bg-red-50 p-4 rounded-xl mt-4 border border-red-100">
-                  <p className="text-xs font-bold text-red-400 mb-2 uppercase tracking-wider">Motivo da Rejeição</p>
-                  <p className="text-sm text-red-600">{candidatura.motivoRejeicao}</p>
+                <div className="bg-red-50 dark:bg-red-950/40 p-4 rounded-xl mt-4 border border-red-100 dark:border-red-900/50">
+                  <p className="text-xs font-bold text-red-400 dark:text-red-400 mb-2 uppercase tracking-wider">Motivo da Rejeição</p>
+                  <p className="text-sm text-red-600 dark:text-red-400">{candidatura.motivoRejeicao}</p>
                 </div>
               )}
 

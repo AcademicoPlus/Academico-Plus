@@ -8,13 +8,13 @@ interface BadgeProps {
 
 // Status → [bg, text] Tailwind classes (cores suaves, fundo claro + texto combinando)
 const statusClasses: Record<NonNullable<BadgeProps["status"]>, string> = {
-  ABERTO: "bg-emerald-100 text-emerald-700",
-  EM_ANDAMENTO: "bg-amber-100   text-amber-700",
-  CONCLUIDO: "bg-violet-100  text-violet-700",
-  PENDENTE: "bg-yellow-100  text-yellow-700",
-  ACEITO: "bg-green-100   text-green-700",
-  REJEITADO: "bg-red-100     text-red-600",
-  CANCELADO: "bg-gray-100 text-gray-500"
+  ABERTO: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+  EM_ANDAMENTO: "bg-amber-100   text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+  CONCLUIDO: "bg-violet-100  text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  PENDENTE: "bg-yellow-100  text-yellow-700 dark:bg-yellow-900/40 dark:text-yellow-300",
+  ACEITO: "bg-green-100   text-green-700 dark:bg-green-900/40 dark:text-green-300",
+  REJEITADO: "bg-red-100     text-red-600 dark:bg-red-900/40 dark:text-red-300",
+  CANCELADO: "bg-gray-100 text-gray-500 dark:bg-slate-800 dark:text-gray-400"
 };
 
 // Rótulos legíveis para exibição quando variant="status"
@@ -30,11 +30,11 @@ const statusLabel: Record<NonNullable<BadgeProps["status"]>, string> = {
 
 // Paleta de cores suaves para badges de habilidade (cicla pelo índice do texto)
 const skillPalette = [
-  "bg-rose-100    text-rose-700",
-  "bg-sky-100     text-sky-700",
-  "bg-violet-100  text-violet-700",
-  "bg-teal-100    text-teal-700",
-  "bg-orange-100  text-orange-700",
+  "bg-rose-100    text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+  "bg-sky-100     text-sky-700 dark:bg-sky-900/40 dark:text-sky-300",
+  "bg-violet-100  text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
+  "bg-teal-100    text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+  "bg-orange-100  text-orange-700 dark:bg-orange-900/40 dark:text-orange-300",
 ];
 
 /**

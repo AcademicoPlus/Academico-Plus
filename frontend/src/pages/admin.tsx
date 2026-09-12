@@ -31,8 +31,8 @@ export default function Admin() {
   return (
     <div className="pb-12 max-w-7xl mx-auto">
       <header className="mb-10">
-        <h1 className="text-3xl md:text-4xl font-extrabold text-[#183E6C] tracking-tight">Administração</h1>
-        <p className="text-gray-500 mt-2 font-medium">Ferramentas de gestão da plataforma, disponíveis apenas para administradores.</p>
+        <h1 className="text-3xl md:text-4xl font-extrabold text-[#183E6C] dark:text-blue-300 tracking-tight">Administração</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-2 font-medium">Ferramentas de gestão da plataforma, disponíveis apenas para administradores.</p>
       </header>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -40,13 +40,13 @@ export default function Admin() {
           <Link
             key={secao.to}
             to={secao.to}
-            className="bg-white rounded-3xl border border-gray-100 shadow-sm p-8 hover:shadow-md hover:border-[#F27405]/30 transition-all group"
+            className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm p-8 hover:shadow-md hover:border-[#F27405]/30 transition-all group"
           >
-            <div className="w-14 h-14 rounded-2xl bg-orange-50 text-[#F27405] flex items-center justify-center mb-6 group-hover:bg-[#F27405] group-hover:text-white transition-colors">
+            <div className="w-14 h-14 rounded-2xl bg-orange-50 dark:bg-orange-950/40 text-[#F27405] flex items-center justify-center mb-6 group-hover:bg-[#F27405] group-hover:text-white transition-colors">
               {secao.icone}
             </div>
-            <h2 className="text-xl font-extrabold text-[#183E6C] mb-2">{secao.titulo}</h2>
-            <p className="text-gray-500 text-sm leading-relaxed">{secao.descricao}</p>
+            <h2 className="text-xl font-extrabold text-[#183E6C] dark:text-blue-300 mb-2">{secao.titulo}</h2>
+            <p className="text-gray-500 dark:text-gray-400 text-sm leading-relaxed">{secao.descricao}</p>
           </Link>
         ))}
       </div>

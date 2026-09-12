@@ -7,7 +7,7 @@ export default function LayoutBase() {
   const [menuAberto, setMenuAberto] = useState(false)
 
   return (
-    <div className="h-screen bg-[#F8F9FA] flex flex-col font-sans overflow-hidden">
+    <div className="h-screen bg-[#F8F9FA] dark:bg-slate-950 flex flex-col font-sans overflow-hidden">
       <Header onToggleMenu={() => setMenuAberto(!menuAberto)} />
       
       <div className="flex flex-1 h-[calc(100vh-4rem)] overflow-hidden relative">

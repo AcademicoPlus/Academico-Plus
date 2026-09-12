@@ -46,11 +46,11 @@ function formatarIniciais(nome: string): string {
 }
 
 const avatarPalette = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
 ];
 
 function obterCorAvatar(nome: string): string {
@@ -71,7 +71,7 @@ function Estrelas({ nota }: { nota: number }) {
         <svg
           key={posicao}
           xmlns="http://www.w3.org/2000/svg"
-          className={`h-3.5 w-3.5 ${posicao <= Math.round(nota) ? 'text-amber-400' : 'text-gray-200'}`}
+          className={`h-3.5 w-3.5 ${posicao <= Math.round(nota) ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700'}`}
           viewBox="0 0 20 20"
           fill="currentColor"
         >
@@ -90,26 +90,26 @@ function obterEstiloHabilidade(nomeHabilidade: string): string {
   const norm = nomeHabilidade.toLowerCase().trim();
 
   if (norm.includes('ui/ux') || norm.includes('design')) {
-    return 'bg-violet-50 text-violet-700 border-violet-200';
+    return 'bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-900/40 dark:text-violet-300 dark:border-violet-800';
   }
   if (norm.includes('figma') || norm.includes('marketing')) {
-    return 'bg-emerald-50 text-emerald-700 border-emerald-200';
+    return 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/40 dark:text-emerald-300 dark:border-emerald-800';
   }
   if (norm.includes('react') || norm.includes('java') || norm.includes('front')) {
-    return 'bg-amber-50 text-amber-700 border-amber-200';
+    return 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800';
   }
   if (norm.includes('pesquisa') || norm.includes('ux')) {
-    return 'bg-purple-50 text-purple-700 border-purple-200';
+    return 'bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-900/40 dark:text-purple-300 dark:border-purple-800';
   }
 
   // Paleta fallback ciclada
   let h = 0;
   for (let i = 0; i < nomeHabilidade.length; i++) h = (h * 31 + nomeHabilidade.charCodeAt(i)) >>> 0;
   const paletaFallback = [
-    'bg-sky-50 text-sky-700 border-sky-200',
-    'bg-rose-50 text-rose-700 border-rose-200',
-    'bg-teal-50 text-teal-700 border-teal-200',
-    'bg-indigo-50 text-indigo-700 border-indigo-200',
+    'bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-900/40 dark:text-sky-300 dark:border-sky-800',
+    'bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-900/40 dark:text-rose-300 dark:border-rose-800',
+    'bg-teal-50 text-teal-700 border-teal-200 dark:bg-teal-900/40 dark:text-teal-300 dark:border-teal-800',
+    'bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-900/40 dark:text-indigo-300 dark:border-indigo-800',
   ];
   return paletaFallback[h % paletaFallback.length];
 }
@@ -255,18 +255,18 @@ export default function Perfil() {
     return (
       <div className="mx-auto max-w-4xl flex flex-col gap-6 py-4 animate-pulse">
         {/* Banner Skeleton */}
-        <div className="h-40 w-full rounded-2xl bg-gray-200" />
+        <div className="h-40 w-full rounded-2xl bg-gray-200 dark:bg-slate-700" />
 
         {/* Card Informações Skeleton */}
-        <div className="bg-white rounded-2xl border border-gray-100 p-6 flex flex-col gap-4">
+        <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 p-6 flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-20 w-20 rounded-full bg-gray-300 shrink-0" />
+            <div className="h-20 w-20 rounded-full bg-gray-300 dark:bg-slate-700 shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-5 w-48 bg-gray-300 rounded" />
-              <div className="h-4 w-32 bg-gray-200 rounded" />
+              <div className="h-5 w-48 bg-gray-300 dark:bg-slate-700 rounded" />
+              <div className="h-4 w-32 bg-gray-200 dark:bg-slate-800 rounded" />
             </div>
           </div>
-          <div className="h-16 w-full bg-gray-100 rounded-xl" />
+          <div className="h-16 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
         </div>
       </div>
     );
@@ -276,16 +276,16 @@ export default function Perfil() {
   if (erro || !usuario) {
     return (
       <div className="mx-auto max-w-2xl py-16 flex flex-col items-center justify-center text-center gap-4">
-        <div className="h-16 w-16 rounded-full bg-red-50 text-red-500 flex items-center justify-center text-2xl">
+        <div className="h-16 w-16 rounded-full bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400 flex items-center justify-center text-2xl">
           ⚠️
         </div>
-        <h2 className="text-xl font-bold text-gray-900">Perfil não encontrado</h2>
-        <p className="text-sm text-gray-500 max-w-md">
+        <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">Perfil não encontrado</h2>
+        <p className="text-sm text-gray-500 dark:text-gray-400 max-w-md">
           {erro ?? 'O usuário solicitado não existe ou você não possui permissão para visualizá-lo.'}
         </p>
         <button
           onClick={() => navigate('/pessoas')}
-          className="mt-2 text-sm font-semibold text-violet-600 hover:text-violet-800 transition-colors"
+          className="mt-2 text-sm font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 transition-colors"
         >
           ← Voltar para Explorar Pessoas
         </button>
@@ -305,7 +305,7 @@ export default function Perfil() {
       <div>
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
+          className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none"
             viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -316,9 +316,9 @@ export default function Perfil() {
       </div>
 
       {/* Card Principal de Perfil com Banner */}
-      <Card className="overflow-hidden p-0 border border-gray-100 shadow-sm">
+      <Card className="overflow-hidden p-0 border border-gray-100 dark:border-slate-700 shadow-sm">
         {/* Banner Decorativo no Topo */}
-        <div className="h-36 sm:h-44 w-full bg-linear-to-r from-gray-100 via-gray-200 to-gray-300 relative" />
+        <div className="h-36 sm:h-44 w-full bg-linear-to-r from-gray-100 via-gray-200 to-gray-300 dark:from-slate-800 dark:via-slate-700 dark:to-slate-600 relative" />
 
         {/* Informações do Usuário com Avatar Sobreposto */}
         <div className="px-6 sm:px-8 pb-6 pt-0">
@@ -330,11 +330,11 @@ export default function Perfil() {
                 <img
                   src={usuario.fotoUrl}
                   alt={usuario.nome}
-                  className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover ring-4 ring-white shadow-md bg-white"
+                  className="h-24 w-24 sm:h-28 sm:w-28 rounded-2xl object-cover ring-4 ring-white dark:ring-slate-900 shadow-md bg-white dark:bg-slate-900"
                 />
               ) : (
                 <div
-                  className={`h-24 w-24 sm:h-28 sm:w-28 rounded-2xl ring-4 ring-white shadow-md flex items-center justify-center text-2xl font-bold ${obterCorAvatar(
+                  className={`h-24 w-24 sm:h-28 sm:w-28 rounded-2xl ring-4 ring-white dark:ring-slate-900 shadow-md flex items-center justify-center text-2xl font-bold ${obterCorAvatar(
                     usuario.nome
                   )}`}
                 >
@@ -349,7 +349,7 @@ export default function Perfil() {
                 {/* Botão Editar Perfil */}
                 <button
                   onClick={() => navigate(`/usuarios/${id}/editar`)}
-                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-violet-600 bg-violet-50 hover:bg-violet-100 border border-violet-100 transition-colors shadow-2xs"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-semibold text-violet-600 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-900/60 border border-violet-100 dark:border-violet-800 transition-colors shadow-2xs"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5 text-violet-600" viewBox="0 0 20 20" fill="currentColor">
                     <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zM11.379 5.793L3 14.172V17h2.828l8.38-8.379-2.83-2.828z" />
@@ -365,7 +365,7 @@ export default function Perfil() {
                     rel="noopener noreferrer"
                     aria-label="LinkedIn"
                     title="LinkedIn"
-                    className="p-1.5 rounded-xl text-violet-600 hover:text-violet-800 hover:bg-violet-50 border border-violet-100 transition-colors flex items-center justify-center"
+                    className="p-1.5 rounded-xl text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:bg-violet-50 dark:hover:bg-violet-900/40 border border-violet-100 dark:border-violet-800 transition-colors flex items-center justify-center"
                   >
                     <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
                       <path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.46 10.9v8.37H9.2V10.9H6.46M7.83 6.2a1.66 1.66 0 0 0-1.66 1.66c0 .92.74 1.66 1.66 1.66.92 0 1.66-.74 1.66-1.66 0-.92-.74-1.66-1.66-1.66Z" />
@@ -381,7 +381,7 @@ export default function Perfil() {
                     rel="noopener noreferrer"
                     aria-label="GitHub"
                     title="GitHub"
-                    className="p-1.5 rounded-xl text-violet-600 hover:text-violet-800 hover:bg-violet-50 border border-violet-100 transition-colors flex items-center justify-center"
+                    className="p-1.5 rounded-xl text-violet-600 dark:text-violet-300 hover:text-violet-800 dark:hover:text-violet-200 hover:bg-violet-50 dark:hover:bg-violet-900/40 border border-violet-100 dark:border-violet-800 transition-colors flex items-center justify-center"
                   >
                     <svg className="h-4 w-4 fill-current" viewBox="0 0 24 24">
                       <path fillRule="evenodd" clipRule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2Z" />
@@ -395,23 +395,23 @@ export default function Perfil() {
           {/* Nome, Curso, Avaliação e Bio */}
           <div className="space-y-2">
             <div>
-              <h1 className="text-2xl font-bold text-gray-900 leading-tight">
+              <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">
                 {usuario.nome}
               </h1>
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 mt-0.5">
-                <p className="text-sm font-medium text-gray-500">
+                <p className="text-sm font-medium text-gray-500 dark:text-gray-400">
                   {cursoEPeriodo}
                 </p>
 
                 {/* Nota média das avaliações recebidas de colegas de projeto */}
                 {usuario.notaMedia != null && usuario.totalAvaliacoes != null && (
                   <span className="inline-flex items-center gap-1 text-sm">
-                    <span className="text-gray-300">·</span>
+                    <span className="text-gray-300 dark:text-gray-600">·</span>
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-amber-400" viewBox="0 0 20 20" fill="currentColor">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.448a1 1 0 00-.364 1.118l1.287 3.957c.299.922-.756 1.688-1.54 1.118l-3.367-2.447a1 1 0 00-1.176 0l-3.368 2.447c-.783.57-1.838-.196-1.539-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.98 9.385c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.951-.69l1.286-3.958z" />
                     </svg>
-                    <span className="font-semibold text-gray-700">{usuario.notaMedia.toFixed(1)}</span>
-                    <span className="text-xs text-gray-400">
+                    <span className="font-semibold text-gray-700 dark:text-gray-200">{usuario.notaMedia.toFixed(1)}</span>
+                    <span className="text-xs text-gray-400 dark:text-gray-500">
                       ({usuario.totalAvaliacoes} {usuario.totalAvaliacoes === 1 ? 'avaliação' : 'avaliações'})
                     </span>
                   </span>
@@ -420,11 +420,11 @@ export default function Perfil() {
             </div>
 
             {usuario.bio ? (
-              <p className="text-sm text-gray-600 leading-relaxed pt-1 max-w-2xl">
+              <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pt-1 max-w-2xl">
                 {usuario.bio}
               </p>
             ) : (
-              <p className="text-sm text-gray-400 italic pt-1">
+              <p className="text-sm text-gray-400 dark:text-gray-500 italic pt-1">
                 Nenhuma biografia informada.
               </p>
             )}
@@ -434,7 +434,7 @@ export default function Perfil() {
 
       {/* Seção: Habilidades */}
       <Card className="p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-4">Habilidades</h2>
+        <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">Habilidades</h2>
 
         {habilidades.length > 0 ? (
           <div className="flex flex-col gap-3">
@@ -444,7 +444,7 @@ export default function Perfil() {
               return (
                 <div
                   key={h.id}
-                  className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-gray-50 last:border-0"
+                  className="flex flex-wrap items-center justify-between gap-2 py-2 border-b border-gray-50 dark:border-slate-700 last:border-0"
                 >
                   <div className="flex flex-wrap items-center gap-2.5">
                     {/* Badge da Habilidade com cor temática do Figma */}
@@ -457,7 +457,7 @@ export default function Perfil() {
 
                   {/* Nível da Habilidade */}
                   {h.nivel && (
-                    <span className="text-[11px] text-gray-500 font-medium px-2 py-0.5 bg-gray-100 rounded-md">
+                    <span className="text-[11px] text-gray-500 dark:text-gray-400 font-medium px-2 py-0.5 bg-gray-100 dark:bg-slate-800 rounded-md">
                       {formatarNivel(h.nivel)}
                     </span>
                   )}
@@ -466,13 +466,13 @@ export default function Perfil() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">Nenhuma habilidade cadastrada.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma habilidade cadastrada.</p>
         )}
       </Card>
 
       {/* Seção: Avaliações recebidas (feitas por colegas de projeto) */}
       <Card className="p-6">
-        <h2 className="text-base font-bold text-gray-900 mb-4">
+        <h2 className="text-base font-bold text-gray-900 dark:text-gray-100 mb-4">
           Avaliações {avaliacoes.length > 0 ? `(${avaliacoes.length})` : ''}
         </h2>
 
@@ -483,7 +483,7 @@ export default function Perfil() {
               const denunciandoEsta = denunciandoId === av.id;
 
               return (
-                <div key={av.id} className="flex flex-col gap-2 py-3 border-b border-gray-50 last:border-0">
+                <div key={av.id} className="flex flex-col gap-2 py-3 border-b border-gray-50 dark:border-slate-700 last:border-0">
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <span
@@ -492,8 +492,8 @@ export default function Perfil() {
                         {iniciaisDoNome(av.avaliador.nome)}
                       </span>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-800 truncate">{av.avaliador.nome}</p>
-                        <p className="text-xs text-gray-400 truncate">
+                        <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 truncate">{av.avaliador.nome}</p>
+                        <p className="text-xs text-gray-400 dark:text-gray-500 truncate">
                           {av.projeto.titulo} · {formatarData(av.criadoEm)}
                         </p>
                       </div>
@@ -502,31 +502,31 @@ export default function Perfil() {
                   </div>
 
                   {av.comentario && (
-                    <p className="text-sm text-gray-600 leading-relaxed pl-10">{av.comentario}</p>
+                    <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed pl-10">{av.comentario}</p>
                   )}
 
                   {/* Denunciar — só o próprio avaliado pode denunciar uma avaliação sobre si */}
                   {isDono && (
                     jaDenunciada ? (
-                      <p className="text-xs text-gray-400 pl-10">Denúncia enviada — em análise.</p>
+                      <p className="text-xs text-gray-400 dark:text-gray-500 pl-10">Denúncia enviada — em análise.</p>
                     ) : denunciandoEsta ? (
                       <div className="pl-10 flex flex-col gap-2">
                         {erroDenuncia && (
-                          <p role="alert" className="text-xs text-red-500">{erroDenuncia}</p>
+                          <p role="alert" className="text-xs text-red-500 dark:text-red-400">{erroDenuncia}</p>
                         )}
                         <textarea
                           value={motivoDenuncia}
                           onChange={(e) => setMotivoDenuncia(e.target.value)}
                           placeholder="Explique por que essa avaliação é abusiva ou indevida..."
                           rows={2}
-                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-800 placeholder:text-gray-400 outline-none focus:bg-white focus:ring-2 focus:ring-red-400 focus:border-red-300 transition-colors resize-none"
+                          className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2 text-xs text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-red-400 focus:border-red-300 transition-colors resize-none"
                         />
                         <div className="flex gap-2 justify-end">
                           <button
                             type="button"
                             onClick={() => setDenunciandoId(null)}
                             disabled={enviandoDenuncia}
-                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                            className="px-3 py-1.5 rounded-lg text-xs font-semibold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                           >
                             Cancelar
                           </button>
@@ -544,7 +544,7 @@ export default function Perfil() {
                       <button
                         type="button"
                         onClick={() => handleAbrirDenuncia(av.id)}
-                        className="self-start pl-10 text-xs font-medium text-gray-400 hover:text-red-600 transition-colors"
+                        className="self-start pl-10 text-xs font-medium text-gray-400 dark:text-gray-500 hover:text-red-600 dark:hover:text-red-400 transition-colors"
                       >
                         Denunciar
                       </button>
@@ -555,13 +555,13 @@ export default function Perfil() {
             })}
           </div>
         ) : (
-          <p className="text-sm text-gray-400">Nenhuma avaliação recebida ainda.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma avaliação recebida ainda.</p>
         )}
       </Card>
 
       {/* Seção: Projetos */}
       <div className="space-y-3">
-        <h2 className="text-base font-bold text-gray-900">
+        <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">
           Projetos {projetos.length > 0 ? `(${projetos.length})` : ''}
         </h2>
 
@@ -571,22 +571,22 @@ export default function Perfil() {
               <Card
                 key={proj.id}
                 onClick={() => navigate(`/detalhes/${proj.id}`)}
-                className="hover:border-violet-200 transition-colors"
+                className="hover:border-violet-200 dark:hover:border-violet-800 transition-colors"
               >
                 <div className="flex flex-col h-full justify-between gap-3">
                   <div>
                     <div className="flex items-start justify-between gap-2 mb-1.5">
-                      <h3 className="text-sm font-semibold text-gray-900 line-clamp-1">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100 line-clamp-1">
                         {proj.titulo}
                       </h3>
                       <Badge variant="status" status={proj.status}>{proj.status}</Badge>
                     </div>
-                    <p className="text-xs text-gray-500 line-clamp-2">
+                    <p className="text-xs text-gray-500 dark:text-gray-400 line-clamp-2">
                       {proj.descricao}
                     </p>
                   </div>
 
-                  <div className="text-xs font-semibold text-violet-600 hover:text-violet-800 transition-colors mt-auto pt-2 flex items-center gap-1">
+                  <div className="text-xs font-semibold text-violet-600 dark:text-violet-400 hover:text-violet-800 dark:hover:text-violet-300 transition-colors mt-auto pt-2 flex items-center gap-1">
                     Ver detalhes
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
                       <path fillRule="evenodd" clipRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" />
@@ -597,7 +597,7 @@ export default function Perfil() {
             ))}
           </div>
         ) : (
-          <Card className="p-8 text-center text-sm text-gray-400">
+          <Card className="p-8 text-center text-sm text-gray-400 dark:text-gray-500">
             Nenhum projeto encontrado para este usuário.
           </Card>
         )}

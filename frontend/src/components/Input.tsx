@@ -11,12 +11,12 @@ interface InputProps {
 }
 
 const fieldBase =
-  "w-full rounded-xl border px-4 py-2.5 text-sm text-gray-800 " +
-  "placeholder:text-gray-400 bg-gray-50 " +
+  "w-full rounded-xl border px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 " +
+  "placeholder:text-gray-400 dark:placeholder:text-gray-500 bg-gray-50 dark:bg-slate-800 " +
   "transition-colors duration-150 outline-none " +
-  "focus:bg-white focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 focus:border-indigo-400";
+  "focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500 focus:ring-offset-0 focus:border-indigo-400";
 
-const fieldNormal = "border-gray-200";
+const fieldNormal = "border-gray-200 dark:border-slate-700";
 const fieldError = "border-red-400 focus:ring-red-400 focus:border-red-400";
 
 export default function Input({
@@ -52,7 +52,7 @@ export default function Input({
       {/* Label */}
       <label
         htmlFor={id}
-        className="text-sm font-medium text-gray-700 leading-none"
+        className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-none"
       >
         {label}
         {required && (
@@ -78,7 +78,7 @@ export default function Input({
 
       {/* Error message */}
       {error && (
-        <p id={errorId} role="alert" className="text-xs text-red-500 leading-none">
+        <p id={errorId} role="alert" className="text-xs text-red-500 dark:text-red-400 leading-none">
           {error}
         </p>
       )}

@@ -42,7 +42,7 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
   const ehAdmin = meuPerfil?.nivelAcesso?.nome?.toUpperCase() === 'ADMIN';
 
   const activeClass = "bg-[#183E6C] text-white shadow-md font-bold";
-  const inactiveClass = "text-gray-500 hover:bg-gray-50 hover:text-[#F27405] font-medium transition-all duration-200";
+  const inactiveClass = "text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 hover:text-[#F27405] font-medium transition-all duration-200";
 
   const iniciaisPerfil = meuPerfil
     ? meuPerfil.nome.split(' ').filter(Boolean).slice(0, 2).map((p) => p[0].toUpperCase()).join('')
@@ -55,7 +55,7 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
       )}
 
       {/* AQUI: Usando h-full limpo */}
-      <aside className={`${isOpen ? 'flex absolute left-0 z-50' : 'hidden'} lg:flex w-72 bg-white border-r border-gray-100 h-full flex-col`}>
+      <aside className={`${isOpen ? 'flex absolute left-0 z-50' : 'hidden'} lg:flex w-72 bg-white dark:bg-slate-900 border-r border-gray-100 dark:border-slate-700 h-full flex-col`}>
         
         {/* PARTE DE CIMA DO MENU */}
         <div className="flex-1 overflow-y-auto py-6">
@@ -92,31 +92,31 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
           </nav>
 
           <div className="px-8 my-6">
-            <div className="h-px w-full bg-gray-100"></div>
+            <div className="h-px w-full bg-gray-100 dark:bg-slate-700"></div>
           </div>
 
           <div className="px-8">
             <div className="flex justify-between items-center mb-4">
-              <p className="text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">Meus Projetos</p>
-              <Link to="/criar-projeto" onClick={onClose} className="text-[#F27405] hover:bg-orange-50 p-1 rounded transition-colors" title="Criar Novo Projeto">
+              <p className="text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest">Meus Projetos</p>
+              <Link to="/criar-projeto" onClick={onClose} className="text-[#F27405] hover:bg-orange-50 dark:hover:bg-orange-950/40 p-1 rounded transition-colors" title="Criar Novo Projeto">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M12 4v16m8-8H4"></path></svg>
               </Link>
             </div>
 
             <ul className="flex flex-col gap-1">
               {carregandoProjetos ? (
-                <li className="text-sm text-gray-400 italic py-2">Buscando projetos...</li>
+                <li className="text-sm text-gray-400 dark:text-gray-500 italic py-2">Buscando projetos...</li>
               ) : meusProjetos.length === 0 ? (
-                <li className="text-xs text-gray-400 py-2 leading-relaxed">Você ainda não faz parte de nenhum projeto.</li>
+                <li className="text-xs text-gray-400 dark:text-gray-500 py-2 leading-relaxed">Você ainda não faz parte de nenhum projeto.</li>
               ) : (
                 meusProjetos.map((proj) => (
                   <li key={proj.id}>
                     <Link
                       to={`/detalhes/${proj.id}`}
                       onClick={onClose}
-                      className="flex items-center gap-3 text-sm text-gray-500 font-medium hover:text-[#F27405] hover:bg-gray-50 py-2.5 px-3 -mx-3 rounded-lg transition-all group"
+                      className="flex items-center gap-3 text-sm text-gray-500 dark:text-gray-400 font-medium hover:text-[#F27405] hover:bg-gray-50 dark:hover:bg-slate-800 py-2.5 px-3 -mx-3 rounded-lg transition-all group"
                     >
-                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300 group-hover:bg-[#F27405] transition-colors shrink-0"></div>
+                      <div className="w-1.5 h-1.5 rounded-full bg-gray-300 dark:bg-slate-600 group-hover:bg-[#F27405] transition-colors shrink-0"></div>
                       <span className="truncate">{proj.titulo}</span>
                     </Link>
                   </li>
@@ -128,7 +128,7 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
 
         {/* PARTE INFERIOR  */}
         {meuPerfil && (
-          <div className="p-6 border-t border-gray-100 flex items-center justify-between gap-2 bg-white shrink-0">
+          <div className="p-6 border-t border-gray-100 dark:border-slate-700 flex items-center justify-between gap-2 bg-white dark:bg-slate-900 shrink-0">
             <Link
               to={`/usuarios/${meuPerfil.id}`}
               onClick={onClose}
@@ -138,8 +138,8 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
                 {iniciaisPerfil}
               </div>
               <div className="min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">{meuPerfil.nome}</p>
-                <p className="text-xs text-gray-500 truncate">{meuPerfil.curso?.nome ?? '—'}</p>
+                <p className="text-sm font-bold text-gray-900 dark:text-gray-100 truncate">{meuPerfil.nome}</p>
+                <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{meuPerfil.curso?.nome ?? '—'}</p>
               </div>
             </Link>
 
@@ -149,7 +149,7 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
               disabled={saindo}
               title="Sair"
               aria-label="Sair da conta"
-              className="p-2 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors shrink-0 disabled:opacity-50"
+              className="p-2 rounded-lg text-gray-400 dark:text-gray-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors shrink-0 disabled:opacity-50"
             >
               <svg xmlns="http://www.w3.org/2000/svg" className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

@@ -39,7 +39,7 @@ export default function EditarProjetoRota() {
   if (!id) {
     return (
       <div className="max-w-3xl mx-auto pb-10">
-        <p className="text-gray-500 mb-4">Projeto não encontrado.</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-4">Projeto não encontrado.</p>
         <Link to="/projetos" className="text-[#F27405] font-semibold hover:underline">← Voltar para projetos</Link>
       </div>
     );
@@ -288,16 +288,16 @@ function EditarProjeto({ id }: { id: string }) {
   }
 
   if (carregando) {
-    return <p className="text-sm text-gray-400">Carregando projeto...</p>;
+    return <p className="text-sm text-gray-400 dark:text-gray-500">Carregando projeto...</p>;
   }
 
   if (erroCarregamento || !projeto) {
     return (
       <div className="max-w-3xl mx-auto pb-10">
-        <Link to="/projetos" className="inline-block mb-6 text-gray-500 hover:text-[#F27405] text-sm font-medium transition-colors">
+        <Link to="/projetos" className="inline-block mb-6 text-gray-500 dark:text-gray-400 hover:text-[#F27405] text-sm font-medium transition-colors">
           ← Voltar para projetos
         </Link>
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center text-gray-500">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm text-center text-gray-500 dark:text-gray-400">
           {erroCarregamento ?? 'Projeto não encontrado.'}
         </div>
       </div>
@@ -307,10 +307,10 @@ function EditarProjeto({ id }: { id: string }) {
   if (souCriador === false) {
     return (
       <div className="max-w-3xl mx-auto pb-10">
-        <Link to={`/detalhes/${id}`} className="inline-block mb-6 text-gray-500 hover:text-[#F27405] text-sm font-medium transition-colors">
+        <Link to={`/detalhes/${id}`} className="inline-block mb-6 text-gray-500 dark:text-gray-400 hover:text-[#F27405] text-sm font-medium transition-colors">
           ← Voltar para o projeto
         </Link>
-        <div className="bg-white rounded-3xl p-8 border border-gray-100 shadow-sm text-center text-gray-500">
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-8 border border-gray-100 dark:border-slate-700 shadow-sm text-center text-gray-500 dark:text-gray-400">
           Você não tem permissão para editar este projeto.
         </div>
       </div>
@@ -321,26 +321,26 @@ function EditarProjeto({ id }: { id: string }) {
 
   return (
     <div className="max-w-3xl mx-auto pb-10">
-      <Link to={`/detalhes/${id}`} className="inline-block mb-6 text-gray-500 hover:text-[#F27405] text-sm font-medium transition-colors">
+      <Link to={`/detalhes/${id}`} className="inline-block mb-6 text-gray-500 dark:text-gray-400 hover:text-[#F27405] text-sm font-medium transition-colors">
         ← Voltar para o projeto
       </Link>
 
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C]">Editar projeto</h1>
-        <p className="text-gray-500 text-sm mt-1">{projeto.titulo}</p>
+        <h1 className="text-2xl md:text-3xl font-bold text-[#183E6C] dark:text-blue-300">Editar projeto</h1>
+        <p className="text-gray-500 dark:text-gray-400 text-sm mt-1">{projeto.titulo}</p>
       </div>
 
       {/* Informações básicas */}
-      <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-8 mb-6">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 p-6 md:p-8 mb-6">
         {erro && (
-          <div className="mb-5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">{erro}</div>
+          <div className="mb-5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">{erro}</div>
         )}
         {sucesso && (
-          <div className="mb-5 rounded-xl bg-green-50 border border-green-100 px-4 py-3 text-sm text-green-700">{sucesso}</div>
+          <div className="mb-5 rounded-xl bg-green-50 border border-green-100 px-4 py-3 text-sm text-green-700 dark:bg-green-950/40 dark:border-green-900/50 dark:text-green-400">{sucesso}</div>
         )}
 
         {statusFinal && (
-          <div className="mb-5 rounded-xl bg-gray-50 border border-gray-100 px-4 py-3 text-sm text-gray-500">
+          <div className="mb-5 rounded-xl bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 px-4 py-3 text-sm text-gray-500 dark:text-gray-400">
             Projetos com status {STATUS_PROJETO_LABEL[projeto.status]} não podem ser editados.
           </div>
         )}
@@ -348,66 +348,66 @@ function EditarProjeto({ id }: { id: string }) {
         <fieldset disabled={statusFinal} className="flex flex-col gap-4 disabled:opacity-50">
           <form className="flex flex-col gap-4" onSubmit={handleSubmit} noValidate>
             <div>
-              <label className="block text-sm font-medium text-[#183E6C] mb-2">Título do projeto</label>
+              <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Título do projeto</label>
               <input
                 type="text"
                 value={titulo}
                 onChange={(e) => { setTitulo(e.target.value); limparErroCampo('titulo'); }}
-                className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all text-gray-700 ${
+                className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:ring-2 outline-none transition-all text-gray-700 dark:text-gray-100 ${
                   errosCampo.titulo
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
                     : 'border-transparent focus:border-[#F27405] focus:ring-[#F27405]/20'
                 }`}
               />
-              {errosCampo.titulo && <p className="text-xs text-red-500 mt-1.5">{errosCampo.titulo}</p>}
+              {errosCampo.titulo && <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{errosCampo.titulo}</p>}
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-[#183E6C] mb-2">Descrição</label>
+              <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Descrição</label>
               <textarea
                 value={descricao}
                 onChange={(e) => { setDescricao(e.target.value); limparErroCampo('descricao'); }}
                 rows={5}
-                className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all text-gray-700 resize-none ${
+                className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:ring-2 outline-none transition-all text-gray-700 dark:text-gray-100 resize-none ${
                   errosCampo.descricao
                     ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
                     : 'border-transparent focus:border-[#F27405] focus:ring-[#F27405]/20'
                 }`}
               />
-              {errosCampo.descricao && <p className="text-xs text-red-500 mt-1.5">{errosCampo.descricao}</p>}
+              {errosCampo.descricao && <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{errosCampo.descricao}</p>}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-[#183E6C] mb-2">Número de vagas</label>
+                <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Número de vagas</label>
                 <input
                   type="number"
                   min={1}
                   value={vagas}
                   onChange={(e) => { setVagas(e.target.value); limparErroCampo('vagas'); }}
-                  className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all text-gray-700 ${
+                  className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:ring-2 outline-none transition-all text-gray-700 dark:text-gray-100 ${
                     errosCampo.vagas
                       ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
                       : 'border-transparent focus:border-[#F27405] focus:ring-[#F27405]/20'
                   }`}
                 />
-                {errosCampo.vagas && <p className="text-xs text-red-500 mt-1.5">{errosCampo.vagas}</p>}
+                {errosCampo.vagas && <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{errosCampo.vagas}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-[#183E6C] mb-2">Prazo final (opcional)</label>
+                <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Prazo final (opcional)</label>
                 <input
                   type="date"
                   value={dataFim}
                   max={formatarDataISO(adicionarAnos(new Date(), ANOS_MAXIMOS_PRAZO))}
                   onChange={(e) => { setDataFim(e.target.value); limparErroCampo('dataFim'); }}
-                  className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all text-gray-700 ${
+                  className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:ring-2 outline-none transition-all text-gray-700 dark:text-gray-100 ${
                     errosCampo.dataFim
                       ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
                       : 'border-transparent focus:border-[#F27405] focus:ring-[#F27405]/20'
                   }`}
                 />
-                {errosCampo.dataFim && <p className="text-xs text-red-500 mt-1.5">{errosCampo.dataFim}</p>}
+                {errosCampo.dataFim && <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{errosCampo.dataFim}</p>}
               </div>
             </div>
 
@@ -423,11 +423,11 @@ function EditarProjeto({ id }: { id: string }) {
       </div>
 
       {/* Habilidades necessárias */}
-      <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-8 mb-6">
-        <h2 className="text-lg font-bold text-[#183E6C] mb-4">Habilidades necessárias</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 p-6 md:p-8 mb-6">
+        <h2 className="text-lg font-bold text-[#183E6C] dark:text-blue-300 mb-4">Habilidades necessárias</h2>
 
         {erroHabilidade && (
-          <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">{erroHabilidade}</div>
+          <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">{erroHabilidade}</div>
         )}
 
         {habilidadesSelecionadas.length > 0 && (
@@ -435,21 +435,21 @@ function EditarProjeto({ id }: { id: string }) {
             {habilidadesSelecionadas.map((vinculo) => (
               <div
                 key={vinculo.id}
-                className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-[#F27405]/30 bg-orange-50"
+                className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-[#F27405]/30 bg-orange-50 dark:bg-orange-950/40"
               >
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-gray-700">{vinculo.habilidade.nome}</span>
-                  <span className="text-[10px] text-gray-400 uppercase font-semibold">{vinculo.habilidade.categoria}</span>
+                  <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{vinculo.habilidade.nome}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{vinculo.habilidade.categoria}</span>
                 </div>
 
                 <div className="flex items-center gap-4 shrink-0">
-                  <label className="flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
+                  <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={vinculo.obrigatoria}
                       disabled={habilidadeEmAcao === vinculo.habilidade.id}
                       onChange={() => handleAlternarObrigatoria(vinculo.habilidade.id, vinculo.obrigatoria)}
-                      className="h-3.5 w-3.5 rounded border-gray-300 text-[#183E6C] focus:ring-[#183E6C]/20"
+                      className="h-3.5 w-3.5 rounded border-gray-300 dark:border-slate-600 text-[#183E6C] focus:ring-[#183E6C]/20"
                     />
                     Obrigatória
                   </label>
@@ -458,7 +458,7 @@ function EditarProjeto({ id }: { id: string }) {
                     disabled={habilidadeEmAcao === vinculo.habilidade.id}
                     onClick={() => handleRemoverHabilidade(vinculo.habilidade.id)}
                     aria-label={`Remover ${vinculo.habilidade.nome}`}
-                    className="text-gray-400 hover:text-red-500 transition-colors disabled:opacity-40"
+                    className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors disabled:opacity-40"
                   >
                     <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
@@ -471,14 +471,14 @@ function EditarProjeto({ id }: { id: string }) {
         )}
 
         {carregandoHabilidades ? (
-          <p className="text-sm text-gray-400">Carregando habilidades...</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Carregando habilidades...</p>
         ) : habilidadesErro ? (
-          <p className="text-sm text-red-500">{habilidadesErro}</p>
+          <p className="text-sm text-red-500 dark:text-red-400">{habilidadesErro}</p>
         ) : (
           <>
             <div className="relative mb-3">
               <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
                 </svg>
               </div>
@@ -487,12 +487,12 @@ function EditarProjeto({ id }: { id: string }) {
                 placeholder="Buscar habilidade por nome ou categoria..."
                 value={buscaHabilidade}
                 onChange={(e) => setBuscaHabilidade(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-sm text-gray-700"
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-sm text-gray-700 dark:text-gray-100"
               />
             </div>
 
             {habilidadesFiltradas.length === 0 ? (
-              <p className="text-sm text-gray-400">
+              <p className="text-sm text-gray-400 dark:text-gray-500">
                 {buscaHabilidade
                   ? `Nenhuma habilidade encontrada para "${buscaHabilidade}".`
                   : 'Todas as habilidades do catálogo já foram adicionadas.'}
@@ -505,11 +505,11 @@ function EditarProjeto({ id }: { id: string }) {
                     key={habilidade.id}
                     disabled={habilidadeEmAcao === habilidade.id}
                     onClick={() => handleAdicionarHabilidade(habilidade.id)}
-                    className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-gray-50 hover:bg-gray-100 border border-transparent hover:border-[#F27405]/30 transition-colors text-left disabled:opacity-50"
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-transparent hover:border-[#F27405]/30 transition-colors text-left disabled:opacity-50"
                   >
                     <span className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700">{habilidade.nome}</span>
-                      <span className="text-[10px] text-gray-400 uppercase font-semibold">{habilidade.categoria}</span>
+                      <span className="text-sm text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
                     </span>
                     <span className="text-[#F27405] text-lg leading-none font-bold shrink-0">+</span>
                   </button>
@@ -521,19 +521,19 @@ function EditarProjeto({ id }: { id: string }) {
       </div>
 
       {/* Status do projeto */}
-      <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-8">
-        <h2 className="text-lg font-bold text-[#183E6C] mb-4">Status do projeto</h2>
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 p-6 md:p-8">
+        <h2 className="text-lg font-bold text-[#183E6C] dark:text-blue-300 mb-4">Status do projeto</h2>
 
         <span className={`inline-block px-3 py-1 rounded-full text-xs font-bold mb-4 ${STATUS_PROJETO_BADGE[projeto.status]}`}>
           {STATUS_PROJETO_LABEL[projeto.status]}
         </span>
 
         {erroStatus && (
-          <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">{erroStatus}</div>
+          <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">{erroStatus}</div>
         )}
 
         {statusFinal ? (
-          <p className="text-sm text-gray-400">Projetos com status final não podem ter o status alterado.</p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">Projetos com status final não podem ter o status alterado.</p>
         ) : (
           <div className="flex flex-col gap-4">
             <div className="flex flex-wrap gap-3">
@@ -545,7 +545,7 @@ function EditarProjeto({ id }: { id: string }) {
                     type="button"
                     disabled={alterandoStatus}
                     onClick={() => handleMudarStatus(status)}
-                    className="px-5 py-2.5 rounded-xl font-bold text-sm border-2 border-[#183E6C] text-[#183E6C] hover:bg-[#183E6C] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="px-5 py-2.5 rounded-xl font-bold text-sm border-2 border-[#183E6C] text-[#183E6C] dark:text-blue-300 hover:bg-[#183E6C] hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     Marcar como {STATUS_PROJETO_LABEL[status]}
                   </button>
@@ -556,7 +556,7 @@ function EditarProjeto({ id }: { id: string }) {
                   type="button"
                   disabled={alterandoStatus}
                   onClick={() => setConfirmandoCancelamento(true)}
-                  className="px-5 py-2.5 rounded-xl font-bold text-sm border-2 border-red-500 text-red-500 hover:bg-red-50 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2.5 rounded-xl font-bold text-sm border-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   Cancelar projeto
                 </button>
@@ -564,8 +564,8 @@ function EditarProjeto({ id }: { id: string }) {
             </div>
 
             {confirmandoCancelamento && (
-              <div className="rounded-xl border border-red-100 bg-red-50 p-4 flex flex-col gap-3">
-                <p className="text-sm text-red-700">
+              <div className="rounded-xl border border-red-100 bg-red-50 dark:bg-red-950/40 dark:border-red-900/50 p-4 flex flex-col gap-3">
+                <p className="text-sm text-red-700 dark:text-red-400">
                   Cancelar avisa todos os membros do projeto. Essa ação não pode ser desfeita.
                 </p>
                 <textarea
@@ -573,7 +573,7 @@ function EditarProjeto({ id }: { id: string }) {
                   value={motivoCancelamento}
                   onChange={(e) => setMotivoCancelamento(e.target.value)}
                   rows={2}
-                  className="w-full px-4 py-2.5 bg-white border border-red-200 rounded-xl outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all text-sm text-gray-700 resize-none"
+                  className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-red-200 dark:border-red-900/50 rounded-xl outline-none focus:border-red-400 focus:ring-2 focus:ring-red-400/20 transition-all text-sm text-gray-700 dark:text-gray-100 resize-none"
                 />
                 <div className="flex gap-3">
                   <button
@@ -588,7 +588,7 @@ function EditarProjeto({ id }: { id: string }) {
                     type="button"
                     disabled={alterandoStatus}
                     onClick={() => { setConfirmandoCancelamento(false); setMotivoCancelamento(''); }}
-                    className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-500 hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
                   >
                     Voltar
                   </button>

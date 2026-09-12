@@ -8,7 +8,7 @@ interface CardProps {
 
 export default function Card({ children, onClick, className = "" }: CardProps) {
   const base =
-    "bg-white rounded-2xl shadow-sm border border-gray-100 p-6";
+    "bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-6";
 
   const interactive = onClick
     ? "cursor-pointer transition-shadow duration-150 hover:shadow-md"

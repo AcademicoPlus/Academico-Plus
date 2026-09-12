@@ -16,8 +16,8 @@ const variantClasses: Record<NonNullable<ButtonProps["variant"]>, string> = {
   ].join(" "),
 
   secondary: [
-    "bg-white text-indigo-700 border border-gray-200",
-    "hover:bg-gray-50",
+    "bg-white dark:bg-slate-900 text-indigo-700 dark:text-blue-300 border border-gray-200 dark:border-slate-700",
+    "hover:bg-gray-50 dark:hover:bg-slate-800",
     "focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2",
   ].join(" "),
 };

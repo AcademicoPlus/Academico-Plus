@@ -160,48 +160,48 @@ export default function AdminHabilidades() {
   return (
     <div className="pb-12 max-w-7xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-extrabold text-[#183E6C] tracking-tight">Habilidades</h1>
-        <p className="text-gray-500 mt-1 font-medium">{totalElementos} habilidades no catálogo</p>
+        <h1 className="text-2xl md:text-3xl font-extrabold text-[#183E6C] dark:text-blue-300 tracking-tight">Habilidades</h1>
+        <p className="text-gray-500 dark:text-gray-400 mt-1 font-medium">{totalElementos} habilidades no catálogo</p>
       </header>
 
       {/* Formulário de criar/editar */}
-      <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 p-6 md:p-8 mb-8">
-        <h2 className="text-lg font-extrabold text-[#183E6C] mb-4">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 p-6 md:p-8 mb-8">
+        <h2 className="text-lg font-extrabold text-[#183E6C] dark:text-blue-300 mb-4">
           {editandoId ? 'Editar habilidade' : 'Nova habilidade'}
         </h2>
 
         {erroForm && (
-          <div className="mb-5 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+          <div className="mb-5 rounded-xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-4 py-3 text-sm text-red-600 dark:text-red-400">
             {erroForm}
           </div>
         )}
 
         <form className="grid grid-cols-1 md:grid-cols-2 gap-4" onSubmit={handleSubmit} noValidate>
           <div>
-            <label className="block text-sm font-medium text-[#183E6C] mb-2">Nome</label>
+            <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Nome</label>
             <input
               type="text"
               placeholder="Ex.: React"
               value={formulario.nome}
               onChange={(e) => setFormulario((atual) => ({ ...atual, nome: e.target.value }))}
-              className={`w-full px-4 py-3 bg-gray-50 border rounded-xl focus:bg-white focus:ring-2 outline-none transition-all text-gray-700 ${
+              className={`w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:ring-2 outline-none transition-all text-gray-700 dark:text-gray-200 ${
                 errosCampoForm.nome
                   ? 'border-red-400 focus:border-red-400 focus:ring-red-400/20'
                   : 'border-transparent focus:border-[#F27405] focus:ring-[#F27405]/20'
               }`}
             />
-            {errosCampoForm.nome && <p className="text-xs text-red-500 mt-1.5">{errosCampoForm.nome}</p>}
+            {errosCampoForm.nome && <p className="text-xs text-red-500 dark:text-red-400 mt-1.5">{errosCampoForm.nome}</p>}
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-[#183E6C] mb-2">Categoria</label>
+            <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Categoria</label>
             <input
               type="text"
               placeholder="Ex.: Frontend"
               value={formulario.categoria}
               onChange={(e) => setFormulario((atual) => ({ ...atual, categoria: e.target.value }))}
               list="categorias-existentes"
-              className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-200"
             />
             <datalist id="categorias-existentes">
               {categorias.map((categoria) => <option key={categoria} value={categoria} />)}
@@ -209,13 +209,13 @@ export default function AdminHabilidades() {
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-[#183E6C] mb-2">Descrição (opcional)</label>
+            <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Descrição (opcional)</label>
             <textarea
               placeholder="Breve descrição da habilidade..."
               value={formulario.descricao}
               onChange={(e) => setFormulario((atual) => ({ ...atual, descricao: e.target.value }))}
               rows={3}
-              className="w-full px-4 py-3 bg-gray-50 border border-transparent rounded-xl focus:bg-white focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 resize-none"
+              className="w-full px-4 py-3 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-gray-700 dark:text-gray-200 resize-none"
             />
           </div>
 
@@ -224,7 +224,7 @@ export default function AdminHabilidades() {
               <button
                 type="button"
                 onClick={cancelarEdicao}
-                className="w-full md:w-auto text-center px-6 py-3.5 rounded-xl font-bold text-gray-500 hover:bg-gray-50 transition-colors"
+                className="w-full md:w-auto text-center px-6 py-3.5 rounded-xl font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
               >
                 Cancelar edição
               </button>
@@ -248,14 +248,14 @@ export default function AdminHabilidades() {
             placeholder="Buscar por nome..."
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            className="w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 text-gray-700 shadow-sm transition-all"
+            className="w-full pl-11 pr-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 text-gray-700 dark:text-gray-200 shadow-sm transition-all"
           />
-          <svg className="w-5 h-5 text-gray-400 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+          <svg className="w-5 h-5 text-gray-400 dark:text-gray-500 absolute left-3.5 top-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
         </div>
         <select
           value={categoriaFiltro}
           onChange={(e) => { setCategoriaFiltro(e.target.value); setPagina(0); }}
-          className="px-4 py-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 shadow-sm cursor-pointer min-w-50"
+          className="px-4 py-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-4 focus:ring-[#F27405]/10 font-medium text-gray-700 dark:text-gray-200 shadow-sm cursor-pointer min-w-50"
         >
           <option value="">Todas as categorias</option>
           {categorias.map((categoria) => <option key={categoria} value={categoria}>{categoria}</option>)}
@@ -263,29 +263,29 @@ export default function AdminHabilidades() {
       </section>
 
       {erro && (
-        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm">
+        <div className="mb-6 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-6 py-4 text-sm font-semibold text-red-600 dark:text-red-400 shadow-sm">
           {erro}
         </div>
       )}
       {erroExclusao && (
-        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm">
+        <div className="mb-6 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-6 py-4 text-sm font-semibold text-red-600 dark:text-red-400 shadow-sm">
           {erroExclusao}
         </div>
       )}
 
       {carregando ? (
-        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 animate-pulse">Carregando habilidades...</p></div>
+        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Carregando habilidades...</p></div>
       ) : habilidades.length === 0 ? (
-        <div className="bg-white rounded-3xl border border-gray-100 p-12 text-center shadow-sm">
-          <p className="text-lg text-gray-500 font-medium">Nenhuma habilidade encontrada.</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
+          <p className="text-lg text-gray-500 dark:text-gray-400 font-medium">Nenhuma habilidade encontrada.</p>
         </div>
       ) : (
         <>
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-left">
                 <thead>
-                  <tr className="border-b border-gray-100 text-[11px] font-extrabold text-gray-400 uppercase tracking-widest">
+                  <tr className="border-b border-gray-100 dark:border-slate-700 text-[11px] font-extrabold text-gray-400 dark:text-gray-500 uppercase tracking-widest">
                     <th className="px-6 py-4">Nome</th>
                     <th className="px-6 py-4">Categoria</th>
                     <th className="px-6 py-4">Em uso</th>
@@ -294,15 +294,15 @@ export default function AdminHabilidades() {
                 </thead>
                 <tbody>
                   {habilidades.map((habilidade) => (
-                    <tr key={habilidade.id} className="border-b border-gray-50 last:border-0 hover:bg-gray-50/50 transition-colors">
+                    <tr key={habilidade.id} className="border-b border-gray-50 dark:border-slate-700 last:border-0 hover:bg-gray-50/50 dark:hover:bg-slate-800/50 transition-colors">
                       <td className="px-6 py-4">
-                        <p className="font-bold text-[#183E6C]">{habilidade.nome}</p>
+                        <p className="font-bold text-[#183E6C] dark:text-blue-300">{habilidade.nome}</p>
                         {habilidade.descricao && (
-                          <p className="text-xs text-gray-400 mt-0.5 max-w-md truncate">{habilidade.descricao}</p>
+                          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5 max-w-md truncate">{habilidade.descricao}</p>
                         )}
                       </td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">{habilidade.categoria}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600 font-medium">
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-medium">{habilidade.categoria}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600 dark:text-gray-300 font-medium">
                         {habilidade.usuariosCount} usuário(s) · {habilidade.projetosCount} projeto(s)
                       </td>
                       <td className="px-6 py-4">
@@ -310,7 +310,7 @@ export default function AdminHabilidades() {
                           <button
                             type="button"
                             onClick={() => iniciarEdicao(habilidade)}
-                            className="text-sm font-bold text-[#183E6C] hover:text-[#F27405] transition-colors"
+                            className="text-sm font-bold text-[#183E6C] dark:text-blue-300 hover:text-[#F27405] transition-colors"
                           >
                             Editar
                           </button>
@@ -318,7 +318,7 @@ export default function AdminHabilidades() {
                             type="button"
                             onClick={() => handleExcluir(habilidade)}
                             disabled={excluindoId === habilidade.id}
-                            className="text-sm font-bold text-red-500 hover:text-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                            className="text-sm font-bold text-red-500 dark:text-red-400 hover:text-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                           >
                             {excluindoId === habilidade.id ? 'Excluindo...' : 'Excluir'}
                           </button>
@@ -337,16 +337,16 @@ export default function AdminHabilidades() {
                 type="button"
                 onClick={() => setPagina((atual) => Math.max(0, atual - 1))}
                 disabled={pagina === 0}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 ← Anterior
               </button>
-              <span className="text-sm font-medium text-gray-500">Página {pagina + 1} de {totalPaginas}</span>
+              <span className="text-sm font-medium text-gray-500 dark:text-gray-400">Página {pagina + 1} de {totalPaginas}</span>
               <button
                 type="button"
                 onClick={() => setPagina((atual) => Math.min(totalPaginas - 1, atual + 1))}
                 disabled={pagina >= totalPaginas - 1}
-                className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-500 bg-white border border-gray-200 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                className="px-5 py-2.5 rounded-xl font-bold text-sm text-gray-500 dark:text-gray-400 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
               >
                 Próxima →
               </button>

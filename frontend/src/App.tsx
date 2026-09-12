@@ -73,26 +73,6 @@ export default function App() {
 
           </Route>
         </Route>
-
-        {/* ROTAS DA ÁREA LOGADA (O "LayoutBase" abraça todas essas telas) */}
-        <Route element={<LayoutBase />}>
-
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/projetos" element={<Projetos />} />
-          <Route path="/pessoas" element={<ExplorarPessoas />} />
-          <Route path="/usuarios/:id" element={<Perfil />} />
-
-          {/* ALTERADO AQUI: Adicionado o /:id para carregar o projeto certo */}
-          <Route path="/detalhes/:id" element={<DetalhesProjeto />} />
-
-          <Route path="/candidaturas" element={<Candidaturas />} />
-
-          <Route path="/usuarios/:id/editar" element={<EditarPerfil />} />
-          {/* Telas que faremos no futuro (Aparece só um texto provisório por enquanto) */}
-          <Route path="/criar-projeto" element={<CriarProjeto />} />
-          <Route path="/editar-projeto/:id" element={<EditarProjeto />} />
-
-        </Route>
       </Routes>
     </BrowserRouter>
   )

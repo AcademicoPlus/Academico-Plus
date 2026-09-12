@@ -200,10 +200,10 @@ let meuPerfilMock = {
   nivelAcesso: null,
   curso: CURSOS_MOCK[0], // Ciência da Computação
   periodo: 4,
-  bio: 'Designer apaixonada por UI/UX e design systems. Busco projetos que unam criatividade e impacto social. Tenho experiência com Figma, pesquisa com usuários e prototipagem de alta fidelidade.',
+  bio: 'Designer apaixonada por UI/UX e design systems. Busco projetos que unam criatividade e impacto social. Tenho experiência com Figma, pesquisa com usuários e prototipagem de alta fidelidade.' as string | null,
   fotoUrl: null as string | null,
-  linkedinUrl: 'https://linkedin.com/in',
-  githubUrl: 'https://github.com',
+  linkedinUrl: 'https://linkedin.com/in' as string | null,
+  githubUrl: 'https://github.com' as string | null,
   habilidades: [
     { id: 'perfil-hab-1', habilidade: acha('hab-uiux'), nivel: 'AVANCADO', endossado: true, endossadoPor: 'Prof. Carvalho' },
     { id: 'perfil-hab-2', habilidade: acha('hab-figma'), nivel: 'EXPERT', endossado: true, endossadoPor: 'Prof. Carvalho' },

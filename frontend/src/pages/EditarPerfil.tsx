@@ -61,11 +61,11 @@ function formatarIniciais(nome: string): string {
 }
 
 const avatarPalette = [
-  'bg-indigo-100 text-indigo-700',
-  'bg-violet-100 text-violet-700',
-  'bg-emerald-100 text-emerald-700',
-  'bg-amber-100 text-amber-700',
-  'bg-rose-100 text-rose-700',
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
 ];
 
 function obterCorAvatar(nome: string): string {
@@ -383,7 +383,7 @@ export default function EditarPerfil() {
   if (verificando) {
     return (
       <div className="flex items-center justify-center py-24">
-        <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-600 border-t-transparent" />
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-violet-600 dark:border-violet-400 border-t-transparent" />
       </div>
     );
   }
@@ -400,7 +400,7 @@ export default function EditarPerfil() {
         <button
           onClick={() => navigate(`/usuarios/${id}`)}
           aria-label="Cancelar e voltar ao perfil"
-          className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 transition-colors"
+          className="flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-100 transition-colors"
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none"
             viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -411,19 +411,19 @@ export default function EditarPerfil() {
       </div>
 
       <div>
-        <h1 className="text-2xl font-bold text-gray-900 leading-tight">Editar perfil</h1>
+        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100 leading-tight">Editar perfil</h1>
       </div>
 
       {/* Feedback global */}
       {erroGeral && (
         <p role="alert"
-          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
           {erroGeral}
         </p>
       )}
       {sucesso && (
         <p role="status"
-          className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2">
+          className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 flex items-center gap-2 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-400">
           <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 shrink-0" viewBox="0 0 20 20" fill="currentColor">
             <path fillRule="evenodd" clipRule="evenodd"
               d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" />
@@ -433,7 +433,7 @@ export default function EditarPerfil() {
       )}
 
       {/* ── Bloco Principal de Edição ──────────────────────────────────────── */}
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 flex flex-col gap-6">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 sm:p-8 flex flex-col gap-6">
 
         {/* Upload de Foto de Perfil */}
         <div className="flex items-center gap-5 pb-2">
@@ -441,7 +441,7 @@ export default function EditarPerfil() {
             <img
               src={fotoUrl}
               alt={nome}
-              className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover ring-2 ring-gray-100 shadow-sm shrink-0"
+              className="h-16 w-16 sm:h-20 sm:w-20 rounded-2xl object-cover ring-2 ring-gray-100 dark:ring-slate-700 shadow-sm shrink-0"
             />
           ) : (
             <div
@@ -464,14 +464,14 @@ export default function EditarPerfil() {
             />
             <label
               htmlFor="foto-perfil-input"
-              className={`inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold text-violet-700 bg-violet-50 hover:bg-violet-100 cursor-pointer transition-colors w-fit border border-violet-100 ${enviandoFoto ? 'opacity-50 pointer-events-none' : ''
+              className={`inline-flex items-center justify-center px-3.5 py-1.5 rounded-xl text-xs font-semibold text-violet-700 dark:text-violet-300 bg-violet-50 dark:bg-violet-900/40 hover:bg-violet-100 dark:hover:bg-violet-900/60 cursor-pointer transition-colors w-fit border border-violet-100 dark:border-violet-800 ${enviandoFoto ? 'opacity-50 pointer-events-none' : ''
                 }`}
             >
               {enviandoFoto ? 'Enviando...' : 'Alterar foto'}
             </label>
-            <span className="text-xs text-gray-400">JPG ou PNG. Máx 2MB</span>
+            <span className="text-xs text-gray-400 dark:text-gray-500">JPG ou PNG. Máx 2MB</span>
             {erroFoto && (
-              <p className="text-xs text-red-500 mt-0.5">{erroFoto}</p>
+              <p className="text-xs text-red-500 dark:text-red-400 mt-0.5">{erroFoto}</p>
             )}
           </div>
         </div>
@@ -489,13 +489,13 @@ export default function EditarPerfil() {
 
         {/* Select de Curso */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 leading-none">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-none">
             Curso
           </label>
           <select
             value={idCurso}
             onChange={(e) => setIdCurso(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-colors duration-150"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-colors duration-150"
           >
             <option value="">Selecione seu curso</option>
             {cursos.map((c) => (
@@ -508,13 +508,13 @@ export default function EditarPerfil() {
 
         {/* Select de Período */}
         <div className="flex flex-col gap-1.5">
-          <label className="text-sm font-medium text-gray-700 leading-none">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-none">
             Período
           </label>
           <select
             value={periodo}
             onChange={(e) => setPeriodo(e.target.value)}
-            className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-800 outline-none focus:bg-white focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-colors duration-150"
+            className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-4 py-2.5 text-sm text-gray-800 dark:text-gray-100 outline-none focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-violet-500 focus:border-violet-400 transition-colors duration-150"
           >
             <option value="">Não informado</option>
             {Array.from({ length: 12 }, (_, i) => i + 1).map((n) => (
@@ -555,7 +555,7 @@ export default function EditarPerfil() {
 
         {/* Habilidades */}
         <div className="flex flex-col gap-3 pt-2">
-          <label className="text-sm font-medium text-gray-700 leading-none">
+          <label className="text-sm font-medium text-gray-700 dark:text-gray-200 leading-none">
             Habilidades
           </label>
 
@@ -568,9 +568,9 @@ export default function EditarPerfil() {
                   value={buscaHabilidade}
                   onChange={(e) => handleBuscaHabilidadeChange(e.target.value)}
                   placeholder="Adicionar habilidade..."
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 pr-10
-                             text-sm text-gray-800 placeholder:text-gray-400 outline-none
-                             focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-500
+                  className="w-full rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-4 py-2.5 pr-10
+                             text-sm text-gray-800 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 outline-none
+                             focus:bg-white dark:focus:bg-slate-800 focus:border-violet-400 focus:ring-2 focus:ring-violet-500
                              transition-colors duration-150"
                 />
                 <span className="absolute right-3 text-violet-600 font-bold text-lg pointer-events-none select-none">
@@ -582,8 +582,8 @@ export default function EditarPerfil() {
                 value={nivelParaAdicionar}
                 onChange={(e) => setNivelParaAdicionar(e.target.value as NivelHabilidade)}
                 title="Nível de experiência da habilidade a adicionar"
-                className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm text-gray-700
-                           outline-none focus:bg-white focus:border-violet-400 focus:ring-2 focus:ring-violet-500
+                className="rounded-xl border border-gray-200 dark:border-slate-700 bg-gray-50 dark:bg-slate-800 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200
+                           outline-none focus:bg-white dark:focus:bg-slate-800 focus:border-violet-400 focus:ring-2 focus:ring-violet-500
                            transition-colors duration-150 shrink-0"
               >
                 {NIVEIS_HABILIDADE.map((n) => (
@@ -594,11 +594,11 @@ export default function EditarPerfil() {
 
             {/* Dropdown de sugestões */}
             {(sugestoes.length > 0 || carregandoSugestoes) && (
-              <div className="absolute z-20 left-0 right-0 mt-1.5 bg-white border border-gray-200
-                              rounded-xl shadow-lg overflow-hidden divide-y divide-gray-50">
+              <div className="absolute z-20 left-0 right-0 mt-1.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700
+                              rounded-xl shadow-lg overflow-hidden divide-y divide-gray-50 dark:divide-slate-700">
                 {carregandoSugestoes ? (
-                  <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-400">
-                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 border-t-violet-500" />
+                  <div className="flex items-center gap-2 px-4 py-3 text-sm text-gray-400 dark:text-gray-500">
+                    <div className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-300 dark:border-slate-600 border-t-violet-500" />
                     Buscando…
                   </div>
                 ) : (
@@ -608,8 +608,8 @@ export default function EditarPerfil() {
                       type="button"
                       onMouseDown={(e) => { e.preventDefault(); handleAdicionar(h); }}
                       disabled={adicionando}
-                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700
-                                 hover:bg-violet-50 hover:text-violet-700 flex items-center gap-2
+                      className="w-full text-left px-4 py-2.5 text-sm text-gray-700 dark:text-gray-200
+                                 hover:bg-violet-50 dark:hover:bg-violet-900/40 hover:text-violet-700 dark:hover:text-violet-300 flex items-center gap-2
                                  transition-colors disabled:opacity-50"
                     >
                       <span className="text-violet-500 font-bold">+</span>
@@ -631,7 +631,7 @@ export default function EditarPerfil() {
                 return (
                   <span
                     key={h.id}
-                    className="inline-flex items-center gap-1.5 rounded-full pl-3 pr-1 py-1 text-xs font-medium bg-indigo-50 text-indigo-700 border border-indigo-100"
+                    className="inline-flex items-center gap-1.5 rounded-full pl-3 pr-1 py-1 text-xs font-medium bg-indigo-50 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-300 border border-indigo-100 dark:border-indigo-800"
                   >
                     <span>{h.habilidade.nome}</span>
 
@@ -640,7 +640,7 @@ export default function EditarPerfil() {
                       onChange={(e) => handleAlterarNivel(h, e.target.value as NivelHabilidade)}
                       disabled={estaAtualizandoNivel || estaRemovendo}
                       aria-label={`Nível de experiência em ${h.habilidade.nome}`}
-                      className="rounded-full bg-white border border-indigo-200 text-indigo-700 text-[11px]
+                      className="rounded-full bg-white dark:bg-slate-900 border border-indigo-200 dark:border-indigo-800 text-indigo-700 dark:text-indigo-300 text-[11px]
                                  font-medium pl-1.5 pr-1 py-0.5 outline-none focus:ring-1 focus:ring-violet-500
                                  disabled:opacity-50"
                     >
@@ -654,7 +654,7 @@ export default function EditarPerfil() {
                       onClick={() => handleRemover(h)}
                       disabled={estaRemovendo || adicionando}
                       aria-label={`Remover ${h.habilidade.nome}`}
-                      className="ml-0.5 rounded-full p-0.5 text-indigo-400 hover:text-indigo-700 hover:bg-indigo-100 transition-colors disabled:opacity-40"
+                      className="ml-0.5 rounded-full p-0.5 text-indigo-400 dark:text-indigo-300 hover:text-indigo-700 dark:hover:text-indigo-200 hover:bg-indigo-100 dark:hover:bg-indigo-900/60 transition-colors disabled:opacity-40"
                     >
                       {estaRemovendo ? (
                         <svg className="h-3 w-3 animate-spin" viewBox="0 0 24 24" fill="none">
@@ -673,7 +673,7 @@ export default function EditarPerfil() {
               })}
             </div>
           ) : (
-            <p className="text-xs text-gray-400">Nenhuma habilidade adicionada ainda.</p>
+            <p className="text-xs text-gray-400 dark:text-gray-500">Nenhuma habilidade adicionada ainda.</p>
           )}
         </div>
 
@@ -684,7 +684,7 @@ export default function EditarPerfil() {
         <button
           type="button"
           onClick={() => navigate(`/usuarios/${id}`)}
-          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors"
+          className="w-full sm:w-auto px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors"
         >
           Cancelar
         </button>
@@ -709,19 +709,19 @@ export default function EditarPerfil() {
       </div>
 
       {/* ── Segurança: trocar senha ────────────────────────────────────────── */}
-      <section className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 sm:p-8 flex flex-col gap-4">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 sm:p-8 flex flex-col gap-4">
         <div>
-          <h2 className="text-base font-bold text-gray-900">Segurança</h2>
-          <p className="text-xs text-gray-400 mt-0.5">Altere a senha usada para entrar na sua conta.</p>
+          <h2 className="text-base font-bold text-gray-900 dark:text-gray-100">Segurança</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Altere a senha usada para entrar na sua conta.</p>
         </div>
 
         {erroSenha && (
-          <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
             {erroSenha}
           </p>
         )}
         {sucessoSenha && (
-          <p role="status" className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+          <p role="status" className="rounded-xl border border-emerald-100 bg-emerald-50 px-4 py-3 text-sm text-emerald-700 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-400">
             Senha alterada com sucesso.
           </p>
         )}
@@ -756,7 +756,7 @@ export default function EditarPerfil() {
             type="button"
             onClick={handleAlterarSenha}
             disabled={alterandoSenha}
-            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            className="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
           >
             {alterandoSenha ? 'Alterando…' : 'Alterar senha'}
           </button>
@@ -764,16 +764,16 @@ export default function EditarPerfil() {
       </section>
 
       {/* ── Zona de risco: excluir conta ───────────────────────────────────── */}
-      <section className="bg-white rounded-2xl border border-red-100 shadow-sm p-6 sm:p-8 flex flex-col gap-4">
+      <section className="bg-white dark:bg-slate-900 rounded-2xl border border-red-100 dark:border-red-900/50 shadow-sm p-6 sm:p-8 flex flex-col gap-4">
         <div>
-          <h2 className="text-base font-bold text-red-700">Excluir conta</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+          <h2 className="text-base font-bold text-red-700 dark:text-red-400">Excluir conta</h2>
+          <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
             Essa ação desativa sua conta permanentemente. Não é possível desfazer.
           </p>
         </div>
 
         {erroExclusao && (
-          <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600">
+          <p role="alert" className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
             {erroExclusao}
           </p>
         )}
@@ -783,14 +783,14 @@ export default function EditarPerfil() {
             <button
               type="button"
               onClick={() => setConfirmandoExclusao(true)}
-              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-red-600 bg-red-50 border border-red-100 hover:bg-red-100 transition-colors"
+              className="px-6 py-2.5 rounded-xl text-sm font-semibold text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 hover:bg-red-100 dark:hover:bg-red-900/60 transition-colors"
             >
               Excluir minha conta
             </button>
           </div>
         ) : (
-          <div className="flex flex-col gap-4 rounded-xl border border-red-100 bg-red-50/40 p-4">
-            <p className="text-sm text-red-700 font-medium">
+          <div className="flex flex-col gap-4 rounded-xl border border-red-100 dark:border-red-900/50 bg-red-50/40 dark:bg-red-950/30 p-4">
+            <p className="text-sm text-red-700 dark:text-red-400 font-medium">
               Tem certeza? Digite sua senha para confirmar a exclusão da sua conta.
             </p>
             <Input
@@ -805,7 +805,7 @@ export default function EditarPerfil() {
                 type="button"
                 onClick={() => { setConfirmandoExclusao(false); setSenhaExclusao(''); setErroExclusao(null); }}
                 disabled={excluindoConta}
-                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-700 bg-white border border-gray-200 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold text-gray-700 dark:text-gray-200 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors disabled:opacity-50"
               >
                 Cancelar
               </button>

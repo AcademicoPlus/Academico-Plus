@@ -10,10 +10,10 @@ export const STATUS_PROJETO_LABEL: Record<StatusProjeto, string> = {
 };
 
 export const STATUS_PROJETO_BADGE: Record<StatusProjeto, string> = {
-  ABERTO: 'bg-green-50 text-green-600',
-  EM_ANDAMENTO: 'bg-orange-50 text-[#F27405]',
-  CONCLUIDO: 'bg-blue-50 text-[#183E6C]',
-  CANCELADO: 'bg-red-50 text-red-500',
+  ABERTO: 'bg-green-50 text-green-600 dark:bg-green-900/40 dark:text-green-300',
+  EM_ANDAMENTO: 'bg-orange-50 text-[#F27405] dark:bg-orange-900/40 dark:text-orange-300',
+  CONCLUIDO: 'bg-blue-50 text-[#183E6C] dark:bg-blue-900/40 dark:text-blue-300',
+  CANCELADO: 'bg-red-50 text-red-500 dark:bg-red-900/40 dark:text-red-300',
 };
 
 export function formatarData(data: string | null | undefined): string | null {

@@ -22,7 +22,7 @@ export default function DetalhesProjetoRota() {
   if (!id) {
     return (
       <div className="max-w-5xl mx-auto pb-10">
-        <p className="text-gray-500 mb-4 font-bold text-center">Projeto não encontrado.</p>
+        <p className="text-gray-500 dark:text-gray-400 mb-4 font-bold text-center">Projeto não encontrado.</p>
         <Link to="/projetos" className="text-[#F27405] font-semibold hover:underline block text-center">← Voltar para projetos</Link>
       </div>
     );
@@ -162,13 +162,13 @@ function DetalhesProjeto({ id }: { id: string }) {
     }
   }
 
-  if (carregando) return <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 animate-pulse">Carregando projeto...</p></div>;
+  if (carregando) return <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Carregando projeto...</p></div>;
 
   if (erro || !projeto) {
     return (
       <div className="max-w-5xl mx-auto pb-10">
-        <Link to="/projetos" className="inline-block mb-6 text-gray-500 hover:text-[#F27405] text-sm font-bold transition-colors">← Voltar para projetos</Link>
-        <div className="bg-white rounded-3xl p-12 border border-gray-100 shadow-sm text-center text-gray-500 font-bold text-lg">{erro ?? 'Projeto não encontrado.'}</div>
+        <Link to="/projetos" className="inline-block mb-6 text-gray-500 dark:text-gray-400 hover:text-[#F27405] text-sm font-bold transition-colors">← Voltar para projetos</Link>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl p-12 border border-gray-100 dark:border-slate-700 shadow-sm text-center text-gray-500 dark:text-gray-400 font-bold text-lg">{erro ?? 'Projeto não encontrado.'}</div>
       </div>
     );
   }
@@ -178,15 +178,15 @@ function DetalhesProjeto({ id }: { id: string }) {
 
   return (
     <div className="max-w-5xl mx-auto pb-12 animate-fade-in">
-      <Link to="/projetos" className="inline-flex items-center gap-2 mb-8 text-gray-500 hover:text-[#F27405] text-sm font-bold transition-colors">
+      <Link to="/projetos" className="inline-flex items-center gap-2 mb-8 text-gray-500 dark:text-gray-400 hover:text-[#F27405] text-sm font-bold transition-colors">
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path></svg>
         Voltar para explorar
       </Link>
 
-      <div className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 overflow-hidden mb-8">
+      <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 overflow-hidden mb-8">
 
         {/* Capa do Projeto (Hero Section) */}
-        <div className="h-64 sm:h-80 w-full relative bg-gray-100">
+        <div className="h-64 sm:h-80 w-full relative bg-gray-100 dark:bg-slate-800">
           <img src={`https://picsum.photos/seed/${projeto.id}projeto/1200/400`} alt="Capa" className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-linear-to-t from-[#0B1D33]/90 via-[#0B1D33]/40 to-transparent"></div>
           <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 pr-6">
@@ -201,36 +201,36 @@ function DetalhesProjeto({ id }: { id: string }) {
         <div className="p-6 md:p-10 flex flex-col lg:flex-row gap-10">
 
           <div className="lg:w-2/3">
-            <h2 className="text-xl font-bold text-[#183E6C] mb-4">Sobre o Projeto</h2>
-            <p className="text-gray-600 text-base md:text-lg leading-relaxed mb-10 whitespace-pre-line">{projeto.descricao}</p>
+            <h2 className="text-xl font-bold text-[#183E6C] dark:text-blue-300 mb-4">Sobre o Projeto</h2>
+            <p className="text-gray-600 dark:text-gray-300 text-base md:text-lg leading-relaxed mb-10 whitespace-pre-line">{projeto.descricao}</p>
 
-            <h2 className="text-xl font-bold text-[#183E6C] mb-4">Habilidades Desejadas</h2>
+            <h2 className="text-xl font-bold text-[#183E6C] dark:text-blue-300 mb-4">Habilidades Desejadas</h2>
             {projeto.habilidadesNecessarias.length > 0 ? (
               <div className="flex flex-wrap gap-3 mb-8">
                 {projeto.habilidadesNecessarias.map((h) => (
-                  <span key={h.id} className={`px-4 py-2 rounded-xl text-sm font-bold border ${h.obrigatoria ? 'bg-[#183E6C] text-white border-[#183E6C]' : 'bg-orange-50 text-[#F27405] border-orange-100'}`}>
+                  <span key={h.id} className={`px-4 py-2 rounded-xl text-sm font-bold border ${h.obrigatoria ? 'bg-[#183E6C] text-white border-[#183E6C]' : 'bg-orange-50 dark:bg-orange-950/40 text-[#F27405] border-orange-100 dark:border-orange-900/50'}`}>
                     {h.habilidade.nome} {h.obrigatoria && <span className="opacity-75 font-medium ml-1">• Obrigatória</span>}
                   </span>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-400 italic mb-8">Nenhuma habilidade específica requerida.</p>
+              <p className="text-gray-400 dark:text-gray-500 italic mb-8">Nenhuma habilidade específica requerida.</p>
             )}
 
             {/* Membros do Projeto */}
-            <h2 className="text-xl font-bold text-[#183E6C] mb-4 mt-8">Equipe Atual ({projeto.totalMembros})</h2>
+            <h2 className="text-xl font-bold text-[#183E6C] dark:text-blue-300 mb-4 mt-8">Equipe Atual ({projeto.totalMembros})</h2>
             {membros.length === 0 ? (
-              <p className="text-sm text-gray-400">Nenhum membro no momento.</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum membro no momento.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {membros.map((membro) => (
-                  <div key={membro.id} className="bg-gray-50 border border-gray-100 p-4 rounded-2xl flex items-center gap-4">
+                  <div key={membro.id} className="bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-4 rounded-2xl flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-[#183E6C] text-white flex items-center justify-center text-sm font-black shadow-sm">
                       {membro.usuario ? iniciaisDoNome(membro.usuario.nome) : '?'}
                     </div>
                     <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#183E6C] truncate">{membro.usuario?.nome ?? 'Usuário removido'}</p>
-                      <p className="text-xs font-medium text-gray-500 truncate">{membro.funcao ?? membro.usuario?.curso ?? '—'}</p>
+                      <p className="text-sm font-bold text-[#183E6C] dark:text-blue-300 truncate">{membro.usuario?.nome ?? 'Usuário removido'}</p>
+                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{membro.funcao ?? membro.usuario?.curso ?? '—'}</p>
                     </div>
                   </div>
                 ))}
@@ -240,34 +240,34 @@ function DetalhesProjeto({ id }: { id: string }) {
             {/* Candidaturas recebidas (só o criador do projeto vê) */}
             {souCriador && (
               <>
-                <h2 className="text-xl font-bold text-[#183E6C] mb-4 mt-8">
+                <h2 className="text-xl font-bold text-[#183E6C] dark:text-blue-300 mb-4 mt-8">
                   Candidaturas Pendentes {candidaturasPendentes.length > 0 && `(${candidaturasPendentes.length})`}
                 </h2>
 
                 {erroAcao && (
-                  <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600">
+                  <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
                     {erroAcao}
                   </div>
                 )}
 
                 {candidaturasPendentes.length === 0 ? (
-                  <p className="text-sm text-gray-400">Nenhuma candidatura pendente no momento.</p>
+                  <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma candidatura pendente no momento.</p>
                 ) : (
                   <div className="flex flex-col gap-4">
                     {candidaturasPendentes.map((candidatura) => (
-                      <div key={candidatura.id} className="bg-gray-50 border border-gray-100 p-5 rounded-2xl">
+                      <div key={candidatura.id} className="bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-5 rounded-2xl">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center text-sm font-black shrink-0">
                             {candidatura.usuario ? iniciaisDoNome(candidatura.usuario.nome) : '?'}
                           </div>
                           <div className="min-w-0">
-                            <p className="text-sm font-bold text-[#183E6C] truncate">{candidatura.usuario?.nome ?? 'Usuário removido'}</p>
-                            <p className="text-xs text-gray-500 truncate">{candidatura.usuario?.curso ?? '—'}</p>
+                            <p className="text-sm font-bold text-[#183E6C] dark:text-blue-300 truncate">{candidatura.usuario?.nome ?? 'Usuário removido'}</p>
+                            <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{candidatura.usuario?.curso ?? '—'}</p>
                           </div>
                         </div>
 
                         {candidatura.mensagem && (
-                          <p className="text-sm text-gray-600 italic bg-white border border-gray-100 rounded-xl p-3 mb-3">
+                          <p className="text-sm text-gray-600 dark:text-gray-300 italic bg-white dark:bg-slate-900 border border-gray-100 dark:border-slate-700 rounded-xl p-3 mb-3">
                             "{candidatura.mensagem}"
                           </p>
                         )}
@@ -279,13 +279,13 @@ function DetalhesProjeto({ id }: { id: string }) {
                               placeholder="Motivo da rejeição (mínimo 5 caracteres)..."
                               value={motivoRejeicao}
                               onChange={(e) => setMotivoRejeicao(e.target.value)}
-                              className="w-full p-3 bg-white border border-gray-200 rounded-xl outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 resize-none text-sm"
+                              className="w-full p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 resize-none text-sm dark:text-gray-100"
                             />
                             <div className="flex justify-end gap-2">
                               <button
                                 type="button"
                                 onClick={() => { setRejeitandoId(null); setMotivoRejeicao(''); setErroAcao(null); }}
-                                className="px-4 py-2 rounded-xl text-sm font-bold text-gray-500 hover:bg-gray-100 transition-colors"
+                                className="px-4 py-2 rounded-xl text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
                               >
                                 Cancelar
                               </button>
@@ -305,7 +305,7 @@ function DetalhesProjeto({ id }: { id: string }) {
                               type="button"
                               onClick={() => { setRejeitandoId(candidatura.id); setMotivoRejeicao(''); setErroAcao(null); }}
                               disabled={processandoId === candidatura.id}
-                              className="px-4 py-2 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                              className="px-4 py-2 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                             >
                               Rejeitar
                             </button>
@@ -329,55 +329,55 @@ function DetalhesProjeto({ id }: { id: string }) {
 
           {/* Sidebar */}
           <div className="lg:w-1/3 flex flex-col gap-6">
-            <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100">
-              <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-2">Liderado por</p>
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-3xl p-6 border border-gray-100 dark:border-slate-700">
+              <p className="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-2">Liderado por</p>
               <div className="flex items-center gap-4 mt-2">
-                <div className="w-14 h-14 rounded-full bg-orange-50 text-[#F27405] flex justify-center items-center font-black text-xl border border-orange-100 shadow-sm">
+                <div className="w-14 h-14 rounded-full bg-orange-50 dark:bg-orange-950/40 text-[#F27405] flex justify-center items-center font-black text-xl border border-orange-100 dark:border-orange-900/50 shadow-sm">
                   {projeto.criador ? iniciaisDoNome(projeto.criador.nome) : '?'}
                 </div>
                 <div>
-                  <p className="font-extrabold text-[#183E6C] text-lg leading-tight">{projeto.criador?.nome ?? 'Usuário removido'}</p>
-                  <p className="text-sm text-gray-500 font-medium mt-1">Autor do Projeto</p>
+                  <p className="font-extrabold text-[#183E6C] dark:text-blue-300 text-lg leading-tight">{projeto.criador?.nome ?? 'Usuário removido'}</p>
+                  <p className="text-sm text-gray-500 dark:text-gray-400 font-medium mt-1">Autor do Projeto</p>
                 </div>
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-3xl p-6 border border-gray-100 grid grid-cols-2 gap-6">
+            <div className="bg-gray-50 dark:bg-slate-800 rounded-3xl p-6 border border-gray-100 dark:border-slate-700 grid grid-cols-2 gap-6">
               <div>
-                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Vagas</p>
-                <p className="font-black text-2xl text-[#183E6C]">{projeto.vagasPreenchidas}<span className="text-gray-400 text-lg">/{projeto.vagas}</span></p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Vagas</p>
+                <p className="font-black text-2xl text-[#183E6C] dark:text-blue-300">{projeto.vagasPreenchidas}<span className="text-gray-400 dark:text-gray-500 text-lg">/{projeto.vagas}</span></p>
               </div>
               <div>
-                <p className="text-xs text-gray-400 uppercase font-bold tracking-wider mb-1">Prazo</p>
-                <p className="font-bold text-[#183E6C] text-sm mt-1.5">{prazo ?? 'Sem prazo'}</p>
+                <p className="text-xs text-gray-400 dark:text-gray-500 uppercase font-bold tracking-wider mb-1">Prazo</p>
+                <p className="font-bold text-[#183E6C] dark:text-blue-300 text-sm mt-1.5">{prazo ?? 'Sem prazo'}</p>
               </div>
             </div>
 
             {souCriador ? (
-              <Link to={`/editar-projeto/${projeto.id}`} className="w-full text-center py-4 rounded-xl font-extrabold transition-all shadow-sm bg-white border-2 border-[#183E6C] text-[#183E6C] hover:bg-[#183E6C] hover:text-white">
+              <Link to={`/editar-projeto/${projeto.id}`} className="w-full text-center py-4 rounded-xl font-extrabold transition-all shadow-sm bg-white dark:bg-slate-900 border-2 border-[#183E6C] text-[#183E6C] dark:text-blue-300 hover:bg-[#183E6C] hover:text-white">
                 ✎ Editar Detalhes
               </Link>
             ) : minhaCandidatura ? (
               minhaCandidatura.status === 'PENDENTE' ? (
                 <div className="flex flex-col gap-3">
-                  <div className="text-center py-3 px-4 rounded-xl bg-orange-50 text-[#F27405] font-bold text-sm">
+                  <div className="text-center py-3 px-4 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-[#F27405] font-bold text-sm">
                     Candidatura enviada — aguardando resposta
                   </div>
-                  {erroCandidatura && <p className="text-xs text-red-500 text-center">{erroCandidatura}</p>}
+                  {erroCandidatura && <p className="text-xs text-red-500 dark:text-red-400 text-center">{erroCandidatura}</p>}
                   <button
                     onClick={handleCancelarCandidatura}
                     disabled={cancelando}
-                    className="w-full py-4 rounded-xl font-extrabold transition-all shadow-sm bg-white border-2 border-red-500 text-red-500 hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                    className="w-full py-4 rounded-xl font-extrabold transition-all shadow-sm bg-white dark:bg-slate-900 border-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-60 disabled:cursor-not-allowed"
                   >
                     {cancelando ? 'Cancelando...' : '✕ Cancelar Candidatura'}
                   </button>
                 </div>
               ) : minhaCandidatura.status === 'ACEITO' ? (
-                <div className="text-center py-4 px-4 rounded-xl bg-green-50 text-green-600 font-extrabold">
+                <div className="text-center py-4 px-4 rounded-xl bg-green-50 dark:bg-green-950/40 text-green-600 dark:text-green-400 font-extrabold">
                   ✓ Você faz parte da equipe
                 </div>
               ) : (
-                <div className="py-4 px-4 rounded-xl bg-red-50 text-red-500">
+                <div className="py-4 px-4 rounded-xl bg-red-50 dark:bg-red-950/40 text-red-500 dark:text-red-400">
                   <p className="font-extrabold text-center mb-1">Candidatura rejeitada</p>
                   {minhaCandidatura.motivoRejeicao && (
                     <p className="text-sm text-center opacity-90">{minhaCandidatura.motivoRejeicao}</p>
@@ -385,7 +385,7 @@ function DetalhesProjeto({ id }: { id: string }) {
                 </div>
               )
             ) : !projeto.aceitandoCandidaturas ? (
-              <button disabled className="w-full py-4 rounded-xl font-extrabold bg-gray-200 text-gray-500 cursor-not-allowed">
+              <button disabled className="w-full py-4 rounded-xl font-extrabold bg-gray-200 dark:bg-slate-800 text-gray-500 dark:text-gray-400 cursor-not-allowed">
                 🚫 Candidaturas Fechadas
               </button>
             ) : mostrandoFormulario ? (
