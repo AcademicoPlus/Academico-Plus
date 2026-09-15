@@ -2,6 +2,9 @@ import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { listarProjetos, type Projeto, type StatusProjeto } from '../services/projetoService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL, iniciaisDoNome } from '../utils/projeto'
+import ErroCard from '../components/ErroCard'
+import EstadoVazio from '../components/EstadoVazio'
+import Skeleton from '../components/Skeleton'
 
 const OPCOES_STATUS: StatusProjeto[] = ['ABERTO', 'EM_ANDAMENTO', 'CONCLUIDO', 'CANCELADO'];
 const ATRASO_BUSCA_MS = 400;
@@ -77,17 +80,21 @@ export default function Projetos() {
         </select>
       </section>
 
-      {erro && (
-        <div className="mb-6 rounded-2xl bg-red-50 dark:bg-red-950/40 border border-red-100 dark:border-red-900/50 px-6 py-4 text-sm font-semibold text-red-600 dark:text-red-400 shadow-sm">
-          {erro}
-        </div>
-      )}
+      {erro && <ErroCard className="mb-6">{erro}</ErroCard>}
 
       {carregando ? (
-        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Buscando projetos...</p></div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-sm p-6 flex flex-col gap-4">
+              <Skeleton className="h-40 w-full rounded-2xl" />
+              <Skeleton className="h-4 w-3/4 rounded" />
+              <Skeleton className="h-3 w-1/2 rounded" />
+            </div>
+          ))}
+        </div>
       ) : projetos.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
-          <p className="text-lg text-gray-500 dark:text-gray-300 font-medium">Nenhum projeto encontrado com os filtros atuais.</p>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 shadow-sm">
+          <EstadoVazio titulo="Nenhum projeto encontrado com os filtros atuais." />
         </div>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">

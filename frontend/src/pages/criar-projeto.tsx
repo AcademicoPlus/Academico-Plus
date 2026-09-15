@@ -13,26 +13,38 @@ export default function CriarProjeto() {
   const [vagas, setVagas] = useState('1');
   const [dataFim, setDataFim] = useState('');
 
-  const [habilidades, setHabilidades] = useState<Habilidade[]>([]);
-  const [carregandoHabilidades, setCarregandoHabilidades] = useState(true);
-  const [habilidadesErro, setHabilidadesErro] = useState<string | null>(null);
+  // habilidadeId -> { habilidade, obrigatória }. Guardamos o objeto inteiro
+  // (não só o id) porque não mantemos mais o catálogo completo em memória —
+  // a busca abaixo é feita sob demanda no backend, e um catálogo com
+  // centenas/milhares de habilidades nunca caberia numa única página.
+  const [selecionadas, setSelecionadas] = useState<Record<string, { habilidade: Habilidade; obrigatoria: boolean }>>({});
+
   const [buscaHabilidade, setBuscaHabilidade] = useState('');
-  // habilidadeId -> obrigatória (chave presente = selecionada)
-  const [selecionadas, setSelecionadas] = useState<Record<string, boolean>>({});
+  const [sugestoes, setSugestoes] = useState<Habilidade[]>([]);
+  const [buscandoSugestoes, setBuscandoSugestoes] = useState(false);
+  const [erroBuscaHabilidade, setErroBuscaHabilidade] = useState<string | null>(null);
 
   const [carregando, setCarregando] = useState(false);
   const [erro, setErro] = useState<string | null>(null);
   const [errosCampo, setErrosCampo] = useState<Record<string, string>>({});
 
+  // Busca no catálogo (debounced, min. 2 caracteres) — nunca carrega o
+  // catálogo inteiro de uma vez, só a fatia que combina com o termo digitado.
   useEffect(() => {
-    listarHabilidades({ tamanho: 100 })
-      .then((pagina) => setHabilidades(pagina.content))
-      .catch(() => {
-        // Não bloqueia a criação do projeto: habilidades são opcionais aqui.
-        setHabilidadesErro('Não foi possível carregar o catálogo de habilidades. Você ainda pode criar o projeto sem elas.');
-      })
-      .finally(() => setCarregandoHabilidades(false));
-  }, []);
+    if (buscaHabilidade.trim().length < 2) {
+      setSugestoes([]);
+      return;
+    }
+    const temporizador = setTimeout(() => {
+      setBuscandoSugestoes(true);
+      setErroBuscaHabilidade(null);
+      listarHabilidades({ busca: buscaHabilidade.trim(), tamanho: 8 })
+        .then((pagina) => setSugestoes(pagina.content.filter((h) => !(h.id in selecionadas))))
+        .catch(() => setErroBuscaHabilidade('Não foi possível buscar habilidades.'))
+        .finally(() => setBuscandoSugestoes(false));
+    }, 350);
+    return () => clearTimeout(temporizador);
+  }, [buscaHabilidade, selecionadas]);
 
   // Espelha as mensagens do CriarProjetoRequest (backend), pra já avisar o
   // usuário antes de bater na API — a validação do backend continua sendo a
@@ -84,21 +96,12 @@ export default function CriarProjeto() {
     return erros;
   }
 
-  const habilidadesSelecionadas = habilidades.filter((habilidade) => habilidade.id in selecionadas);
+  const habilidadesSelecionadas = Object.values(selecionadas);
 
-  // Já selecionada não aparece mais nos resultados da busca (evita adicionar duas vezes).
-  const habilidadesFiltradas = habilidades.filter((habilidade) => {
-    if (habilidade.id in selecionadas) return false;
-    const termo = buscaHabilidade.trim().toLowerCase();
-    if (!termo) return true;
-    return (
-      habilidade.nome.toLowerCase().includes(termo) ||
-      habilidade.categoria.toLowerCase().includes(termo)
-    );
-  });
-
-  function adicionarHabilidade(id: string) {
-    setSelecionadas((atual) => ({ ...atual, [id]: false }));
+  function adicionarHabilidade(habilidade: Habilidade) {
+    setSelecionadas((atual) => ({ ...atual, [habilidade.id]: { habilidade, obrigatoria: false } }));
+    setBuscaHabilidade('');
+    setSugestoes([]);
   }
 
   function removerHabilidade(id: string) {
@@ -110,7 +113,10 @@ export default function CriarProjeto() {
   }
 
   function alternarObrigatoria(id: string) {
-    setSelecionadas((atual) => ({ ...atual, [id]: !atual[id] }));
+    setSelecionadas((atual) => ({
+      ...atual,
+      [id]: { ...atual[id], obrigatoria: !atual[id].obrigatoria },
+    }));
   }
 
   // Some o erro do campo assim que o usuário mexe nele de novo, em vez de
@@ -142,7 +148,7 @@ export default function CriarProjeto() {
         descricao,
         vagas: Number(vagas),
         dataFim: dataFim ? `${dataFim}T23:59:59` : undefined,
-        habilidades: Object.entries(selecionadas).map(([habilidadeId, obrigatoria]) => ({
+        habilidades: Object.entries(selecionadas).map(([habilidadeId, { obrigatoria }]) => ({
           habilidadeId,
           obrigatoria,
         })),
@@ -261,94 +267,88 @@ export default function CriarProjeto() {
           <div>
             <label className="block text-sm font-medium text-[#183E6C] dark:text-blue-300 mb-2">Habilidades necessárias (opcional)</label>
 
-            {carregandoHabilidades ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">Carregando habilidades...</p>
-            ) : habilidadesErro ? (
-              <p className="text-sm text-red-500 dark:text-red-400">{habilidadesErro}</p>
-            ) : habilidades.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma habilidade cadastrada no catálogo.</p>
-            ) : (
-              <>
-                {/* Habilidades já escolhidas: aqui o usuário decide obrigatoriedade ou remove */}
-                {habilidadesSelecionadas.length > 0 && (
-                  <div className="flex flex-col gap-2 mb-3">
-                    {habilidadesSelecionadas.map((habilidade) => (
-                      <div
-                        key={habilidade.id}
-                        className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-[#F27405]/30 bg-orange-50 dark:bg-orange-950/40"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
-                        </div>
+            {/* Habilidades já escolhidas: aqui o usuário decide obrigatoriedade ou remove */}
+            {habilidadesSelecionadas.length > 0 && (
+              <div className="flex flex-col gap-2 mb-3">
+                {habilidadesSelecionadas.map(({ habilidade, obrigatoria }) => (
+                  <div
+                    key={habilidade.id}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl border border-[#F27405]/30 bg-orange-50 dark:bg-orange-950/40"
+                  >
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
+                    </div>
 
-                        <div className="flex items-center gap-4 shrink-0">
-                          <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
-                            <input
-                              type="checkbox"
-                              checked={selecionadas[habilidade.id]}
-                              onChange={() => alternarObrigatoria(habilidade.id)}
-                              className="h-3.5 w-3.5 rounded border-gray-300 dark:border-slate-600 text-[#183E6C] focus:ring-[#183E6C]/20"
-                            />
-                            Obrigatória
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => removerHabilidade(habilidade.id)}
-                            aria-label={`Remover ${habilidade.nome}`}
-                            className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
-                          >
-                            <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                <div className="relative mb-3">
-                  <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                    <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
-                    </svg>
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="Buscar habilidade por nome ou categoria..."
-                    value={buscaHabilidade}
-                    onChange={(e) => setBuscaHabilidade(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-sm text-gray-700 dark:text-gray-100"
-                  />
-                </div>
-
-                {/* Catálogo (excluindo o que já foi adicionado acima): clicar adiciona */}
-                {habilidadesFiltradas.length === 0 ? (
-                  <p className="text-sm text-gray-400 dark:text-gray-500">
-                    {buscaHabilidade
-                      ? `Nenhuma habilidade encontrada para "${buscaHabilidade}".`
-                      : 'Todas as habilidades do catálogo já foram adicionadas.'}
-                  </p>
-                ) : (
-                  <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-                    {habilidadesFiltradas.map((habilidade) => (
+                    <div className="flex items-center gap-4 shrink-0">
+                      <label className="flex items-center gap-1.5 text-xs text-gray-500 dark:text-gray-400 cursor-pointer">
+                        <input
+                          type="checkbox"
+                          checked={obrigatoria}
+                          onChange={() => alternarObrigatoria(habilidade.id)}
+                          className="h-3.5 w-3.5 rounded border-gray-300 dark:border-slate-600 text-[#183E6C] focus:ring-[#183E6C]/20"
+                        />
+                        Obrigatória
+                      </label>
                       <button
                         type="button"
-                        key={habilidade.id}
-                        onClick={() => adicionarHabilidade(habilidade.id)}
-                        className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-transparent hover:border-[#F27405]/30 transition-colors text-left"
+                        onClick={() => removerHabilidade(habilidade.id)}
+                        aria-label={`Remover ${habilidade.nome}`}
+                        className="text-gray-400 dark:text-gray-500 hover:text-red-500 dark:hover:text-red-400 transition-colors"
                       >
-                        <span className="flex items-center gap-2">
-                          <span className="text-sm text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
-                          <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
-                        </span>
-                        <span className="text-[#F27405] text-lg leading-none font-bold shrink-0">+</span>
+                        <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12"></path>
+                        </svg>
                       </button>
-                    ))}
+                    </div>
                   </div>
-                )}
-              </>
+                ))}
+              </div>
+            )}
+
+            <div className="relative mb-3">
+              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+                </svg>
+              </div>
+              <input
+                type="text"
+                placeholder="Buscar habilidade por nome ou categoria... (mín. 2 letras)"
+                value={buscaHabilidade}
+                onChange={(e) => setBuscaHabilidade(e.target.value)}
+                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-sm text-gray-700 dark:text-gray-100"
+              />
+            </div>
+
+            {/* Resultados da busca no catálogo (server-side): clicar adiciona */}
+            {buscaHabilidade.trim().length < 2 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">Digite ao menos 2 letras para buscar uma habilidade no catálogo.</p>
+            ) : buscandoSugestoes ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">Buscando…</p>
+            ) : erroBuscaHabilidade ? (
+              <p className="text-sm text-red-500 dark:text-red-400">{erroBuscaHabilidade}</p>
+            ) : sugestoes.length === 0 ? (
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                Nenhuma habilidade encontrada para "{buscaHabilidade}".
+              </p>
+            ) : (
+              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+                {sugestoes.map((habilidade) => (
+                  <button
+                    type="button"
+                    key={habilidade.id}
+                    onClick={() => adicionarHabilidade(habilidade)}
+                    className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-transparent hover:border-[#F27405]/30 transition-colors text-left"
+                  >
+                    <span className="flex items-center gap-2">
+                      <span className="text-sm text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
+                      <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
+                    </span>
+                    <span className="text-[#F27405] text-lg leading-none font-bold shrink-0">+</span>
+                  </button>
+                ))}
+              </div>
             )}
           </div>
 

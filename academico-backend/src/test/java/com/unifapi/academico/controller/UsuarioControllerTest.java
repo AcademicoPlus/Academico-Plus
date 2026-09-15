@@ -272,7 +272,7 @@ class UsuarioControllerTest {
         UsuarioResumoResponse resumo = new UsuarioResumoResponse(
                 UUID.randomUUID(), "Usuario", "Curso", null, "ALUNO", 1, null, 0);
         Page<UsuarioResumoResponse> pagina = new PageImpl<>(List.of(resumo), PageRequest.of(0, 12), 1);
-        when(usuarioService.buscarPerfisPublicos(any(), any(), any())).thenReturn(pagina);
+        when(usuarioService.buscarPerfisPublicos(any(), any(), any(), any())).thenReturn(pagina);
 
         mockMvc.perform(get("/usuarios/explorar").param("busca", "usuario"))
                 .andExpect(status().isOk())

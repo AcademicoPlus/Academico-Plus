@@ -9,6 +9,9 @@ import {
 import { ApiError } from '../services/apiClient';
 import { STATUS_CANDIDATURA_BADGE, STATUS_CANDIDATURA_LABEL } from '../utils/candidatura';
 import { formatarData } from '../utils/projeto';
+import ErroCard from '../components/ErroCard';
+import EstadoVazio from '../components/EstadoVazio';
+import Skeleton from '../components/Skeleton';
 
 const OPCOES_STATUS: StatusCandidatura[] = ['PENDENTE', 'ACEITO', 'REJEITADO'];
 
@@ -99,29 +102,34 @@ export default function Candidaturas() {
         </select>
       </div>
 
-      {erro && (
-        <div className="mb-6 rounded-2xl bg-red-50 border border-red-100 px-6 py-4 text-sm font-semibold text-red-600 shadow-sm dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
-          {erro}
-        </div>
-      )}
+      {erro && <ErroCard className="mb-6">{erro}</ErroCard>}
 
       {carregando ? (
-        <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Carregando candidaturas...</p></div>
+        <div className="flex flex-col gap-6">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm flex flex-col gap-3">
+              <Skeleton className="h-4 w-1/2 rounded" />
+              <Skeleton className="h-3 w-1/3 rounded" />
+            </div>
+          ))}
+        </div>
       ) : candidaturas.length === 0 ? (
-        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 text-center shadow-sm">
-          <p className="text-lg text-gray-500 dark:text-gray-400 font-medium mb-2">Você ainda não se candidatou a nenhum projeto.</p>
-          <Link to="/projetos" className="text-[#F27405] font-bold hover:underline">Explorar projetos →</Link>
+        <div className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 p-12 shadow-sm">
+          <EstadoVazio
+            titulo="Você ainda não se candidatou a nenhum projeto."
+            acao={<Link to="/projetos" className="text-[#F27405] font-bold hover:underline text-sm">Explorar projetos →</Link>}
+          />
         </div>
       ) : (
         <div className="flex flex-col gap-6">
           {candidaturas.map((candidatura) => (
             <div key={candidatura.id} className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm">
-              <div className="flex justify-between items-start mb-4 gap-4">
+              <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-2 sm:gap-4">
                 <Link to={`/detalhes/${candidatura.projeto.id}`} className="min-w-0">
                   <h3 className="font-bold text-lg text-[#183E6C] dark:text-blue-300 hover:text-[#F27405] transition-colors truncate">{candidatura.projeto.titulo}</h3>
                   <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Candidatou-se em {formatarData(candidatura.dataCandidatura)}</p>
                 </Link>
-                <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 ${STATUS_CANDIDATURA_BADGE[candidatura.status]}`}>
+                <span className={`text-xs font-bold px-3 py-1 rounded-full shrink-0 self-start ${STATUS_CANDIDATURA_BADGE[candidatura.status]}`}>
                   {STATUS_CANDIDATURA_LABEL[candidatura.status]}
                 </span>
               </div>

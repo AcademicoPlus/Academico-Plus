@@ -84,11 +84,12 @@ public class UsuarioService {
     }
 
     @Transactional(readOnly = true)
-    public Page<UsuarioResumoResponse> buscarPerfisPublicos(String busca, UUID idCurso, Pageable pageable) {
+    public Page<UsuarioResumoResponse> buscarPerfisPublicos(String busca, UUID idCurso, UUID idHabilidade, Pageable pageable) {
         Specification<Usuario> spec = Specification
                 .where(UsuarioRepository.somenteAtivos())
                 .and(UsuarioRepository.semAdmin())
                 .and(UsuarioRepository.comCurso(idCurso))
+                .and(UsuarioRepository.comHabilidade(idHabilidade))
                 .and(UsuarioRepository.comBuscaTextual(busca))
                 .and(UsuarioRepository.comFetchRelacoes());
 

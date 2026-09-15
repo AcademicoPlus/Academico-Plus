@@ -65,10 +65,10 @@ function EditarProjeto({ id }: { id: string }) {
   const [sucesso, setSucesso] = useState<string | null>(null);
   const [errosCampo, setErrosCampo] = useState<Record<string, string>>({});
 
-  const [habilidades, setHabilidades] = useState<Habilidade[]>([]);
-  const [carregandoHabilidades, setCarregandoHabilidades] = useState(true);
-  const [habilidadesErro, setHabilidadesErro] = useState<string | null>(null);
   const [buscaHabilidade, setBuscaHabilidade] = useState('');
+  const [sugestoes, setSugestoes] = useState<Habilidade[]>([]);
+  const [buscandoSugestoes, setBuscandoSugestoes] = useState(false);
+  const [erroBuscaHabilidade, setErroBuscaHabilidade] = useState<string | null>(null);
   const [habilidadeEmAcao, setHabilidadeEmAcao] = useState<string | null>(null);
   const [erroHabilidade, setErroHabilidade] = useState<string | null>(null);
 
@@ -105,12 +105,24 @@ function EditarProjeto({ id }: { id: string }) {
     };
   }, [id]);
 
+  // Busca no catálogo (debounced, min. 2 caracteres) — nunca carrega o
+  // catálogo inteiro de uma vez, só a fatia que combina com o termo digitado.
   useEffect(() => {
-    listarHabilidades({ tamanho: 100 })
-      .then((pagina) => setHabilidades(pagina.content))
-      .catch(() => setHabilidadesErro('Não foi possível carregar o catálogo de habilidades.'))
-      .finally(() => setCarregandoHabilidades(false));
-  }, []);
+    if (buscaHabilidade.trim().length < 2) {
+      setSugestoes([]);
+      return;
+    }
+    const idsJaVinculados = new Set((projeto?.habilidadesNecessarias ?? []).map((h) => h.habilidade.id));
+    const temporizador = setTimeout(() => {
+      setBuscandoSugestoes(true);
+      setErroBuscaHabilidade(null);
+      listarHabilidades({ busca: buscaHabilidade.trim(), tamanho: 8 })
+        .then((pagina) => setSugestoes(pagina.content.filter((h) => !idsJaVinculados.has(h.id))))
+        .catch(() => setErroBuscaHabilidade('Não foi possível buscar habilidades.'))
+        .finally(() => setBuscandoSugestoes(false));
+    }, 350);
+    return () => clearTimeout(temporizador);
+  }, [buscaHabilidade, projeto?.habilidadesNecessarias]);
 
   function validar(): Record<string, string> {
     const erros: Record<string, string> = {};
@@ -209,16 +221,6 @@ function EditarProjeto({ id }: { id: string }) {
   }
 
   const habilidadesSelecionadas = projeto?.habilidadesNecessarias ?? [];
-  const idsSelecionados = new Set(habilidadesSelecionadas.map((h) => h.habilidade.id));
-  const habilidadesFiltradas = habilidades.filter((habilidade) => {
-    if (idsSelecionados.has(habilidade.id)) return false;
-    const termo = buscaHabilidade.trim().toLowerCase();
-    if (!termo) return true;
-    return (
-      habilidade.nome.toLowerCase().includes(termo) ||
-      habilidade.categoria.toLowerCase().includes(termo)
-    );
-  });
 
   async function handleAdicionarHabilidade(habilidadeId: string) {
     setErroHabilidade(null);
@@ -226,6 +228,8 @@ function EditarProjeto({ id }: { id: string }) {
     try {
       const vinculo = await vincularHabilidadeAoProjeto(id, habilidadeId, false);
       setProjeto((atual) => (atual ? { ...atual, habilidadesNecessarias: [...atual.habilidadesNecessarias, vinculo] } : atual));
+      setBuscaHabilidade('');
+      setSugestoes([]);
     } catch (erroCapturado) {
       setErroHabilidade(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível adicionar a habilidade.');
     } finally {
@@ -470,53 +474,49 @@ function EditarProjeto({ id }: { id: string }) {
           </div>
         )}
 
-        {carregandoHabilidades ? (
-          <p className="text-sm text-gray-400 dark:text-gray-500">Carregando habilidades...</p>
-        ) : habilidadesErro ? (
-          <p className="text-sm text-red-500 dark:text-red-400">{habilidadesErro}</p>
-        ) : (
-          <>
-            <div className="relative mb-3">
-              <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
-                </svg>
-              </div>
-              <input
-                type="text"
-                placeholder="Buscar habilidade por nome ou categoria..."
-                value={buscaHabilidade}
-                onChange={(e) => setBuscaHabilidade(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-sm text-gray-700 dark:text-gray-100"
-              />
-            </div>
+        <div className="relative mb-3">
+          <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+            <svg className="h-4 w-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"></path>
+            </svg>
+          </div>
+          <input
+            type="text"
+            placeholder="Buscar habilidade por nome ou categoria... (mín. 2 letras)"
+            value={buscaHabilidade}
+            onChange={(e) => setBuscaHabilidade(e.target.value)}
+            className="w-full pl-10 pr-4 py-2.5 bg-gray-50 dark:bg-slate-800 border border-transparent rounded-xl focus:bg-white dark:focus:bg-slate-800 focus:border-[#F27405] focus:ring-2 focus:ring-[#F27405]/20 outline-none transition-all text-sm text-gray-700 dark:text-gray-100"
+          />
+        </div>
 
-            {habilidadesFiltradas.length === 0 ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500">
-                {buscaHabilidade
-                  ? `Nenhuma habilidade encontrada para "${buscaHabilidade}".`
-                  : 'Todas as habilidades do catálogo já foram adicionadas.'}
-              </p>
-            ) : (
-              <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
-                {habilidadesFiltradas.map((habilidade) => (
-                  <button
-                    type="button"
-                    key={habilidade.id}
-                    disabled={habilidadeEmAcao === habilidade.id}
-                    onClick={() => handleAdicionarHabilidade(habilidade.id)}
-                    className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-transparent hover:border-[#F27405]/30 transition-colors text-left disabled:opacity-50"
-                  >
-                    <span className="flex items-center gap-2">
-                      <span className="text-sm text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
-                      <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
-                    </span>
-                    <span className="text-[#F27405] text-lg leading-none font-bold shrink-0">+</span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </>
+        {buscaHabilidade.trim().length < 2 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">Digite ao menos 2 letras para buscar uma habilidade no catálogo.</p>
+        ) : buscandoSugestoes ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">Buscando…</p>
+        ) : erroBuscaHabilidade ? (
+          <p className="text-sm text-red-500 dark:text-red-400">{erroBuscaHabilidade}</p>
+        ) : sugestoes.length === 0 ? (
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Nenhuma habilidade encontrada para "{buscaHabilidade}".
+          </p>
+        ) : (
+          <div className="flex flex-col gap-2 max-h-64 overflow-y-auto pr-1">
+            {sugestoes.map((habilidade) => (
+              <button
+                type="button"
+                key={habilidade.id}
+                disabled={habilidadeEmAcao === habilidade.id}
+                onClick={() => handleAdicionarHabilidade(habilidade.id)}
+                className="flex items-center justify-between gap-3 px-4 py-2.5 rounded-xl bg-gray-50 dark:bg-slate-800 hover:bg-gray-100 dark:hover:bg-slate-700 border border-transparent hover:border-[#F27405]/30 transition-colors text-left disabled:opacity-50"
+              >
+                <span className="flex items-center gap-2">
+                  <span className="text-sm text-gray-700 dark:text-gray-200">{habilidade.nome}</span>
+                  <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase font-semibold">{habilidade.categoria}</span>
+                </span>
+                <span className="text-[#F27405] text-lg leading-none font-bold shrink-0">+</span>
+              </button>
+            ))}
+          </div>
         )}
       </div>
 

@@ -41,42 +41,36 @@ const CURSOS_MOCK: Curso[] = [
   { id: '55555555-5555-5555-5555-555555555555', nome: 'Psicologia', criadoEm: '2024-01-01T00:00:00Z' },
 ];
 
+// Catálogo único de habilidades, no mesmo formato do endpoint real
+// GET /habilidades (ver habilidadeService.ts). Serve tanto o painel admin e
+// os seletores de criar/editar-projeto (catálogo completo, com categoria)
+// quanto os cards de ExplorarPessoas e os perfis fictícios abaixo — um único
+// catálogo, para que o filtro de habilidade em Explorar Pessoas realmente
+// bata com o que os usuários fictícios têm no perfil.
 const HABILIDADES_MOCK: Habilidade[] = [
-  { id: 'aaaaaaaa-0001-0001-0001-000000000001', nome: 'React', categoria: 'Frontend', descricao: null, usuariosCount: 4, projetosCount: 2, criadoEm: '2024-01-01T00:00:00Z' },
-  { id: 'aaaaaaaa-0001-0001-0001-000000000002', nome: 'Node.js', categoria: 'Backend', descricao: null, usuariosCount: 3, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
-  { id: 'aaaaaaaa-0001-0001-0001-000000000003', nome: 'Figma', categoria: 'Design', descricao: null, usuariosCount: 2, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
-  { id: 'aaaaaaaa-0001-0001-0001-000000000004', nome: 'Python', categoria: 'Backend', descricao: null, usuariosCount: 5, projetosCount: 3, criadoEm: '2024-01-01T00:00:00Z' },
-];
-
-type HabilidadeMock = { id: string; nome: string };
-
-// Catálogo fictício de habilidades, no mesmo formato do endpoint real
-// GET /habilidades (ver habilidadeService.ts). Usado tanto para preencher
-// o select de filtro em ExplorarPessoas quanto para dar às pessoas
-// fictícias abaixo (USUARIOS_MOCK) habilidades reais para exibir nos cards.
-const HABILIDADES_PESSOAS_MOCK: HabilidadeMock[] = [
-  { id: 'hab-java', nome: 'Java' },
-  { id: 'hab-spring', nome: 'Spring Boot' },
-  { id: 'hab-react', nome: 'React' },
-  { id: 'hab-docker', nome: 'Docker' },
-  { id: 'hab-marketing', nome: 'Marketing Digital' },
-  { id: 'hab-branding', nome: 'Branding' },
-  { id: 'hab-seo', nome: 'SEO' },
-  { id: 'hab-ads', nome: 'Google Ads' },
-  { id: 'hab-reactnative', nome: 'React Native' },
-  { id: 'hab-ts', nome: 'TypeScript' },
-  { id: 'hab-node', nome: 'Node.js' },
-  { id: 'hab-aws', nome: 'AWS' },
-  { id: 'hab-psico', nome: 'Psicologia' },
-  { id: 'hab-pesquisa', nome: 'Pesquisa' },
-  { id: 'hab-uxr', nome: 'UX Research' },
-  { id: 'hab-uiux', nome: 'UI/UX' },
-  { id: 'hab-figma', nome: 'Figma' },
+  { id: 'hab-java', nome: 'Java', categoria: 'Backend', descricao: null, usuariosCount: 2, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-spring', nome: 'Spring Boot', categoria: 'Backend', descricao: null, usuariosCount: 1, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-react', nome: 'React', categoria: 'Frontend', descricao: null, usuariosCount: 4, projetosCount: 2, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-docker', nome: 'Docker', categoria: 'DevOps', descricao: null, usuariosCount: 1, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-marketing', nome: 'Marketing Digital', categoria: 'Marketing', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-branding', nome: 'Branding', categoria: 'Marketing', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-seo', nome: 'SEO', categoria: 'Marketing', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-ads', nome: 'Google Ads', categoria: 'Marketing', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-reactnative', nome: 'React Native', categoria: 'Frontend', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-ts', nome: 'TypeScript', categoria: 'Frontend', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-node', nome: 'Node.js', categoria: 'Backend', descricao: null, usuariosCount: 2, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-aws', nome: 'AWS', categoria: 'DevOps', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-psico', nome: 'Psicologia', categoria: 'Pesquisa', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-pesquisa', nome: 'Pesquisa', categoria: 'Pesquisa', descricao: null, usuariosCount: 2, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-uxr', nome: 'UX Research', categoria: 'Design', descricao: null, usuariosCount: 1, projetosCount: 0, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-uiux', nome: 'UI/UX', categoria: 'Design', descricao: null, usuariosCount: 1, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-figma', nome: 'Figma', categoria: 'Design', descricao: null, usuariosCount: 2, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
+  { id: 'hab-python', nome: 'Python', categoria: 'Backend', descricao: null, usuariosCount: 1, projetosCount: 1, criadoEm: '2024-01-01T00:00:00Z' },
 ];
 
 // Atalho pra puxar uma habilidade do catálogo pelo id, sem repetir o
 // objeto inteiro toda vez que um usuário fictício precisa dela.
-const acha = (id: string) => HABILIDADES_PESSOAS_MOCK.find((h) => h.id === id)!;
+const acha = (id: string) => HABILIDADES_MOCK.find((h) => h.id === id)!;
 
 // Credenciais fixas pra testar o login sem backend.
 export const CREDENCIAIS_MOCK = {
@@ -175,7 +169,7 @@ const CANDIDATURAS_MOCK: Candidatura[] = [
   },
 ];
 
-type UsuarioMock = UsuarioResumo & { habilidades: HabilidadeMock[] };
+type UsuarioMock = UsuarioResumo & { habilidades: Habilidade[] };
 
 // Pessoas fictícias para a tela Explorar Pessoas — nomes, cursos e
 // habilidades variados de propósito, para testar busca, filtro por curso
@@ -287,8 +281,8 @@ const PROJETOS_MOCK: ProjetoDetalhe[] = [
     criadoEm: '2024-02-01T10:00:00Z',
     atualizadoEm: '2024-02-01T10:00:00Z',
     habilidadesNecessarias: [
-      habilidadeNecessariaMock('aaaaaaaa-0001-0001-0001-000000000001', true),
-      habilidadeNecessariaMock('aaaaaaaa-0001-0001-0001-000000000003', false),
+      habilidadeNecessariaMock('hab-react', true),
+      habilidadeNecessariaMock('hab-figma', false),
     ],
     totalMembros: 1,
     totalCandidaturasPendentes: 0,
@@ -308,8 +302,8 @@ const PROJETOS_MOCK: ProjetoDetalhe[] = [
     criadoEm: '2024-01-15T10:00:00Z',
     atualizadoEm: '2024-01-15T10:00:00Z',
     habilidadesNecessarias: [
-      habilidadeNecessariaMock('aaaaaaaa-0001-0001-0001-000000000002', true),
-      habilidadeNecessariaMock('aaaaaaaa-0001-0001-0001-000000000004', true),
+      habilidadeNecessariaMock('hab-node', true),
+      habilidadeNecessariaMock('hab-python', true),
     ],
     totalMembros: 2,
     totalCandidaturasPendentes: 1,
@@ -328,7 +322,7 @@ const PROJETOS_MOCK: ProjetoDetalhe[] = [
     ativo: true,
     criadoEm: '2024-03-10T10:00:00Z',
     atualizadoEm: '2024-03-10T10:00:00Z',
-    habilidadesNecessarias: [habilidadeNecessariaMock('aaaaaaaa-0001-0001-0001-000000000001', true)],
+    habilidadesNecessarias: [habilidadeNecessariaMock('hab-react', true)],
     totalMembros: 3,
     totalCandidaturasPendentes: 0,
   },
@@ -411,6 +405,7 @@ type MockOptions = {
 function mockExplorarPerfis(query: URLSearchParams): Promise<PaginaResposta<UsuarioResumo>> {
   const busca = query.get('busca')?.toLowerCase() ?? '';
   const idCurso = query.get('idCurso') ?? '';
+  const idHabilidade = query.get('idHabilidade') ?? '';
   const page = Number(query.get('page') ?? '0');
   const size = Number(query.get('size') ?? '10');
 
@@ -426,7 +421,9 @@ function mockExplorarPerfis(query: URLSearchParams): Promise<PaginaResposta<Usua
       usuario.nome.toLowerCase().includes(busca) ||
       (usuario.curso?.toLowerCase().includes(busca) ?? false);
     const bateCurso = !nomeCursoFiltro || usuario.curso === nomeCursoFiltro;
-    return bateBusca && bateCurso;
+    const bateHabilidade =
+      !idHabilidade || usuario.habilidades.some((h) => h.id === idHabilidade);
+    return bateBusca && bateCurso && bateHabilidade;
   });
 
   const inicio = page * size;
@@ -444,12 +441,49 @@ function mockExplorarPerfis(query: URLSearchParams): Promise<PaginaResposta<Usua
   return resolverComAtraso(resposta);
 }
 
+// Simula GET /habilidades com busca/categoria/paginação de verdade — usado
+// tanto pelo autocomplete de criar/editar-projeto e Explorar Pessoas quanto
+// pela paginação do painel admin, então precisa filtrar de fato em vez de
+// devolver o catálogo inteiro (senão o mock mascara o mesmo problema de
+// escala que a busca server-side existe justamente para evitar).
+function mockListarHabilidades(query: URLSearchParams): Promise<PaginaResposta<Habilidade>> {
+  const busca = query.get('busca')?.toLowerCase() ?? '';
+  const categoria = query.get('categoria') ?? '';
+  const page = Number(query.get('page') ?? '0');
+  const size = Number(query.get('size') ?? '10');
+
+  const filtradas = HABILIDADES_MOCK.filter((h) => {
+    const bateBusca =
+      !busca ||
+      h.nome.toLowerCase().includes(busca) ||
+      h.categoria.toLowerCase().includes(busca);
+    const bateCategoria = !categoria || h.categoria === categoria;
+    return bateBusca && bateCategoria;
+  });
+
+  const inicio = page * size;
+  const pagina = filtradas.slice(inicio, inicio + size);
+
+  return resolverComAtraso({
+    content: pagina,
+    totalElements: filtradas.length,
+    totalPages: Math.ceil(filtradas.length / size) || 1,
+    number: page,
+    size,
+    last: inicio + size >= filtradas.length,
+  });
+}
+
 export function mockFetch<TResposta>(caminho: string, { method, body }: MockOptions): Promise<TResposta> {
   const [caminhoBase, queryString] = caminho.split('?');
   const parametros = new URLSearchParams(queryString ?? '');
 
   if (method === 'GET' && caminhoBase === '/usuarios/explorar') {
     return mockExplorarPerfis(parametros) as unknown as Promise<TResposta>;
+  }
+
+  if (method === 'GET' && caminhoBase === '/habilidades') {
+    return mockListarHabilidades(parametros) as unknown as Promise<TResposta>;
   }
 
   // Perfil de outro usuário: GET /usuarios/usuario-mock-N (mas não /usuarios/me)
@@ -462,9 +496,6 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
   switch (rota) {
     case 'GET /cursos':
       return resolverComAtraso(CURSOS_MOCK as unknown as TResposta);
-
-    case 'GET /habilidades':
-      return resolverComAtraso(paginar(HABILIDADES_MOCK) as unknown as TResposta);
 
     case 'GET /habilidades/categorias': {
       const categorias = [...new Set(HABILIDADES_MOCK.map((h) => h.categoria))];
@@ -494,16 +525,6 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
 
     case 'GET /denuncias':
       return resolverComAtraso(paginar(clonar(DENUNCIAS_MOCK)) as unknown as TResposta);
-
-    case 'GET /habilidades?size=100':
-      return resolverComAtraso({
-        content: HABILIDADES_PESSOAS_MOCK,
-        totalElements: HABILIDADES_PESSOAS_MOCK.length,
-        totalPages: 1,
-        number: 0,
-        size: 100,
-        last: true,
-      } as unknown as TResposta);
 
     case 'GET /usuarios/me':
       return resolverComAtraso({ ...meuPerfilMock } as unknown as TResposta);

@@ -25,6 +25,9 @@ import { formatarData, iniciaisDoNome } from '../utils/projeto';
 
 import Card from '../components/Card';
 import Badge from '../components/Badge';
+import Estrelas from '../components/Estrelas';
+import Skeleton from '../components/Skeleton';
+import EstadoVazio from '../components/EstadoVazio';
 
 // ─── Tipos Locais ─────────────────────────────────────────────────────────────
 
@@ -62,24 +65,6 @@ function obterCorAvatar(nome: string): string {
 function formatarNivel(nivel?: string): string {
   if (!nivel) return '';
   return nivel.charAt(0).toUpperCase() + nivel.slice(1).toLowerCase();
-}
-
-function Estrelas({ nota }: { nota: number }) {
-  return (
-    <div className="flex items-center gap-0.5" aria-label={`Nota ${nota} de 5`}>
-      {[1, 2, 3, 4, 5].map((posicao) => (
-        <svg
-          key={posicao}
-          xmlns="http://www.w3.org/2000/svg"
-          className={`h-3.5 w-3.5 ${posicao <= Math.round(nota) ? 'text-amber-400' : 'text-gray-200 dark:text-slate-700'}`}
-          viewBox="0 0 20 20"
-          fill="currentColor"
-        >
-          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.448a1 1 0 00-.364 1.118l1.287 3.957c.299.922-.756 1.688-1.54 1.118l-3.367-2.447a1 1 0 00-1.176 0l-3.368 2.447c-.783.57-1.838-.196-1.539-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.98 9.385c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.951-.69l1.286-3.958z" />
-        </svg>
-      ))}
-    </div>
-  );
 }
 
 /**
@@ -253,20 +238,20 @@ export default function Perfil() {
   // ── Render: Carregando ───────────────────────────────────────────────────────
   if (carregando) {
     return (
-      <div className="mx-auto max-w-4xl flex flex-col gap-6 py-4 animate-pulse">
+      <div className="mx-auto max-w-4xl flex flex-col gap-6 py-4">
         {/* Banner Skeleton */}
-        <div className="h-40 w-full rounded-2xl bg-gray-200 dark:bg-slate-700" />
+        <Skeleton className="h-40 w-full rounded-2xl" />
 
         {/* Card Informações Skeleton */}
         <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 p-6 flex flex-col gap-4">
           <div className="flex items-center gap-4">
-            <div className="h-20 w-20 rounded-full bg-gray-300 dark:bg-slate-700 shrink-0" />
+            <Skeleton className="h-20 w-20 rounded-full shrink-0" />
             <div className="flex-1 space-y-2">
-              <div className="h-5 w-48 bg-gray-300 dark:bg-slate-700 rounded" />
-              <div className="h-4 w-32 bg-gray-200 dark:bg-slate-800 rounded" />
+              <Skeleton className="h-5 w-48 rounded" />
+              <Skeleton className="h-4 w-32 rounded" />
             </div>
           </div>
-          <div className="h-16 w-full bg-gray-100 dark:bg-slate-800 rounded-xl" />
+          <Skeleton className="h-16 w-full rounded-xl" />
         </div>
       </div>
     );
@@ -597,8 +582,8 @@ export default function Perfil() {
             ))}
           </div>
         ) : (
-          <Card className="p-8 text-center text-sm text-gray-400 dark:text-gray-500">
-            Nenhum projeto encontrado para este usuário.
+          <Card className="p-8">
+            <EstadoVazio titulo="Nenhum projeto encontrado para este usuário." />
           </Card>
         )}
       </div>

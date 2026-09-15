@@ -190,10 +190,25 @@ class UsuarioServiceTest {
 
         when(usuarioRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(paginaDeEntidades);
 
-        Page<UsuarioResumoResponse> resultado = usuarioService.buscarPerfisPublicos(busca, idCurso, pageable);
+        Page<UsuarioResumoResponse> resultado = usuarioService.buscarPerfisPublicos(busca, idCurso, null, pageable);
 
         assertThat(resultado.getContent()).hasSize(1);
         assertThat(resultado.getContent().get(0).nome()).isEqualTo(usuario.getNome());
+        verify(usuarioRepository).findAll(any(Specification.class), eq(pageable));
+    }
+
+    @Test
+    @SuppressWarnings("unchecked")
+    void buscarPerfisPublicos_deveFiltrarPorHabilidadeQuandoInformada() {
+        UUID idHabilidade = UUID.randomUUID();
+        Pageable pageable = mock(Pageable.class);
+        Page<Usuario> paginaDeEntidades = new PageImpl<>(List.of(usuario));
+
+        when(usuarioRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(paginaDeEntidades);
+
+        Page<UsuarioResumoResponse> resultado = usuarioService.buscarPerfisPublicos(null, null, idHabilidade, pageable);
+
+        assertThat(resultado.getContent()).hasSize(1);
         verify(usuarioRepository).findAll(any(Specification.class), eq(pageable));
     }
 

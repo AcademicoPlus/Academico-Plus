@@ -7,6 +7,8 @@ import { listarMinhasCandidaturas } from '../services/candidaturaService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
 import { useToast } from '../context/ToastContext'
 import { ApiError } from '../services/apiClient'
+import EstadoVazio from '../components/EstadoVazio'
+import Skeleton from '../components/Skeleton'
 
 function mensagemErro(erro: unknown): string {
   return erro instanceof ApiError ? erro.message : 'Não foi possível carregar os dados do dashboard.';
@@ -91,12 +93,16 @@ export default function Dashboard() {
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 p-2">
             {carregandoMeusProjetos ? (
-              <p className="text-sm text-gray-400 dark:text-gray-500 p-5">Carregando...</p>
-            ) : meusProjetos.length === 0 ? (
-              <div className="p-8 text-center text-sm text-gray-500 dark:text-gray-300">
-                Você ainda não criou nenhum projeto.<br/><br/>
-                <Link to="/criar-projeto" className="text-[#F27405] font-bold hover:underline">Criar o primeiro →</Link>
+              <div className="p-5 flex flex-col gap-3">
+                <Skeleton className="h-4 w-2/3 rounded" />
+                <Skeleton className="h-4 w-1/2 rounded" />
               </div>
+            ) : meusProjetos.length === 0 ? (
+              <EstadoVazio
+                titulo="Você ainda não criou nenhum projeto."
+                className="py-8"
+                acao={<Link to="/criar-projeto" className="text-[#F27405] font-bold hover:underline text-sm">Criar o primeiro →</Link>}
+              />
             ) : (
               <div className="divide-y divide-gray-50 dark:divide-slate-700">
                 {meusProjetos.map((proj) => {
@@ -139,9 +145,12 @@ export default function Dashboard() {
 
           <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden divide-y divide-gray-50 dark:divide-slate-700">
             {carregandoRecomendados ? (
-              <p className="p-5 text-sm text-gray-400 dark:text-gray-500">Buscando oportunidades...</p>
+              <div className="p-5 flex flex-col gap-3">
+                <Skeleton className="h-4 w-3/4 rounded" />
+                <Skeleton className="h-4 w-1/2 rounded" />
+              </div>
             ) : recomendados.length === 0 ? (
-              <p className="p-5 text-sm text-gray-400 dark:text-gray-500 text-center">Nenhuma recomendação baseada nas suas habilidades.</p>
+              <EstadoVazio titulo="Nenhuma recomendação baseada nas suas habilidades." className="py-8" />
             ) : (
               recomendados.map(({ projeto }) => (
                 <Link key={projeto.id} to={`/detalhes/${projeto.id}`} className="p-5 block hover:bg-gray-50 dark:hover:bg-slate-800 transition-colors group">

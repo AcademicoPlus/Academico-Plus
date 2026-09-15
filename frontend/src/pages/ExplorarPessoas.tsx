@@ -14,6 +14,9 @@ import { listarCursos, type Curso } from '../services/cursoService';
 import type { UsuarioResumo } from '../services/authService';
 import Card from '../components/Card';
 import Badge from '../components/Badge';
+import ErroCard from '../components/ErroCard';
+import EstadoVazio from '../components/EstadoVazio';
+import Skeleton from '../components/Skeleton';
 
 // ─── Tipos locais ─────────────────────────────────────────────────────────────
 
@@ -56,18 +59,18 @@ function avatarColor(nome: string): string {
 
 function SkeletonCard() {
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3 animate-pulse">
+    <div className="bg-white dark:bg-slate-900 rounded-2xl border border-gray-100 dark:border-slate-700 shadow-sm p-5 flex flex-col gap-3">
       <div className="flex items-center gap-3">
-        <div className="h-11 w-11 rounded-full bg-gray-200 dark:bg-slate-700 shrink-0" />
+        <Skeleton className="h-11 w-11 rounded-full shrink-0" />
         <div className="flex-1 flex flex-col gap-2">
-          <div className="h-3.5 w-3/5 rounded bg-gray-200 dark:bg-slate-700" />
-          <div className="h-3 w-2/5 rounded bg-gray-100 dark:bg-slate-800" />
+          <Skeleton className="h-3.5 w-3/5 rounded" />
+          <Skeleton className="h-3 w-2/5 rounded" />
         </div>
       </div>
       <div className="flex gap-2">
-        <div className="h-5 w-16 rounded-full bg-gray-100 dark:bg-slate-800" />
-        <div className="h-5 w-20 rounded-full bg-gray-100 dark:bg-slate-800" />
-        <div className="h-5 w-14 rounded-full bg-gray-100 dark:bg-slate-800" />
+        <Skeleton className="h-5 w-16 rounded-full" />
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-5 w-14 rounded-full" />
       </div>
     </div>
   );
@@ -147,33 +150,13 @@ export default function ExplorarPessoas() {
 
   function handleHabilidade(valor: string) {
     setIdHabilidadeSelecionada(valor);
-    // Filtragem local por habilidade quando o backend não suporta esse param
-    // diretamente no /explorar — o select serve de filtro client-side.
-    atualizarFiltroAtivo((f) => ({ ...f, pagina: undefined }));
-    // Salva o id escolhido para o filtro client-side abaixo
-    _setHabClienteId(valor);
+    atualizarFiltroAtivo((f) => ({ ...f, idHabilidade: valor || undefined, pagina: undefined }));
   }
-
-  // Id de habilidade para filtro client-side (não enviado ao backend)
-  const [_habClienteId, _setHabClienteId] = useState('');
-
-  // Lista filtrada client-side por habilidade selecionada
-  const usuariosFiltrados =
-    _habClienteId
-      ? usuarios.filter((u) =>
-          (u.habilidades ?? []).some((h) => h.id === _habClienteId),
-        )
-      : usuarios;
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   const subtitulo = (() => {
     if (carregando) return 'Buscando…';
-
-    if (_habClienteId) {
-      const n = usuariosFiltrados.length;
-      return `${n} ${n === 1 ? 'pessoa encontrada' : 'pessoas encontradas'} nesta página`;
-    }
 
     if (total !== null) {
       return `${total} ${total === 1 ? 'pessoa encontrada' : 'pessoas encontradas'}`;
@@ -247,27 +230,23 @@ export default function ExplorarPessoas() {
       </div>
 
       {/* Erro */}
-      {erro && (
-        <p role="alert"
-          className="rounded-xl border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
-          {erro}
-        </p>
-      )}
+      {erro && <ErroCard>{erro}</ErroCard>}
 
       {/* Grid */}
       {carregando ? (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => <SkeletonCard key={i} />)}
         </div>
-      ) : usuariosFiltrados.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-center">
-          <span className="text-4xl">🔍</span>
-          <p className="text-gray-500 dark:text-gray-400 text-sm">Nenhuma pessoa encontrada.</p>
-          <p className="text-gray-400 dark:text-gray-500 text-xs">Tente outros termos ou remova os filtros.</p>
-        </div>
+      ) : usuarios.length === 0 ? (
+        <EstadoVazio
+          icone="🔍"
+          titulo="Nenhuma pessoa encontrada."
+          descricao="Tente outros termos ou remova os filtros."
+          className="py-20"
+        />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {usuariosFiltrados.map((u) => (
+          {usuarios.map((u) => (
             <Card key={u.id} onClick={() => navigate(`/usuarios/${u.id}`)}>
               <div className="flex flex-col gap-3">
 

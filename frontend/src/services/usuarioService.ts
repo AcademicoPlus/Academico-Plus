@@ -104,6 +104,7 @@ export function listarTodosOsUsuarios(): Promise<UsuarioResumo[]> {
 export type FiltroExplorarPerfis = {
   busca?: string;
   idCurso?: string;
+  idHabilidade?: string;
   pagina?: number;
   tamanho?: number;
 };
@@ -116,6 +117,7 @@ export function explorarPerfis(
   const query = construirQuery({
     busca: filtro.busca,
     idCurso: filtro.idCurso,
+    idHabilidade: filtro.idHabilidade,
     page: filtro.pagina,
     size: filtro.tamanho,
   });

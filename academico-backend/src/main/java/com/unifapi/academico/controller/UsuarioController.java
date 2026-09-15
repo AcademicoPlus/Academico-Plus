@@ -129,9 +129,10 @@ public class UsuarioController {
     public ResponseEntity<Page<UsuarioResumoResponse>> explorarPerfis(
             @RequestParam(name = "busca", required = false) String busca,
             @RequestParam(name = "idCurso", required = false) UUID idCurso,
+            @RequestParam(name = "idHabilidade", required = false) UUID idHabilidade,
             @ParameterObject @PageableDefault(size = 12, sort = "nome") Pageable pageable
     ) {
-        Page<UsuarioResumoResponse> perfis = usuarioService.buscarPerfisPublicos(busca, idCurso, pageable);
+        Page<UsuarioResumoResponse> perfis = usuarioService.buscarPerfisPublicos(busca, idCurso, idHabilidade, pageable);
         return ResponseEntity.ok(perfis);
     }
 

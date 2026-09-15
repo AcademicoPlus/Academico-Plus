@@ -72,6 +72,14 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID>, JpaSpec
         };
     }
 
+    static Specification<Usuario> comHabilidade(UUID idHabilidade) {
+        return (root, query, cb) -> {
+            if (idHabilidade == null) return cb.conjunction();
+            query.distinct(true);
+            return cb.equal(root.join("habilidades").get("habilidade").get("id"), idHabilidade);
+        };
+    }
+
     static Specification<Usuario> comStatus(String status) {
         return (root, query, cb) -> {
             if ("ativos".equalsIgnoreCase(status)) {

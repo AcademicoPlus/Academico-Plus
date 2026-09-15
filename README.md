@@ -154,10 +154,10 @@ Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a
       criador aceitar/rejeitar candidatos direto na tela de detalhes
 - [x] Painel de administração (`/admin`): usuários e nível de acesso, catálogo de habilidades,
       fila de denúncias — restrito a quem tem `nivelAcesso` ADMIN
-- [ ] Tela de perfil próprio (o menu já linka pra `/perfil`, mas a rota ainda não existe)
-- [ ] "Encontrar Pessoas" (`/pessoas`) — hoje é só um placeholder, sem busca implementada
-- [ ] Avaliação entre colegas de projeto e recomendação de candidatos (services prontos, sem tela)
-- [ ] Testes automatizados de frontend
+- [x] Tela de perfil (`/usuarios/:id` e edição em `/usuarios/:id/editar`), com habilidades e avaliações recebidas
+- [x] "Encontrar Pessoas" (`/pessoas`): busca por nome/curso/habilidade (server-side), com paginação
+- [x] Avaliação entre colegas de projeto (após conclusão) e candidatos recomendados para o criador
+- [x] Testes automatizados de frontend (Vitest + Testing Library)
 
 ---
 
@@ -168,7 +168,7 @@ Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a
 cd academico-backend
 ./mvnw test
 
-# Frontend — ainda sem testes escritos
+# Frontend
 cd frontend
 npm test
 ```

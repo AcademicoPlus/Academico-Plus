@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
 import { buscarProjetoPorId, type ProjetoDetalhe } from '../services/projetoService'
-import { listarMembrosDoProjeto, type ProjetoMembro } from '../services/projetoMembroService'
+import { listarMembrosDoProjeto, adicionarMembroAoProjeto, type ProjetoMembro } from '../services/projetoMembroService'
 import { obterMeuPerfilCache } from '../hooks/useMeuPerfil'
 import {
   aceitarCandidatura,
@@ -13,8 +13,12 @@ import {
   rejeitarCandidatura,
   type Candidatura,
 } from '../services/candidaturaService'
+import { avaliarParticipante } from '../services/avaliacaoService'
+import { recomendarCandidatos, type UsuarioRecomendado } from '../services/recomendacaoService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL, formatarData, iniciaisDoNome } from '../utils/projeto'
 import CaixaCandidaturat from '../components/caixa-candidaturat'
+import Estrelas from '../components/Estrelas'
+import ErroCard from '../components/ErroCard'
 
 export default function DetalhesProjetoRota() {
   const { id } = useParams<{ id: string }>();
@@ -53,6 +57,18 @@ function DetalhesProjeto({ id }: { id: string }) {
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
   const [erroAcao, setErroAcao] = useState<string | null>(null);
 
+  // Visão do criador: candidatos recomendados para o projeto.
+  const [candidatosRecomendados, setCandidatosRecomendados] = useState<UsuarioRecomendado[]>([]);
+  const [processandoRecomendadoId, setProcessandoRecomendadoId] = useState<string | null>(null);
+
+  // Avaliação de colegas de equipe (só após o projeto terminar).
+  const [avaliandoMembroId, setAvaliandoMembroId] = useState<string | null>(null);
+  const [notaAvaliacao, setNotaAvaliacao] = useState(5);
+  const [comentarioAvaliacao, setComentarioAvaliacao] = useState('');
+  const [enviandoAvaliacao, setEnviandoAvaliacao] = useState(false);
+  const [erroAvaliacao, setErroAvaliacao] = useState<string | null>(null);
+  const [avaliadosNestaSessao, setAvaliadosNestaSessao] = useState<Set<string>>(new Set());
+
   // Reutilizada tanto no carregamento inicial quanto depois de qualquer ação
   // (candidatar, cancelar, aceitar, rejeitar) — assim vagas/membros/status
   // continuam consistentes sem precisar atualizar cada pedaço à mão.
@@ -72,6 +88,8 @@ function DetalhesProjeto({ id }: { id: string }) {
     if (souCriador) {
       const pagina = await listarCandidaturasDoProjeto(id, { status: 'PENDENTE', tamanho: 50 }).catch(() => null);
       setCandidaturasPendentes(pagina?.content ?? []);
+      const recomendados = await recomendarCandidatos(id, 5).catch(() => [] as UsuarioRecomendado[]);
+      setCandidatosRecomendados(recomendados);
     } else {
       const pagina = await listarMinhasCandidaturas({ tamanho: 100 }).catch(() => null);
       setMinhaCandidatura(pagina?.content.find((c) => c.projeto.id === id) ?? null);
@@ -162,6 +180,40 @@ function DetalhesProjeto({ id }: { id: string }) {
     }
   }
 
+  async function handleAdicionarAoTime(usuarioId: string, nome: string) {
+    const confirmado = window.confirm(`Adicionar ${nome} à equipe do projeto?`);
+    if (!confirmado) return;
+
+    setErroAcao(null);
+    setProcessandoRecomendadoId(usuarioId);
+    try {
+      await adicionarMembroAoProjeto(id, usuarioId);
+      await carregarDados();
+    } catch (erroCapturado) {
+      setErroAcao(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível adicionar este candidato.');
+    } finally {
+      setProcessandoRecomendadoId(null);
+    }
+  }
+
+  async function handleEnviarAvaliacao(membro: ProjetoMembro) {
+    if (!membro.usuario) return;
+
+    setErroAvaliacao(null);
+    setEnviandoAvaliacao(true);
+    try {
+      await avaliarParticipante(id, membro.usuario.id, notaAvaliacao, comentarioAvaliacao.trim() || undefined);
+      setAvaliadosNestaSessao((prev) => new Set(prev).add(membro.usuario!.id));
+      setAvaliandoMembroId(null);
+      setNotaAvaliacao(5);
+      setComentarioAvaliacao('');
+    } catch (erroCapturado) {
+      setErroAvaliacao(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível enviar a avaliação.');
+    } finally {
+      setEnviandoAvaliacao(false);
+    }
+  }
+
   if (carregando) return <div className="flex justify-center py-20"><p className="text-lg font-bold text-gray-400 dark:text-gray-500 animate-pulse">Carregando projeto...</p></div>;
 
   if (erro || !projeto) {
@@ -223,17 +275,73 @@ function DetalhesProjeto({ id }: { id: string }) {
               <p className="text-sm text-gray-400 dark:text-gray-500">Nenhum membro no momento.</p>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                {membros.map((membro) => (
-                  <div key={membro.id} className="bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-4 rounded-2xl flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-[#183E6C] text-white flex items-center justify-center text-sm font-black shadow-sm">
-                      {membro.usuario ? iniciaisDoNome(membro.usuario.nome) : '?'}
+                {membros.map((membro) => {
+                  const projetoEncerrado = projeto.status === 'CONCLUIDO' || projeto.status === 'CANCELADO';
+                  const podeAvaliar =
+                    projetoEncerrado && membro.usuario && membro.usuario.id !== meuId;
+                  const jaAvaliado = membro.usuario ? avaliadosNestaSessao.has(membro.usuario.id) : false;
+                  const avaliandoEste = avaliandoMembroId === membro.id;
+
+                  return (
+                    <div key={membro.id} className="bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-4 rounded-2xl flex flex-col gap-3">
+                      <div className="flex items-center gap-4">
+                        <div className="w-12 h-12 rounded-full bg-[#183E6C] text-white flex items-center justify-center text-sm font-black shadow-sm shrink-0">
+                          {membro.usuario ? iniciaisDoNome(membro.usuario.nome) : '?'}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-bold text-[#183E6C] dark:text-blue-300 truncate">{membro.usuario?.nome ?? 'Usuário removido'}</p>
+                          <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{membro.funcao ?? membro.usuario?.curso ?? '—'}</p>
+                        </div>
+                      </div>
+
+                      {podeAvaliar && (
+                        jaAvaliado ? (
+                          <p className="text-xs font-semibold text-green-600 dark:text-green-400">✓ Avaliado</p>
+                        ) : avaliandoEste ? (
+                          <div className="flex flex-col gap-2">
+                            {erroAvaliacao && (
+                              <p role="alert" className="text-xs text-red-500 dark:text-red-400">{erroAvaliacao}</p>
+                            )}
+                            <Estrelas nota={notaAvaliacao} onSelecionar={setNotaAvaliacao} tamanho="h-5 w-5" />
+                            <textarea
+                              rows={2}
+                              placeholder="Comentário (opcional)..."
+                              value={comentarioAvaliacao}
+                              onChange={(e) => setComentarioAvaliacao(e.target.value)}
+                              className="w-full p-2.5 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#183E6C] focus:ring-1 focus:ring-[#183E6C] resize-none text-xs dark:text-gray-100"
+                            />
+                            <div className="flex justify-end gap-2">
+                              <button
+                                type="button"
+                                onClick={() => { setAvaliandoMembroId(null); setErroAvaliacao(null); }}
+                                disabled={enviandoAvaliacao}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-700 transition-colors disabled:opacity-50"
+                              >
+                                Cancelar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleEnviarAvaliacao(membro)}
+                                disabled={enviandoAvaliacao}
+                                className="px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#183E6C] hover:bg-[#102a4a] transition-colors disabled:opacity-60"
+                              >
+                                {enviandoAvaliacao ? 'Enviando…' : 'Enviar avaliação'}
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => { setAvaliandoMembroId(membro.id); setNotaAvaliacao(5); setComentarioAvaliacao(''); setErroAvaliacao(null); }}
+                            className="self-start text-xs font-bold text-[#183E6C] dark:text-blue-300 hover:underline"
+                          >
+                            ★ Avaliar
+                          </button>
+                        )
+                      )}
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-sm font-bold text-[#183E6C] dark:text-blue-300 truncate">{membro.usuario?.nome ?? 'Usuário removido'}</p>
-                      <p className="text-xs font-medium text-gray-500 dark:text-gray-400 truncate">{membro.funcao ?? membro.usuario?.curso ?? '—'}</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -244,11 +352,7 @@ function DetalhesProjeto({ id }: { id: string }) {
                   Candidaturas Pendentes {candidaturasPendentes.length > 0 && `(${candidaturasPendentes.length})`}
                 </h2>
 
-                {erroAcao && (
-                  <div className="mb-4 rounded-xl bg-red-50 border border-red-100 px-4 py-3 text-sm text-red-600 dark:bg-red-950/40 dark:border-red-900/50 dark:text-red-400">
-                    {erroAcao}
-                  </div>
-                )}
+                {erroAcao && <ErroCard className="mb-4">{erroAcao}</ErroCard>}
 
                 {candidaturasPendentes.length === 0 ? (
                   <p className="text-sm text-gray-400 dark:text-gray-500">Nenhuma candidatura pendente no momento.</p>
@@ -322,6 +426,51 @@ function DetalhesProjeto({ id }: { id: string }) {
                       </div>
                     ))}
                   </div>
+                )}
+
+                {candidatosRecomendados.length > 0 && (
+                  <>
+                    <h2 className="text-xl font-bold text-[#183E6C] dark:text-blue-300 mb-4 mt-8">
+                      Candidatos Recomendados
+                    </h2>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {candidatosRecomendados.map((rec) => (
+                        <div key={rec.usuario.id} className="bg-gray-50 dark:bg-slate-800 border border-gray-100 dark:border-slate-700 p-4 rounded-2xl flex flex-col gap-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-[#183E6C] text-white flex items-center justify-center text-sm font-black shrink-0">
+                              {iniciaisDoNome(rec.usuario.nome)}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-bold text-[#183E6C] dark:text-blue-300 truncate">{rec.usuario.nome}</p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400 truncate">{rec.usuario.curso ?? '—'}</p>
+                            </div>
+                            <span className="text-xs font-black text-[#F27405] shrink-0">
+                              {Math.round(rec.compatibilidade * 100)}%
+                            </span>
+                          </div>
+
+                          {rec.habilidadesEmComum.length > 0 && (
+                            <div className="flex flex-wrap gap-1.5">
+                              {rec.habilidadesEmComum.map((h) => (
+                                <span key={h.id} className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-orange-50 dark:bg-orange-950/40 text-[#F27405] border border-orange-100 dark:border-orange-900/50">
+                                  {h.nome}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+
+                          <button
+                            type="button"
+                            onClick={() => handleAdicionarAoTime(rec.usuario.id, rec.usuario.nome)}
+                            disabled={processandoRecomendadoId === rec.usuario.id}
+                            className="self-start px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#183E6C] hover:bg-[#102a4a] transition-colors disabled:opacity-60"
+                          >
+                            {processandoRecomendadoId === rec.usuario.id ? 'Adicionando…' : '+ Adicionar à equipe'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </>
                 )}
               </>
             )}
