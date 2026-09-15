@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { listarDenunciasPendentes, resolverDenuncia, type Denuncia } from '../services/denunciaService'
 import { ApiError } from '../services/apiClient'
+import ConfirmModal from '../components/ConfirmModal'
 
 function formatarData(data: string): string {
   return new Date(data).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
@@ -12,6 +13,7 @@ export default function AdminDenuncias() {
   const [erro, setErro] = useState<string | null>(null);
   const [resolvendoId, setResolvendoId] = useState<string | null>(null);
   const [erroLinha, setErroLinha] = useState<Record<string, string>>({});
+  const [denunciaParaConfirmar, setDenunciaParaConfirmar] = useState<Denuncia | null>(null);
 
   useEffect(() => {
     listarDenunciasPendentes()
@@ -21,13 +23,12 @@ export default function AdminDenuncias() {
   }, []);
 
   async function handleResolver(denuncia: Denuncia, procedente: boolean) {
-    if (procedente) {
-      const confirmado = window.confirm(
-        'Marcar como procedente remove permanentemente a avaliação denunciada. Deseja continuar?',
-      );
-      if (!confirmado) return;
+    if (procedente && denunciaParaConfirmar?.id !== denuncia.id) {
+      setDenunciaParaConfirmar(denuncia);
+      return;
     }
 
+    setDenunciaParaConfirmar(null);
     setErroLinha((atual) => {
       const proximo = { ...atual };
       delete proximo[denuncia.id];
@@ -118,6 +119,17 @@ export default function AdminDenuncias() {
             </div>
           ))}
         </div>
+      )}
+
+      {denunciaParaConfirmar && (
+        <ConfirmModal
+          titulo="Marcar como procedente"
+          mensagem="Marcar como procedente remove permanentemente a avaliação denunciada. Deseja continuar?"
+          variante="perigo"
+          confirmando={resolvendoId === denunciaParaConfirmar.id}
+          onCancelar={() => setDenunciaParaConfirmar(null)}
+          onConfirmar={() => handleResolver(denunciaParaConfirmar, true)}
+        />
       )}
     </div>
   )
