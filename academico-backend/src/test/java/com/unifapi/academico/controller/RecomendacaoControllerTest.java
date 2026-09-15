@@ -47,7 +47,7 @@ class RecomendacaoControllerTest {
 
     private ProjetoResumoResponse projetoResumo() {
         return new ProjetoResumoResponse(UUID.randomUUID(), null, "Projeto de robótica educacional",
-                "Descrição com pelo menos vinte caracteres.", StatusProjeto.ABERTO, List.of(), 3, 0, null);
+                "Descrição com pelo menos vinte caracteres.", null, StatusProjeto.ABERTO, List.of(), 3, 0, null);
     }
 
     @Test

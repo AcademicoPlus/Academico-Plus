@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
-import { buscarProjetoPorId, type ProjetoDetalhe } from '../services/projetoService'
+import { buscarProjetoPorId, enviarBannerDoProjeto, type ProjetoDetalhe } from '../services/projetoService'
 import { listarMembrosDoProjeto, adicionarMembroAoProjeto, type ProjetoMembro } from '../services/projetoMembroService'
 import { obterMeuPerfilCache } from '../hooks/useMeuPerfil'
 import {
@@ -19,6 +19,7 @@ import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL, formatarData, iniciaisDoNom
 import CaixaCandidaturat from '../components/caixa-candidaturat'
 import Estrelas from '../components/Estrelas'
 import ErroCard from '../components/ErroCard'
+import ConfirmModal from '../components/ConfirmModal'
 
 export default function DetalhesProjetoRota() {
   const { id } = useParams<{ id: string }>();
@@ -35,6 +36,12 @@ export default function DetalhesProjetoRota() {
   return <DetalhesProjeto key={id} id={id} />;
 }
 
+type AcaoConfirmavel =
+  | { tipo: 'cancelarCandidatura' }
+  | { tipo: 'aceitarCandidatura'; candidatura: Candidatura }
+  | { tipo: 'rejeitarCandidatura'; candidatura: Candidatura }
+  | { tipo: 'adicionarRecomendado'; usuarioId: string; nome: string };
+
 function DetalhesProjeto({ id }: { id: string }) {
   const [projeto, setProjeto] = useState<ProjetoDetalhe | null>(null);
   const [membros, setMembros] = useState<ProjetoMembro[]>([]);
@@ -48,18 +55,24 @@ function DetalhesProjeto({ id }: { id: string }) {
   const [mensagem, setMensagem] = useState('');
   const [enviandoCandidatura, setEnviandoCandidatura] = useState(false);
   const [erroCandidatura, setErroCandidatura] = useState<string | null>(null);
-  const [cancelando, setCancelando] = useState(false);
 
   // Visão do criador: candidaturas pendentes recebidas neste projeto.
   const [candidaturasPendentes, setCandidaturasPendentes] = useState<Candidatura[]>([]);
-  const [processandoId, setProcessandoId] = useState<string | null>(null);
-  const [rejeitandoId, setRejeitandoId] = useState<string | null>(null);
   const [motivoRejeicao, setMotivoRejeicao] = useState('');
   const [erroAcao, setErroAcao] = useState<string | null>(null);
 
   // Visão do criador: candidatos recomendados para o projeto.
   const [candidatosRecomendados, setCandidatosRecomendados] = useState<UsuarioRecomendado[]>([]);
-  const [processandoRecomendadoId, setProcessandoRecomendadoId] = useState<string | null>(null);
+
+  // Ação pendente de confirmação (cancelar/aceitar/rejeitar candidatura,
+  // adicionar candidato recomendado) — um único modal cobre todas elas.
+  const [acaoConfirmavel, setAcaoConfirmavel] = useState<AcaoConfirmavel | null>(null);
+  const [confirmandoAcao, setConfirmandoAcao] = useState(false);
+
+  // Upload da capa/banner do projeto (só o criador vê o controle).
+  const [enviandoBanner, setEnviandoBanner] = useState(false);
+  const [erroBanner, setErroBanner] = useState<string | null>(null);
+  const bannerInputRef = useRef<HTMLInputElement>(null);
 
   // Avaliação de colegas de equipe (só após o projeto terminar).
   const [avaliandoMembroId, setAvaliandoMembroId] = useState<string | null>(null);
@@ -126,36 +139,33 @@ function DetalhesProjeto({ id }: { id: string }) {
 
   async function handleCancelarCandidatura() {
     if (!minhaCandidatura) return;
-    const confirmado = window.confirm('Cancelar sua candidatura a este projeto?');
-    if (!confirmado) return;
 
     setErroCandidatura(null);
-    setCancelando(true);
+    setConfirmandoAcao(true);
     try {
       await cancelarCandidatura(minhaCandidatura.id);
       setMinhaCandidatura(null);
+      setAcaoConfirmavel(null);
     } catch (erroCapturado) {
       setErroCandidatura(
         erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível cancelar a candidatura.',
       );
     } finally {
-      setCancelando(false);
+      setConfirmandoAcao(false);
     }
   }
 
   async function handleAceitar(candidatura: Candidatura) {
-    const confirmado = window.confirm(`Aceitar ${candidatura.usuario?.nome ?? 'este candidato'} no projeto?`);
-    if (!confirmado) return;
-
     setErroAcao(null);
-    setProcessandoId(candidatura.id);
+    setConfirmandoAcao(true);
     try {
       await aceitarCandidatura(candidatura.id);
+      setAcaoConfirmavel(null);
       await carregarDados();
     } catch (erroCapturado) {
       setErroAcao(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível aceitar a candidatura.');
     } finally {
-      setProcessandoId(null);
+      setConfirmandoAcao(false);
     }
   }
 
@@ -167,32 +177,81 @@ function DetalhesProjeto({ id }: { id: string }) {
     }
 
     setErroAcao(null);
-    setProcessandoId(candidatura.id);
+    setConfirmandoAcao(true);
     try {
       await rejeitarCandidatura(candidatura.id, motivo);
-      setRejeitandoId(null);
       setMotivoRejeicao('');
+      setAcaoConfirmavel(null);
       await carregarDados();
     } catch (erroCapturado) {
       setErroAcao(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível rejeitar a candidatura.');
     } finally {
-      setProcessandoId(null);
+      setConfirmandoAcao(false);
     }
   }
 
-  async function handleAdicionarAoTime(usuarioId: string, nome: string) {
-    const confirmado = window.confirm(`Adicionar ${nome} à equipe do projeto?`);
-    if (!confirmado) return;
-
+  async function handleAdicionarAoTime(usuarioId: string) {
     setErroAcao(null);
-    setProcessandoRecomendadoId(usuarioId);
+    setConfirmandoAcao(true);
     try {
       await adicionarMembroAoProjeto(id, usuarioId);
+      setAcaoConfirmavel(null);
       await carregarDados();
     } catch (erroCapturado) {
       setErroAcao(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível adicionar este candidato.');
     } finally {
-      setProcessandoRecomendadoId(null);
+      setConfirmandoAcao(false);
+    }
+  }
+
+  async function handleBannerChange(event: ChangeEvent<HTMLInputElement>) {
+    const arquivo = event.target.files?.[0];
+    if (!arquivo) return;
+
+    setErroBanner(null);
+
+    const formatosPermitidos = ['image/jpeg', 'image/png', 'image/jpg', 'image/webp'];
+    if (!formatosPermitidos.includes(arquivo.type)) {
+      setErroBanner('Selecione uma imagem válida (JPG, PNG ou WEBP).');
+      return;
+    }
+
+    const limiteBytes = 5 * 1024 * 1024;
+    if (arquivo.size > limiteBytes) {
+      setErroBanner('A imagem deve ter no máximo 5MB.');
+      return;
+    }
+
+    setEnviandoBanner(true);
+    try {
+      const atualizado = await enviarBannerDoProjeto(id, arquivo);
+      setProjeto(atualizado);
+    } catch (erroCapturado) {
+      setErroBanner(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível enviar a capa do projeto.');
+    } finally {
+      setEnviandoBanner(false);
+      if (bannerInputRef.current) bannerInputRef.current.value = '';
+    }
+  }
+
+  function fecharModalConfirmacao() {
+    setAcaoConfirmavel(null);
+    setErroAcao(null);
+    setErroCandidatura(null);
+    setMotivoRejeicao('');
+  }
+
+  function confirmarAcaoPendente() {
+    if (!acaoConfirmavel) return;
+    switch (acaoConfirmavel.tipo) {
+      case 'cancelarCandidatura':
+        return handleCancelarCandidatura();
+      case 'aceitarCandidatura':
+        return handleAceitar(acaoConfirmavel.candidatura);
+      case 'rejeitarCandidatura':
+        return handleRejeitar(acaoConfirmavel.candidatura);
+      case 'adicionarRecomendado':
+        return handleAdicionarAoTime(acaoConfirmavel.usuarioId);
     }
   }
 
@@ -238,8 +297,10 @@ function DetalhesProjeto({ id }: { id: string }) {
       <div className="bg-white dark:bg-slate-900 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 dark:border-slate-700 overflow-hidden mb-8">
 
         {/* Capa do Projeto (Hero Section) */}
-        <div className="h-64 sm:h-80 w-full relative bg-gray-100 dark:bg-slate-800">
-          <img src={`https://picsum.photos/seed/${projeto.id}projeto/1200/400`} alt="Capa" className="w-full h-full object-cover" />
+        <div className="h-64 sm:h-80 w-full relative bg-linear-to-br from-[#183E6C] to-[#0B1D33]">
+          {projeto.bannerUrl && (
+            <img src={projeto.bannerUrl} alt="Capa" className="w-full h-full object-cover" />
+          )}
           <div className="absolute inset-0 bg-linear-to-t from-[#0B1D33]/90 via-[#0B1D33]/40 to-transparent"></div>
           <div className="absolute bottom-6 left-6 md:bottom-10 md:left-10 pr-6">
             <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider mb-4 inline-block shadow-sm ${STATUS_PROJETO_BADGE[projeto.status]}`}>
@@ -247,6 +308,30 @@ function DetalhesProjeto({ id }: { id: string }) {
             </span>
             <h1 className="text-3xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">{projeto.titulo}</h1>
           </div>
+
+          {souCriador && (
+            <div className="absolute top-4 right-4 flex flex-col items-end gap-2">
+              <input
+                type="file"
+                ref={bannerInputRef}
+                onChange={handleBannerChange}
+                accept="image/jpeg,image/png,image/jpg,image/webp"
+                className="hidden"
+                id="banner-projeto-input"
+              />
+              <label
+                htmlFor="banner-projeto-input"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-black/40 hover:bg-black/60 backdrop-blur-sm cursor-pointer transition-colors ${enviandoBanner ? 'opacity-60 pointer-events-none' : ''}`}
+              >
+                {enviandoBanner ? 'Enviando…' : '📷 Alterar capa'}
+              </label>
+              {erroBanner && (
+                <p className="max-w-56 text-right text-xs font-semibold text-red-200 bg-black/50 backdrop-blur-sm rounded-lg px-2.5 py-1.5">
+                  {erroBanner}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Conteúdo Principal */}
@@ -376,53 +461,22 @@ function DetalhesProjeto({ id }: { id: string }) {
                           </p>
                         )}
 
-                        {rejeitandoId === candidatura.id ? (
-                          <div className="flex flex-col gap-2">
-                            <textarea
-                              rows={2}
-                              placeholder="Motivo da rejeição (mínimo 5 caracteres)..."
-                              value={motivoRejeicao}
-                              onChange={(e) => setMotivoRejeicao(e.target.value)}
-                              className="w-full p-3 bg-white dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 resize-none text-sm dark:text-gray-100"
-                            />
-                            <div className="flex justify-end gap-2">
-                              <button
-                                type="button"
-                                onClick={() => { setRejeitandoId(null); setMotivoRejeicao(''); setErroAcao(null); }}
-                                className="px-4 py-2 rounded-xl text-sm font-bold text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-slate-800 transition-colors"
-                              >
-                                Cancelar
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleRejeitar(candidatura)}
-                                disabled={processandoId === candidatura.id}
-                                className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-red-500 hover:bg-red-600 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                              >
-                                Confirmar rejeição
-                              </button>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex justify-end gap-3">
-                            <button
-                              type="button"
-                              onClick={() => { setRejeitandoId(candidatura.id); setMotivoRejeicao(''); setErroAcao(null); }}
-                              disabled={processandoId === candidatura.id}
-                              className="px-4 py-2 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              Rejeitar
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleAceitar(candidatura)}
-                              disabled={processandoId === candidatura.id}
-                              className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-[#183E6C] hover:bg-[#102a4a] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
-                            >
-                              {processandoId === candidatura.id ? 'Processando...' : 'Aceitar'}
-                            </button>
-                          </div>
-                        )}
+                        <div className="flex justify-end gap-3">
+                          <button
+                            type="button"
+                            onClick={() => { setErroAcao(null); setMotivoRejeicao(''); setAcaoConfirmavel({ tipo: 'rejeitarCandidatura', candidatura }); }}
+                            className="px-4 py-2 rounded-xl text-sm font-bold text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 transition-colors"
+                          >
+                            Rejeitar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => { setErroAcao(null); setAcaoConfirmavel({ tipo: 'aceitarCandidatura', candidatura }); }}
+                            className="px-4 py-2 rounded-xl text-sm font-bold text-white bg-[#183E6C] hover:bg-[#102a4a] transition-colors"
+                          >
+                            Aceitar
+                          </button>
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -461,11 +515,10 @@ function DetalhesProjeto({ id }: { id: string }) {
 
                           <button
                             type="button"
-                            onClick={() => handleAdicionarAoTime(rec.usuario.id, rec.usuario.nome)}
-                            disabled={processandoRecomendadoId === rec.usuario.id}
-                            className="self-start px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#183E6C] hover:bg-[#102a4a] transition-colors disabled:opacity-60"
+                            onClick={() => { setErroAcao(null); setAcaoConfirmavel({ tipo: 'adicionarRecomendado', usuarioId: rec.usuario.id, nome: rec.usuario.nome }); }}
+                            className="self-start px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-[#183E6C] hover:bg-[#102a4a] transition-colors"
                           >
-                            {processandoRecomendadoId === rec.usuario.id ? 'Adicionando…' : '+ Adicionar à equipe'}
+                            + Adicionar à equipe
                           </button>
                         </div>
                       ))}
@@ -512,13 +565,11 @@ function DetalhesProjeto({ id }: { id: string }) {
                   <div className="text-center py-3 px-4 rounded-xl bg-orange-50 dark:bg-orange-950/40 text-[#F27405] font-bold text-sm">
                     Candidatura enviada — aguardando resposta
                   </div>
-                  {erroCandidatura && <p className="text-xs text-red-500 dark:text-red-400 text-center">{erroCandidatura}</p>}
                   <button
-                    onClick={handleCancelarCandidatura}
-                    disabled={cancelando}
-                    className="w-full py-4 rounded-xl font-extrabold transition-all shadow-sm bg-white dark:bg-slate-900 border-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40 disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={() => { setErroCandidatura(null); setAcaoConfirmavel({ tipo: 'cancelarCandidatura' }); }}
+                    className="w-full py-4 rounded-xl font-extrabold transition-all shadow-sm bg-white dark:bg-slate-900 border-2 border-red-500 text-red-500 hover:bg-red-50 dark:hover:bg-red-950/40"
                   >
-                    {cancelando ? 'Cancelando...' : '✕ Cancelar Candidatura'}
+                    ✕ Cancelar Candidatura
                   </button>
                 </div>
               ) : minhaCandidatura.status === 'ACEITO' ? (
@@ -558,6 +609,40 @@ function DetalhesProjeto({ id }: { id: string }) {
 
         </div>
       </div>
+
+      {acaoConfirmavel && (
+        <ConfirmModal
+          titulo={
+            acaoConfirmavel.tipo === 'cancelarCandidatura' ? 'Cancelar candidatura' :
+            acaoConfirmavel.tipo === 'aceitarCandidatura' ? 'Aceitar candidato' :
+            acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'Rejeitar candidato' :
+            'Adicionar à equipe'
+          }
+          mensagem={
+            acaoConfirmavel.tipo === 'cancelarCandidatura' ? 'Cancelar sua candidatura a este projeto?' :
+            acaoConfirmavel.tipo === 'aceitarCandidatura' ? `Aceitar ${acaoConfirmavel.candidatura.usuario?.nome ?? 'este candidato'} no projeto?` :
+            acaoConfirmavel.tipo === 'rejeitarCandidatura' ? `Rejeitar a candidatura de ${acaoConfirmavel.candidatura.usuario?.nome ?? 'este candidato'}?` :
+            `Adicionar ${acaoConfirmavel.nome} à equipe do projeto?`
+          }
+          variante={acaoConfirmavel.tipo === 'cancelarCandidatura' || acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'perigo' : 'padrao'}
+          confirmando={confirmandoAcao}
+          textoConfirmar={acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'Confirmar rejeição' : 'Confirmar'}
+          confirmarDesabilitado={acaoConfirmavel.tipo === 'rejeitarCandidatura' && motivoRejeicao.trim().length < 5}
+          onCancelar={fecharModalConfirmacao}
+          onConfirmar={confirmarAcaoPendente}
+        >
+          {acaoConfirmavel.tipo === 'rejeitarCandidatura' && (
+            <textarea
+              rows={3}
+              placeholder="Motivo da rejeição (mínimo 5 caracteres)..."
+              value={motivoRejeicao}
+              onChange={(e) => setMotivoRejeicao(e.target.value)}
+              className="w-full p-3 bg-gray-50 dark:bg-slate-800 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-red-400 focus:ring-1 focus:ring-red-400 resize-none text-sm text-gray-700 dark:text-gray-100"
+            />
+          )}
+          {(erroAcao || erroCandidatura) && <ErroCard>{erroAcao || erroCandidatura}</ErroCard>}
+        </ConfirmModal>
+      )}
     </div>
   )
 }

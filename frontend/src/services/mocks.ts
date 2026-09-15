@@ -271,6 +271,7 @@ const PROJETOS_MOCK: ProjetoDetalhe[] = [
     criador: LUCAS_MENDES_MOCK,
     titulo: 'App de Saúde Mental para Universitários',
     descricao: 'Desenvolvimento de uma aplicação móvel focada no bem-estar e saúde mental de estudantes universitários, com recursos de mindfulness, tracking de humor e conexão com suporte psicológico institucional.',
+    bannerUrl: null,
     status: 'ABERTO',
     vagas: 3,
     vagasPreenchidas: 1,
@@ -292,6 +293,7 @@ const PROJETOS_MOCK: ProjetoDetalhe[] = [
     criador: USUARIO_LOGADO_MOCK,
     titulo: 'Sistema Inteligente de Proteção Web',
     descricao: 'Desenvolvimento de um sistema voltado para segurança online utilizando análise de comportamento visual e aprendizado de máquina para detectar acessos suspeitos.',
+    bannerUrl: null,
     status: 'EM_ANDAMENTO',
     vagas: 5,
     vagasPreenchidas: 2,
@@ -313,6 +315,7 @@ const PROJETOS_MOCK: ProjetoDetalhe[] = [
     criador: MARIA_COSTA_MOCK,
     titulo: 'Plataforma de E-commerce Sustentável',
     descricao: 'Criação de uma plataforma focada em produtos sustentáveis locais, conectando produtores e consumidores da região de forma direta e sem intermediários.',
+    bannerUrl: null,
     status: 'ABERTO',
     vagas: 4,
     vagasPreenchidas: 3,
@@ -365,6 +368,7 @@ function paraResumo(projeto: ProjetoDetalhe): Projeto {
     criador: projeto.criador,
     titulo: projeto.titulo,
     descricao: projeto.descricao,
+    bannerUrl: projeto.bannerUrl,
     status: projeto.status,
     habilidadesNecessarias: projeto.habilidadesNecessarias,
     vagas: projeto.vagas,
@@ -658,6 +662,7 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         criador: USUARIO_LOGADO_MOCK,
         titulo: dados.titulo,
         descricao: dados.descricao,
+        bannerUrl: null,
         status: 'ABERTO',
         vagas: dados.vagas,
         vagasPreenchidas: 0,
@@ -749,6 +754,17 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         projeto.vagas = dados.vagas;
         projeto.vagasDisponiveis = dados.vagas - projeto.vagasPreenchidas;
         projeto.dataFim = dados.dataFim ?? null;
+        projeto.atualizadoEm = new Date().toISOString();
+        return resolverComAtraso(clonar(projeto) as unknown as TResposta);
+      }
+
+      const matchBanner = method === 'POST' && caminhoBase.match(/^\/projetos\/([^/]+)\/banner$/);
+      if (matchBanner) {
+        const projeto = PROJETOS_MOCK.find((p) => p.id === matchBanner[1]);
+        if (!projeto) {
+          return rejeitarComAtraso(new ApiError(404, 'Projeto não encontrado.'));
+        }
+        projeto.bannerUrl = `https://picsum.photos/seed/${projeto.id}-banner-${Date.now()}/1200/400`;
         projeto.atualizadoEm = new Date().toISOString();
         return resolverComAtraso(clonar(projeto) as unknown as TResposta);
       }

@@ -27,6 +27,7 @@ function projetoBase(overrides: Partial<ProjetoDetalhe> = {}): ProjetoDetalhe {
     criador: CRIADOR,
     titulo: 'Projeto Original',
     descricao: 'Descrição original do projeto de teste com bastante texto.',
+    bannerUrl: null,
     status: 'ABERTO',
     vagas: 3,
     vagasPreenchidas: 1,

@@ -71,7 +71,6 @@ describe('Candidaturas', () => {
   });
 
   it('cancela uma candidatura pendente e remove da lista', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.spyOn(candidaturaService, 'listarMinhasCandidaturas').mockResolvedValue({
       content: [candidatura()],
       totalElements: 1,
@@ -86,6 +85,9 @@ describe('Candidaturas', () => {
 
     await screen.findByText('Projeto Teste');
     await userEvent.click(screen.getByRole('button', { name: /cancelar candidatura/i }));
+
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^confirmar$/i }));
 
     await waitFor(() => expect(candidaturaService.cancelarCandidatura).toHaveBeenCalledWith('cand-1'));
     await waitFor(() => expect(screen.queryByText('Projeto Teste')).not.toBeInTheDocument());

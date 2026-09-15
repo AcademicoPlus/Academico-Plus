@@ -28,6 +28,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -51,6 +52,7 @@ public class ProjetoService {
     private final HabilidadeRepository habilidadeRepository;
     private final ProjetoCanceladoAvisoRepository projetoCanceladoAvisoRepository;
     private final HabilidadeService habilidadeService;
+    private final BannerStorageClient bannerStorageClient;
 
     // ============================================
     // ESCRITA
@@ -137,6 +139,22 @@ public class ProjetoService {
 
         projeto.setAtivo(false);
         projetoRepository.save(projeto);
+    }
+
+    /** Só o criador pode alterar a capa/banner do projeto (mesma trava de atualizar/alterarStatus/inativar). */
+    @Transactional
+    public ProjetoResponse atualizarBanner(UUID id, UUID usuarioLogadoId, MultipartFile arquivo) {
+        Projeto projeto = obterEntidadeComoDono(id, usuarioLogadoId);
+
+        String bannerAntigo = projeto.getBannerUrl();
+        projeto.setBannerUrl(bannerStorageClient.salvar(arquivo));
+        projetoRepository.save(projeto);
+
+        if (bannerAntigo != null && !bannerAntigo.isBlank()) {
+            bannerStorageClient.deletar(bannerAntigo);
+        }
+
+        return responseDetalhado(id);
     }
 
     // ============================================

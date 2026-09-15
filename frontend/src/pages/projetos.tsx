@@ -102,12 +102,14 @@ export default function Projetos() {
             <div key={proj.id} className="bg-white dark:bg-slate-900 rounded-3xl border border-gray-100 dark:border-slate-700 shadow-[0_8px_30px_rgb(0,0,0,0.04)] flex flex-col overflow-hidden group hover:shadow-[0_15px_40px_rgb(0,0,0,0.08)] transition-all duration-300">
 
               {/* Capa do Card Clicável */}
-              <Link to={`/detalhes/${proj.id}`} className="relative h-56 overflow-hidden bg-gray-100 dark:bg-slate-800 block cursor-pointer">
-                <img 
-                  src={`https://picsum.photos/seed/${proj.id}projeto/800/400`} 
-                  alt={`Capa do projeto ${proj.titulo}`} 
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
-                />
+              <Link to={`/detalhes/${proj.id}`} className="relative h-56 overflow-hidden bg-linear-to-br from-[#183E6C] to-[#0B1D33] block cursor-pointer">
+                {proj.bannerUrl && (
+                  <img
+                    src={proj.bannerUrl}
+                    alt={`Capa do projeto ${proj.titulo}`}
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-700 ease-out"
+                  />
+                )}
                 <div className="absolute inset-0 bg-linear-to-t from-[#0B1D33]/90 via-[#0B1D33]/20 to-transparent"></div>
                 
                 <div className="absolute top-4 right-4 z-10">

@@ -27,6 +27,7 @@ export type Projeto = {
   criador: UsuarioResumo | null;
   titulo: string;
   descricao: string;
+  bannerUrl: string | null;
   status: StatusProjeto;
   habilidadesNecessarias: ProjetoHabilidade[];
   vagas: number;
@@ -73,6 +74,7 @@ export type ProjetoDetalhe = {
   criador: UsuarioResumo | null;
   titulo: string;
   descricao: string;
+  bannerUrl: string | null;
   status: StatusProjeto;
   vagas: number;
   vagasPreenchidas: number;
@@ -89,6 +91,15 @@ export type ProjetoDetalhe = {
 
 export function buscarProjetoPorId(id: string): Promise<ProjetoDetalhe> {
   return apiFetch<ProjetoDetalhe>(`/projetos/${id}`);
+}
+
+// Multipart: manda um FormData com o campo "banner" (esperado pelo
+// @RequestParam("banner") do backend). Só o criador do projeto pode chamar
+// essa rota (validado no backend) — mesmo padrão de enviarFotoDePerfil.
+export function enviarBannerDoProjeto(id: string, arquivo: File): Promise<ProjetoDetalhe> {
+  const formData = new FormData();
+  formData.append('banner', arquivo);
+  return apiFetch<ProjetoDetalhe>(`/projetos/${id}/banner`, { method: 'POST', body: formData });
 }
 
 // Espelha CriarProjetoRequest (dto/projeto). "habilidades" é opcional: já

@@ -25,7 +25,7 @@ export default function CaixaCandidaturat({
         value={mensagem}
         onChange={(e) => onChangeMensagem(e.target.value)}
         disabled={enviando}
-        className="w-full p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-1 focus:ring-[#F27405] resize-none text-sm transition-all disabled:opacity-60"
+        className="w-full p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-1 focus:ring-[#F27405] resize-none text-sm text-gray-700 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all disabled:opacity-60"
       ></textarea>
       {erro && <p className="text-xs text-red-500 dark:text-red-400 mt-2">{erro}</p>}
       <div className="flex justify-end gap-3 mt-4">

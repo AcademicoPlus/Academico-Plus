@@ -300,14 +300,11 @@ export default function Perfil() {
         </button>
       </div>
 
-      {/* Card Principal de Perfil com Banner */}
+      {/* Card Principal de Perfil */}
       <Card className="overflow-hidden p-0 border border-gray-100 dark:border-slate-700 shadow-sm">
-        {/* Banner Decorativo no Topo */}
-        <div className="h-36 sm:h-44 w-full bg-linear-to-r from-gray-100 via-gray-200 to-gray-300 dark:from-slate-800 dark:via-slate-700 dark:to-slate-600 relative" />
-
-        {/* Informações do Usuário com Avatar Sobreposto */}
-        <div className="px-6 sm:px-8 pb-6 pt-0">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-12 sm:-mt-14 mb-4">
+        {/* Informações do Usuário */}
+        <div className="px-6 sm:px-8 pb-6 pt-6 sm:pt-8">
+          <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-4">
 
             {/* Avatar */}
             <div className="relative">

@@ -17,6 +17,7 @@ function projetoCriado(): ProjetoDetalhe {
     criador: null,
     titulo: 'Sistema Inteligente de Proteção Web',
     descricao: 'Descrição com mais de vinte caracteres para passar na validação.',
+    bannerUrl: null,
     status: 'ABERTO',
     vagas: 3,
     vagasPreenchidas: 0,

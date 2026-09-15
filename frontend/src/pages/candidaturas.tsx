@@ -12,6 +12,7 @@ import { formatarData } from '../utils/projeto';
 import ErroCard from '../components/ErroCard';
 import EstadoVazio from '../components/EstadoVazio';
 import Skeleton from '../components/Skeleton';
+import ConfirmModal from '../components/ConfirmModal';
 
 const OPCOES_STATUS: StatusCandidatura[] = ['PENDENTE', 'ACEITO', 'REJEITADO'];
 
@@ -20,7 +21,8 @@ export default function Candidaturas() {
   const [carregando, setCarregando] = useState(true);
   const [erro, setErro] = useState<string | null>(null);
   const [filtroStatus, setFiltroStatus] = useState<StatusCandidatura | ''>('');
-  const [cancelandoId, setCancelandoId] = useState<string | null>(null);
+  const [candidaturaParaCancelar, setCandidaturaParaCancelar] = useState<Candidatura | null>(null);
+  const [cancelando, setCancelando] = useState(false);
 
   useEffect(() => {
     let ativo = true;
@@ -46,18 +48,18 @@ export default function Candidaturas() {
     REJEITADO: candidaturas.filter((c) => c.status === 'REJEITADO').length,
   };
 
-  async function handleCancelar(candidatura: Candidatura) {
-    const confirmado = window.confirm(`Cancelar sua candidatura ao projeto "${candidatura.projeto.titulo}"?`);
-    if (!confirmado) return;
+  async function handleCancelar() {
+    if (!candidaturaParaCancelar) return;
 
-    setCancelandoId(candidatura.id);
+    setCancelando(true);
     try {
-      await cancelarCandidatura(candidatura.id);
-      setCandidaturas((atual) => atual.filter((c) => c.id !== candidatura.id));
+      await cancelarCandidatura(candidaturaParaCancelar.id);
+      setCandidaturas((atual) => atual.filter((c) => c.id !== candidaturaParaCancelar.id));
+      setCandidaturaParaCancelar(null);
     } catch (erroCapturado) {
       setErro(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível cancelar a candidatura.');
     } finally {
-      setCancelandoId(null);
+      setCancelando(false);
     }
   }
 
@@ -152,11 +154,10 @@ export default function Candidaturas() {
                 {candidatura.status === 'PENDENTE' && (
                   <button
                     type="button"
-                    onClick={() => handleCancelar(candidatura)}
-                    disabled={cancelandoId === candidatura.id}
-                    className="text-xs font-bold text-red-500 hover:underline disabled:opacity-60 disabled:cursor-not-allowed"
+                    onClick={() => { setErro(null); setCandidaturaParaCancelar(candidatura); }}
+                    className="text-xs font-bold text-red-500 hover:underline"
                   >
-                    {cancelandoId === candidatura.id ? 'Cancelando...' : 'Cancelar candidatura'}
+                    Cancelar candidatura
                   </button>
                 )}
                 <Link to={`/detalhes/${candidatura.projeto.id}`} className="text-xs font-bold text-[#F27405] hover:underline">
@@ -168,6 +169,18 @@ export default function Candidaturas() {
         </div>
       )}
 
+      {candidaturaParaCancelar && (
+        <ConfirmModal
+          titulo="Cancelar candidatura"
+          mensagem={`Cancelar sua candidatura ao projeto "${candidaturaParaCancelar.projeto.titulo}"?`}
+          variante="perigo"
+          confirmando={cancelando}
+          onCancelar={() => { setCandidaturaParaCancelar(null); setErro(null); }}
+          onConfirmar={handleCancelar}
+        >
+          {erro && <ErroCard>{erro}</ErroCard>}
+        </ConfirmModal>
+      )}
     </div>
   )
 }

@@ -19,6 +19,7 @@ function projeto(overrides: Partial<Projeto> = {}): Projeto {
     },
     titulo: 'Projeto Teste',
     descricao: 'Descrição do projeto de teste.',
+    bannerUrl: null,
     status: 'ABERTO',
     habilidadesNecessarias: [],
     vagas: 4,

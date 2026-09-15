@@ -48,6 +48,9 @@ public class Projeto {
     @Column(columnDefinition = "TEXT", nullable = false)
     private String descricao;
 
+    @Column(name = "banner_url")
+    private String bannerUrl;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     @Builder.Default

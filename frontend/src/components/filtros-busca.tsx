@@ -4,7 +4,7 @@ export default function FiltrosBusca() {
       <input
         type="text"
         placeholder="Buscar projetos..."
-        className="flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-1 focus:ring-[#F27405] transition-all"
+        className="flex-1 p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] focus:ring-1 focus:ring-[#F27405] text-gray-700 dark:text-gray-100 placeholder:text-gray-400 dark:placeholder:text-gray-500 transition-all"
       />
       <div className="flex gap-4 w-full md:w-auto">
         <select className="flex-1 md:w-40 p-3 bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-700 rounded-xl outline-none focus:border-[#F27405] text-sm text-gray-600 dark:text-gray-300">

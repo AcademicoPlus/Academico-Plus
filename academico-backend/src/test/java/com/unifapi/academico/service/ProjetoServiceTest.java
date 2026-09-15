@@ -34,6 +34,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,7 +45,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyList;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -64,6 +67,7 @@ class ProjetoServiceTest {
     @Mock private HabilidadeRepository habilidadeRepository;
     @Mock private ProjetoCanceladoAvisoRepository projetoCanceladoAvisoRepository;
     @Mock private HabilidadeService habilidadeService;
+    @Mock private BannerStorageClient bannerStorageClient;
 
     private ProjetoService projetoService;
 
@@ -80,7 +84,8 @@ class ProjetoServiceTest {
                 projetoHabilidadeRepository,
                 habilidadeRepository,
                 projetoCanceladoAvisoRepository,
-                habilidadeService);
+                habilidadeService,
+                bannerStorageClient);
 
         criador = EntityFixtures.usuario("criador@unifapi.edu.br", null);
         outroUsuario = EntityFixtures.usuario("outro@unifapi.edu.br", null);
@@ -730,5 +735,51 @@ class ProjetoServiceTest {
         Projeto projeto = EntityFixtures.projeto(criador, 5);
         projeto.setCriador(null);
         assertThat(projetoService.ehCriador(projeto, criador.getId())).isFalse();
+    }
+
+    // ============================================
+    // atualizarBanner()
+    // ============================================
+
+    @Test
+    void atualizarBanner_deveSalvarNovoBanner_eNaoTentarDeletarAntigo_quandoNaoHaviaBannerAnterior() {
+        Projeto projeto = EntityFixtures.projeto(criador, 5);
+        MultipartFile arquivo = mock(MultipartFile.class);
+        when(projetoRepository.findByIdAndAtivoTrue(projeto.getId())).thenReturn(Optional.of(projeto));
+        when(bannerStorageClient.salvar(arquivo)).thenReturn("http://storage/novo-banner.png");
+        stubDetalhe(projeto, 0, 0);
+
+        ProjetoResponse response = projetoService.atualizarBanner(projeto.getId(), criador.getId(), arquivo);
+
+        assertThat(projeto.getBannerUrl()).isEqualTo("http://storage/novo-banner.png");
+        assertThat(response.bannerUrl()).isEqualTo("http://storage/novo-banner.png");
+        verify(bannerStorageClient).salvar(arquivo);
+        verify(bannerStorageClient, never()).deletar(anyString());
+    }
+
+    @Test
+    void atualizarBanner_deveDeletarBannerAntigo_quandoJaHaviaUm() {
+        Projeto projeto = EntityFixtures.projeto(criador, 5);
+        projeto.setBannerUrl("http://storage/banner-antigo.png");
+        MultipartFile arquivo = mock(MultipartFile.class);
+        when(projetoRepository.findByIdAndAtivoTrue(projeto.getId())).thenReturn(Optional.of(projeto));
+        when(bannerStorageClient.salvar(arquivo)).thenReturn("http://storage/novo-banner.png");
+        stubDetalhe(projeto, 0, 0);
+
+        projetoService.atualizarBanner(projeto.getId(), criador.getId(), arquivo);
+
+        verify(bannerStorageClient).deletar("http://storage/banner-antigo.png");
+    }
+
+    @Test
+    void atualizarBanner_devePropagarExcecao_quandoUsuarioNaoForCriador() {
+        Projeto projeto = EntityFixtures.projeto(criador, 5);
+        MultipartFile arquivo = mock(MultipartFile.class);
+        when(projetoRepository.findByIdAndAtivoTrue(projeto.getId())).thenReturn(Optional.of(projeto));
+
+        assertThatThrownBy(() -> projetoService.atualizarBanner(projeto.getId(), outroUsuario.getId(), arquivo))
+                .isInstanceOf(RegraDeNegocioException.class);
+
+        verify(bannerStorageClient, never()).salvar(any());
     }
 }

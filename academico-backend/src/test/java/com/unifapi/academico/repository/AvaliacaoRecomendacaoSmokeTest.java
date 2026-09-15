@@ -7,6 +7,7 @@ import com.unifapi.academico.dto.recomendacao.ProjetoRecomendadoResponse;
 import com.unifapi.academico.dto.recomendacao.UsuarioRecomendadoResponse;
 import com.unifapi.academico.exception.RegraDeNegocioException;
 import com.unifapi.academico.service.AvaliacaoService;
+import com.unifapi.academico.service.BannerStorageClient;
 import com.unifapi.academico.service.HabilidadeService;
 import com.unifapi.academico.service.ProjetoService;
 import com.unifapi.academico.service.RecomendacaoService;
@@ -73,7 +74,8 @@ class AvaliacaoRecomendacaoSmokeTest {
                 habilidadeRepository, projetoHabilidadeRepository, usuarioHabilidadeRepository);
         ProjetoService projetoService = new ProjetoService(
                 projetoRepository, usuarioRepository, projetoMembroRepository, candidaturaRepository,
-                projetoHabilidadeRepository, habilidadeRepository, projetoCanceladoAvisoRepository, habilidadeService);
+                projetoHabilidadeRepository, habilidadeRepository, projetoCanceladoAvisoRepository, habilidadeService,
+                new BannerStorageClient());
         avaliacaoService = new AvaliacaoService(avaliacaoRepository, projetoRepository, projetoMembroRepository, usuarioRepository);
         recomendacaoService = new RecomendacaoService(
                 projetoService, projetoRepository, projetoHabilidadeRepository, projetoMembroRepository,

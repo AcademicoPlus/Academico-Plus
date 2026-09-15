@@ -36,6 +36,7 @@ function projetoBase(overrides: Partial<ProjetoDetalhe> = {}): ProjetoDetalhe {
     criador: CRIADOR,
     titulo: 'Projeto Teste',
     descricao: 'Descrição do projeto de teste.',
+    bannerUrl: null,
     status: 'ABERTO',
     vagas: 3,
     vagasPreenchidas: 1,
@@ -100,7 +101,6 @@ describe('DetalhesProjeto', () => {
   });
 
   it('permite que o criador aceite uma candidatura pendente', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.spyOn(useMeuPerfilHook, 'obterMeuPerfilCache').mockResolvedValue({ id: 'user-1' } as never);
     vi.spyOn(projetoService, 'buscarProjetoPorId').mockResolvedValue(projetoBase());
 
@@ -127,13 +127,15 @@ describe('DetalhesProjeto', () => {
     expect(await screen.findByText('Bruno Alves')).toBeInTheDocument();
     await userEvent.click(screen.getByRole('button', { name: /^aceitar$/i }));
 
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^confirmar$/i }));
+
     await waitFor(() => expect(candidaturaService.aceitarCandidatura).toHaveBeenCalledWith('cand-1'));
     await waitFor(() => expect(listarCandidaturas).toHaveBeenCalledTimes(2));
     expect(await screen.findByText(/nenhuma candidatura pendente/i)).toBeInTheDocument();
   });
 
   it('mostra candidatos recomendados e permite avaliar um membro em projeto concluído', async () => {
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
     vi.spyOn(useMeuPerfilHook, 'obterMeuPerfilCache').mockResolvedValue({ id: 'user-1' } as never);
     vi.spyOn(projetoService, 'buscarProjetoPorId').mockResolvedValue(projetoBase({ status: 'CONCLUIDO', totalMembros: 1 }));
     vi.spyOn(projetoMembroService, 'listarMembrosDoProjeto').mockResolvedValue([
@@ -169,7 +171,11 @@ describe('DetalhesProjeto', () => {
     expect(screen.getByText('80%')).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole('button', { name: /adicionar à equipe/i }));
+    expect(await screen.findByRole('dialog')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^confirmar$/i }));
+
     await waitFor(() => expect(projetoMembroService.adicionarMembroAoProjeto).toHaveBeenCalledWith('proj-1', 'user-3'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
 
     // Avaliar membro da equipe
     const cardMembro = screen.getByText('Bruno Alves').closest('div.bg-gray-50') as HTMLElement;
@@ -180,5 +186,64 @@ describe('DetalhesProjeto', () => {
 
     await waitFor(() => expect(avaliacaoService.avaliarParticipante).toHaveBeenCalledWith('proj-1', 'user-2', 5, undefined));
     expect(await screen.findByText(/avaliado/i)).toBeInTheDocument();
+  });
+
+  it('permite que o criador rejeite uma candidatura, exigindo um motivo com no mínimo 5 caracteres', async () => {
+    vi.spyOn(useMeuPerfilHook, 'obterMeuPerfilCache').mockResolvedValue({ id: 'user-1' } as never);
+    vi.spyOn(projetoService, 'buscarProjetoPorId').mockResolvedValue(projetoBase());
+
+    const candidaturaPendente = {
+      id: 'cand-1',
+      projeto: { id: 'proj-1', titulo: 'Projeto Teste', status: 'ABERTO' as const },
+      usuario: CANDIDATO,
+      status: 'PENDENTE' as const,
+      mensagem: null,
+      motivoRejeicao: null,
+      dataCandidatura: '2026-01-02T00:00:00Z',
+      dataResposta: null,
+    };
+
+    vi.spyOn(candidaturaService, 'listarCandidaturasDoProjeto').mockResolvedValue({
+      content: [candidaturaPendente], totalElements: 1, totalPages: 1, number: 0, size: 50, last: true,
+    });
+    vi.spyOn(candidaturaService, 'rejeitarCandidatura').mockResolvedValue({ ...candidaturaPendente, status: 'REJEITADO' });
+
+    renderPagina();
+
+    expect(await screen.findByText('Bruno Alves')).toBeInTheDocument();
+    await userEvent.click(screen.getByRole('button', { name: /^rejeitar$/i }));
+
+    const botaoConfirmarRejeicao = await screen.findByRole('button', { name: /confirmar rejeição/i });
+    expect(botaoConfirmarRejeicao).toBeDisabled();
+
+    const textareaMotivo = screen.getByPlaceholderText(/motivo da rejeição/i);
+    await userEvent.type(textareaMotivo, 'Perfil não compatível');
+
+    expect(botaoConfirmarRejeicao).toBeEnabled();
+    await userEvent.click(botaoConfirmarRejeicao);
+
+    await waitFor(() =>
+      expect(candidaturaService.rejeitarCandidatura).toHaveBeenCalledWith('cand-1', 'Perfil não compatível'),
+    );
+  });
+
+  it('permite que o criador envie uma nova capa para o projeto', async () => {
+    vi.spyOn(useMeuPerfilHook, 'obterMeuPerfilCache').mockResolvedValue({ id: 'user-1' } as never);
+    vi.spyOn(projetoService, 'buscarProjetoPorId').mockResolvedValue(projetoBase());
+    vi.spyOn(candidaturaService, 'listarCandidaturasDoProjeto').mockResolvedValue({
+      content: [], totalElements: 0, totalPages: 1, number: 0, size: 50, last: true,
+    });
+    vi.spyOn(projetoService, 'enviarBannerDoProjeto').mockResolvedValue(
+      projetoBase({ bannerUrl: 'https://cdn.exemplo/projetos/nova-capa.png' }),
+    );
+
+    renderPagina();
+
+    const inputBanner = await screen.findByLabelText(/alterar capa/i);
+    const arquivo = new File(['conteudo'], 'capa.png', { type: 'image/png' });
+    await userEvent.upload(inputBanner, arquivo);
+
+    await waitFor(() => expect(projetoService.enviarBannerDoProjeto).toHaveBeenCalledWith('proj-1', arquivo));
+    expect(await screen.findByAltText('Capa')).toHaveAttribute('src', 'https://cdn.exemplo/projetos/nova-capa.png');
   });
 });

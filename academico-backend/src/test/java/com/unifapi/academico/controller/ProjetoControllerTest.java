@@ -25,6 +25,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.MediaType;
+import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -64,13 +65,13 @@ class ProjetoControllerTest {
 
     private ProjetoResponse respostaDetalhada() {
         return new ProjetoResponse(UUID.randomUUID(), null, "Projeto de robótica educacional",
-                "Descrição com pelo menos vinte caracteres.", StatusProjeto.ABERTO, 3, 0, 3, true,
+                "Descrição com pelo menos vinte caracteres.", null, StatusProjeto.ABERTO, 3, 0, 3, true,
                 null, true, LocalDateTime.now(), LocalDateTime.now(), List.of(), 0, 0);
     }
 
     private ProjetoResumoResponse respostaResumo() {
         return new ProjetoResumoResponse(UUID.randomUUID(), null, "Projeto de robótica educacional",
-                "Descrição com pelo menos vinte caracteres.", StatusProjeto.ABERTO, List.of(), 3, 0, null);
+                "Descrição com pelo menos vinte caracteres.", null, StatusProjeto.ABERTO, List.of(), 3, 0, null);
     }
 
     // ============================================
@@ -202,6 +203,29 @@ class ProjetoControllerTest {
     @Test
     void inativar_deveRetornar403_quandoNaoAutenticado() throws Exception {
         mockMvc.perform(delete("/projetos/{id}", UUID.randomUUID()))
+                .andExpect(status().isForbidden());
+    }
+
+    // ============================================
+    // POST /projetos/{id}/banner
+    // ============================================
+
+    @Test
+    @WithUsuarioMock
+    void uploadBanner_deveRetornar200_quandoArquivoValido() throws Exception {
+        UUID id = UUID.randomUUID();
+        MockMultipartFile arquivo = new MockMultipartFile("banner", "banner.png", "image/png", "conteudo".getBytes());
+        when(projetoService.atualizarBanner(eq(id), any(UUID.class), any())).thenReturn(respostaDetalhada());
+
+        mockMvc.perform(multipart("/projetos/{id}/banner", id).file(arquivo))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void uploadBanner_deveRetornar403_quandoNaoAutenticado() throws Exception {
+        MockMultipartFile arquivo = new MockMultipartFile("banner", "banner.png", "image/png", "conteudo".getBytes());
+
+        mockMvc.perform(multipart("/projetos/{id}/banner", UUID.randomUUID()).file(arquivo))
                 .andExpect(status().isForbidden());
     }
 

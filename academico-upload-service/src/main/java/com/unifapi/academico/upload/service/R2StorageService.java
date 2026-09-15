@@ -53,10 +53,14 @@ public class R2StorageService {
     }
 
     public String salvar(MultipartFile arquivo) {
+        return salvar(arquivo, PREFIXO);
+    }
+
+    public String salvar(MultipartFile arquivo, String prefixo) {
         ImagemUploadValidator.validar(arquivo);
 
         String extensao = ImagemUploadValidator.extrairExtensao(arquivo.getOriginalFilename());
-        String chave = PREFIXO + UUID.randomUUID() + extensao;
+        String chave = prefixo + UUID.randomUUID() + extensao;
 
         try (InputStream inputStream = arquivo.getInputStream()) {
             s3Client.putObject(

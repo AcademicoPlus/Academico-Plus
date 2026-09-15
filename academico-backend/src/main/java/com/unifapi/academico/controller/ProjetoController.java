@@ -18,9 +18,11 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.UUID;
 
@@ -67,6 +69,17 @@ public class ProjetoController {
             @AuthenticationPrincipal Usuario usuarioLogado
     ) {
         return ResponseEntity.ok(projetoService.alterarStatus(id, request, usuarioLogado.getId()));
+    }
+
+    @PostMapping(value = "/{id}/banner", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Upload da capa do projeto",
+            description = "Recebe um arquivo de imagem e atualiza a capa/banner do projeto. Somente o criador pode alterar")
+    public ResponseEntity<ProjetoResponse> uploadBanner(
+            @PathVariable UUID id,
+            @RequestParam("banner") MultipartFile arquivo,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(projetoService.atualizarBanner(id, usuarioLogado.getId(), arquivo));
     }
 
     @DeleteMapping("/{id}")
