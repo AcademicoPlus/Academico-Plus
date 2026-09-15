@@ -191,7 +191,7 @@ let meuPerfilMock = {
   id: 'usuario-mock-1',
   email: CREDENCIAIS_MOCK.email,
   nome: 'Ana Silva',
-  nivelAcesso: null,
+  nivelAcesso: NIVEIS_ACESSO_MOCK.find((nivel) => nivel.nome === USUARIO_LOGADO_MOCK.permission) ?? null,
   curso: CURSOS_MOCK[0], // Ciência da Computação
   periodo: 4,
   bio: 'Designer apaixonada por UI/UX e design systems. Busco projetos que unam criatividade e impacto social. Tenho experiência com Figma, pesquisa com usuários e prototipagem de alta fidelidade.' as string | null,
@@ -585,29 +585,6 @@ export function mockFetch<TResposta>(caminho: string, { method, body }: MockOpti
         (c) => c.usuario?.id === USUARIO_LOGADO_MOCK.id && (!status || c.status === status),
       );
       return resolverComAtraso(paginar(clonar(minhas)) as unknown as TResposta);
-    }
-
-    case 'GET /usuarios/me': {
-      const perfil: UsuarioPerfil = {
-        id: USUARIO_LOGADO_MOCK.id,
-        email: CREDENCIAIS_MOCK.email,
-        nome: USUARIO_LOGADO_MOCK.nome,
-        nivelAcesso: NIVEIS_ACESSO_MOCK.find((nivel) => nivel.nome === USUARIO_LOGADO_MOCK.permission) ?? null,
-        curso: CURSOS_MOCK[0],
-        periodo: USUARIO_LOGADO_MOCK.periodo,
-        bio: null,
-        fotoUrl: USUARIO_LOGADO_MOCK.fotoUrl,
-        linkedinUrl: null,
-        githubUrl: null,
-        habilidades: [],
-        notaMedia: USUARIO_LOGADO_MOCK.notaMedia,
-        totalAvaliacoes: USUARIO_LOGADO_MOCK.totalAvaliacoes,
-        termosAceitosEm: '2024-01-01T00:00:00Z',
-        ativo: true,
-        criadoEm: '2024-01-01T00:00:00Z',
-        atualizadoEm: '2024-01-01T00:00:00Z',
-      };
-      return resolverComAtraso(perfil as unknown as TResposta);
     }
 
     case 'GET /projetos': {
