@@ -49,6 +49,24 @@ export default function Dashboard() {
   return (
     <div className="flex flex-col gap-6 pb-10 max-w-7xl mx-auto">
       
+      {/* Banner de Destaque Adicionado no Topo */}
+      <div className="w-full bg-gradient-to-r from-[#183E6C] to-blue-800 rounded-2xl p-6 md:p-8 flex items-center justify-between shadow-md relative overflow-hidden">
+        <div className="relative z-10">
+          <h2 className="text-xl md:text-2xl font-bold text-white mb-2">
+            Acelere sua jornada no Acadêmico+
+          </h2>
+          <p className="text-blue-100 max-w-xl text-sm md:text-base">
+            Descubra novos projetos, conecte-se com outros estudantes e coloque suas ideias em prática.
+          </p>
+        </div>
+        <div className="hidden md:flex relative z-10 items-center justify-center bg-white/10 p-4 rounded-full backdrop-blur-sm">
+          <span className="text-4xl">🚀</span>
+        </div>
+        {/* Elemento decorativo de fundo no banner */}
+        <div className="absolute -right-10 -top-10 w-40 h-40 bg-white/5 rounded-full blur-2xl"></div>
+        <div className="absolute right-20 -bottom-10 w-32 h-32 bg-[#F27405]/20 rounded-full blur-xl"></div>
+      </div>
+
       {/* Cabeçalho Padronizado */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-4">
         <div>
