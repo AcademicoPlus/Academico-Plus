@@ -143,8 +143,7 @@ export default function Dashboard() {
   }, [mostrarToast]);
 
   const primeiroNome = meuPerfil?.nome?.split(' ')[0] || '';
-  const nomeCursoObj = meuPerfil?.curso as any; 
-  const nomeCurso = nomeCursoObj?.nome ?? (typeof nomeCursoObj === 'string' ? nomeCursoObj : 'Estudante');
+  const nomeCurso = meuPerfil?.curso?.nome ?? 'Estudante';
   const cursoEPeriodo = meuPerfil?.periodo != null ? `${nomeCurso} - ${meuPerfil.periodo}º período` : nomeCurso;
   
   const habilidades = (meuPerfil?.habilidades ?? []) as { id: string; habilidade: { id: string; nome: string }; nivel?: string }[];
@@ -173,22 +172,12 @@ export default function Dashboard() {
               index === bannerAtual ? 'opacity-100 z-10' : 'opacity-0 z-0'
             }`}
           >
-            <img 
-              src={banner.imagem} 
-              alt={banner.titulo} 
+            <img
+              src={banner.imagem}
+              alt=""
               className="w-full h-full object-cover"
               draggable="false"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-[#183E6C]/90 via-[#183E6C]/50 to-transparent"></div>
-            
-            <div className="absolute inset-0 p-6 md:p-12 flex flex-col justify-center">
-              <h2 className="text-2xl md:text-4xl font-bold text-white mb-3 max-w-xl drop-shadow-md">
-                {banner.titulo}
-              </h2>
-              <p className="text-blue-50 max-w-lg text-sm md:text-base font-medium drop-shadow-md">
-                {banner.descricao}
-              </p>
-            </div>
           </div>
         ))}
 
