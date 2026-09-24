@@ -157,6 +157,23 @@ public class ProjetoService {
         return responseDetalhado(id);
     }
 
+    /** Só o criador pode remover a capa/banner do projeto (mesma trava de atualizarBanner). */
+    @Transactional
+    public ProjetoResponse removerBanner(UUID id, UUID usuarioLogadoId) {
+        Projeto projeto = obterEntidadeComoDono(id, usuarioLogadoId);
+
+        String bannerAtual = projeto.getBannerUrl();
+        if (bannerAtual == null || bannerAtual.isBlank()) {
+            throw new RegraDeNegocioException("Este projeto não possui capa para remover.");
+        }
+
+        projeto.setBannerUrl(null);
+        projetoRepository.save(projeto);
+        bannerStorageClient.deletar(bannerAtual);
+
+        return responseDetalhado(id);
+    }
+
     // ============================================
     // LEITURA
     // ============================================

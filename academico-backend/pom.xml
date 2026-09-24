@@ -67,6 +67,17 @@
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-amqp</artifactId>
         </dependency>
+        <!--
+            Exigido em runtime pelo MultipartBodyBuilder (usado em FotoStorageClient e
+            BannerStorageClient para montar o multipart/form-data do upload-service):
+            a classe PartBuilder referencia org.reactivestreams.Publisher mesmo no fluxo
+            síncrono com RestClient, e o projeto não depende de spring-webflux/reactor,
+            então esse tipo não estava disponível no classpath (NoClassDefFoundError).
+        -->
+        <dependency>
+            <groupId>org.reactivestreams</groupId>
+            <artifactId>reactive-streams</artifactId>
+        </dependency>
         <dependency>
             <groupId>com.h2database</groupId>
             <artifactId>h2</artifactId>

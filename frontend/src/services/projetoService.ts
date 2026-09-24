@@ -102,6 +102,10 @@ export function enviarBannerDoProjeto(id: string, arquivo: File): Promise<Projet
   return apiFetch<ProjetoDetalhe>(`/projetos/${id}/banner`, { method: 'POST', body: formData });
 }
 
+export function removerBannerDoProjeto(id: string): Promise<ProjetoDetalhe> {
+  return apiFetch<ProjetoDetalhe>(`/projetos/${id}/banner`, { method: 'DELETE' });
+}
+
 // Espelha CriarProjetoRequest (dto/projeto). "habilidades" é opcional: já
 // cria o projeto com os vínculos de VincularHabilidadeRequest.
 export type CriarProjetoRequest = {

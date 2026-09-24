@@ -82,6 +82,16 @@ public class ProjetoController {
         return ResponseEntity.ok(projetoService.atualizarBanner(id, usuarioLogado.getId(), arquivo));
     }
 
+    @DeleteMapping("/{id}/banner")
+    @Operation(summary = "Remover a capa do projeto",
+            description = "Remove a capa/banner atual do projeto. Somente o criador pode remover")
+    public ResponseEntity<ProjetoResponse> removerBanner(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(projetoService.removerBanner(id, usuarioLogado.getId()));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Inativar projeto",
             description = "Exclusão lógica do projeto, preservando o histórico de candidaturas e membros")

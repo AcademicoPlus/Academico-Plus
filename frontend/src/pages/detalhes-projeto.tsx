@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { ApiError } from '../services/apiClient'
-import { buscarProjetoPorId, enviarBannerDoProjeto, type ProjetoDetalhe } from '../services/projetoService'
+import { buscarProjetoPorId, enviarBannerDoProjeto, removerBannerDoProjeto, type ProjetoDetalhe } from '../services/projetoService'
 import { listarMembrosDoProjeto, adicionarMembroAoProjeto, type ProjetoMembro } from '../services/projetoMembroService'
 import { obterMeuPerfilCache } from '../hooks/useMeuPerfil'
 import {
@@ -41,7 +41,8 @@ type AcaoConfirmavel =
   | { tipo: 'cancelarCandidatura' }
   | { tipo: 'aceitarCandidatura'; candidatura: Candidatura }
   | { tipo: 'rejeitarCandidatura'; candidatura: Candidatura }
-  | { tipo: 'adicionarRecomendado'; usuarioId: string; nome: string };
+  | { tipo: 'adicionarRecomendado'; usuarioId: string; nome: string }
+  | { tipo: 'removerBanner' };
 
 function DetalhesProjeto({ id }: { id: string }) {
   const [projeto, setProjeto] = useState<ProjetoDetalhe | null>(null);
@@ -236,6 +237,20 @@ function DetalhesProjeto({ id }: { id: string }) {
     }
   }
 
+  async function handleRemoverBanner() {
+    setErroAcao(null);
+    setConfirmandoAcao(true);
+    try {
+      const atualizado = await removerBannerDoProjeto(id);
+      setProjeto(atualizado);
+      setAcaoConfirmavel(null);
+    } catch (erroCapturado) {
+      setErroAcao(erroCapturado instanceof ApiError ? erroCapturado.message : 'Não foi possível remover a capa do projeto.');
+    } finally {
+      setConfirmandoAcao(false);
+    }
+  }
+
   function fecharModalConfirmacao() {
     setAcaoConfirmavel(null);
     setErroAcao(null);
@@ -254,6 +269,8 @@ function DetalhesProjeto({ id }: { id: string }) {
         return handleRejeitar(acaoConfirmavel.candidatura);
       case 'adicionarRecomendado':
         return handleAdicionarAoTime(acaoConfirmavel.usuarioId);
+      case 'removerBanner':
+        return handleRemoverBanner();
     }
   }
 
@@ -328,6 +345,16 @@ function DetalhesProjeto({ id }: { id: string }) {
               >
                 {enviandoBanner ? 'Enviando…' : '📷 Alterar capa'}
               </label>
+              {projeto.bannerUrl && (
+                <button
+                  type="button"
+                  onClick={() => { setErroAcao(null); setAcaoConfirmavel({ tipo: 'removerBanner' }); }}
+                  disabled={enviandoBanner}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl text-xs font-bold text-white bg-black/40 hover:bg-red-600/80 backdrop-blur-sm cursor-pointer transition-colors disabled:opacity-60 disabled:pointer-events-none"
+                >
+                  🗑️ Remover capa
+                </button>
+              )}
               {erroBanner && (
                 <p className="max-w-56 text-right text-xs font-semibold text-red-200 bg-black/50 backdrop-blur-sm rounded-lg px-2.5 py-1.5">
                   {erroBanner}
@@ -624,17 +651,19 @@ function DetalhesProjeto({ id }: { id: string }) {
             acaoConfirmavel.tipo === 'cancelarCandidatura' ? 'Cancelar candidatura' :
             acaoConfirmavel.tipo === 'aceitarCandidatura' ? 'Aceitar candidato' :
             acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'Rejeitar candidato' :
+            acaoConfirmavel.tipo === 'removerBanner' ? 'Remover capa do projeto' :
             'Adicionar à equipe'
           }
           mensagem={
             acaoConfirmavel.tipo === 'cancelarCandidatura' ? 'Cancelar sua candidatura a este projeto?' :
             acaoConfirmavel.tipo === 'aceitarCandidatura' ? `Aceitar ${acaoConfirmavel.candidatura.usuario?.nome ?? 'este candidato'} no projeto?` :
             acaoConfirmavel.tipo === 'rejeitarCandidatura' ? `Rejeitar a candidatura de ${acaoConfirmavel.candidatura.usuario?.nome ?? 'este candidato'}?` :
+            acaoConfirmavel.tipo === 'removerBanner' ? 'Tem certeza que deseja remover a capa deste projeto?' :
             `Adicionar ${acaoConfirmavel.nome} à equipe do projeto?`
           }
-          variante={acaoConfirmavel.tipo === 'cancelarCandidatura' || acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'perigo' : 'padrao'}
+          variante={acaoConfirmavel.tipo === 'cancelarCandidatura' || acaoConfirmavel.tipo === 'rejeitarCandidatura' || acaoConfirmavel.tipo === 'removerBanner' ? 'perigo' : 'padrao'}
           confirmando={confirmandoAcao}
-          textoConfirmar={acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'Confirmar rejeição' : 'Confirmar'}
+          textoConfirmar={acaoConfirmavel.tipo === 'rejeitarCandidatura' ? 'Confirmar rejeição' : acaoConfirmavel.tipo === 'removerBanner' ? 'Remover capa' : 'Confirmar'}
           confirmarDesabilitado={acaoConfirmavel.tipo === 'rejeitarCandidatura' && motivoRejeicao.trim().length < 5}
           onCancelar={fecharModalConfirmacao}
           onConfirmar={confirmarAcaoPendente}
