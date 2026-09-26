@@ -63,6 +63,12 @@ export function listarMeusProjetos(filtro: FiltroProjetos = {}): Promise<PaginaR
   return apiFetch<PaginaResposta<Projeto>>(`/projetos/meus-projetos${paraQuery(filtro)}`);
 }
 
+// Criados por mim + aqueles em que sou membro — é o que aparece como "Meus
+// Projetos" no dashboard e no menu lateral. Aceita filtro de status.
+export function listarProjetosVinculados(filtro: FiltroProjetos = {}): Promise<PaginaResposta<Projeto>> {
+  return apiFetch<PaginaResposta<Projeto>>(`/projetos/vinculados${paraQuery(filtro)}`);
+}
+
 export function listarProjetosParticipando(filtro: FiltroProjetos = {}): Promise<PaginaResposta<Projeto>> {
   return apiFetch<PaginaResposta<Projeto>>(`/projetos/participando${paraQuery(filtro)}`);
 }

@@ -190,6 +190,15 @@ public class ProjetoService {
                 .map(ProjetoResumoResponse::fromEntity);
     }
 
+    /** Criados pelo usuário + aqueles em que ele é membro, com filtro opcional de status. */
+    @Transactional(readOnly = true)
+    public Page<ProjetoResumoResponse> listarVinculados(UUID usuarioId, StatusProjeto status, Pageable pageable) {
+        Page<Projeto> projetos = (status != null)
+                ? projetoRepository.buscarVinculadosPorStatus(usuarioId, status, pageable)
+                : projetoRepository.buscarVinculados(usuarioId, pageable);
+        return projetos.map(ProjetoResumoResponse::fromEntity);
+    }
+
     @Transactional(readOnly = true)
     public Page<ProjetoResumoResponse> listarParticipando(UUID usuarioId, Pageable pageable) {
         return projetoRepository.findByMembros_Usuario_IdAndAtivoTrue(usuarioId, pageable)

@@ -128,6 +128,17 @@ public class ProjetoController {
         return ResponseEntity.ok(projetoService.listarPorCriador(usuarioLogado.getId(), pageable));
     }
 
+    @GetMapping("/vinculados")
+    @Operation(summary = "Listar projetos que criei ou em que participo",
+            description = "Une meus-projetos e participando numa única lista paginada, com filtro opcional por status")
+    public ResponseEntity<Page<ProjetoResumoResponse>> listarVinculados(
+            @RequestParam(required = false) StatusProjeto status,
+            @AuthenticationPrincipal Usuario usuarioLogado,
+            @ParameterObject @PageableDefault(size = 10, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(projetoService.listarVinculados(usuarioLogado.getId(), status, pageable));
+    }
+
     @GetMapping("/participando")
     @Operation(summary = "Listar projetos em que eu participo",
             description = "Retorna os projetos ativos em que o usuário autenticado é membro da equipe")
