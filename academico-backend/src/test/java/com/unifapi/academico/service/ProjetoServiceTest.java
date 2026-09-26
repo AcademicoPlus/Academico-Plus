@@ -649,6 +649,31 @@ class ProjetoServiceTest {
     }
 
     @Test
+    void listarVinculados_semStatus_deveUsarConsultaSemFiltro() {
+        Projeto projeto = EntityFixtures.projeto(criador, 5);
+        Pageable pageable = PageRequest.of(0, 10);
+        when(projetoRepository.buscarVinculados(outroUsuario.getId(), pageable))
+                .thenReturn(new PageImpl<>(List.of(projeto)));
+
+        Page<ProjetoResumoResponse> resultado = projetoService.listarVinculados(outroUsuario.getId(), null, pageable);
+
+        assertThat(resultado.getContent()).hasSize(1);
+        verify(projetoRepository, never()).buscarVinculadosPorStatus(any(), any(), any());
+    }
+
+    @Test
+    void listarVinculados_comStatus_deveUsarConsultaFiltrada() {
+        Pageable pageable = PageRequest.of(0, 10);
+        when(projetoRepository.buscarVinculadosPorStatus(outroUsuario.getId(), StatusProjeto.ABERTO, pageable))
+                .thenReturn(new PageImpl<>(List.of()));
+
+        projetoService.listarVinculados(outroUsuario.getId(), StatusProjeto.ABERTO, pageable);
+
+        verify(projetoRepository).buscarVinculadosPorStatus(outroUsuario.getId(), StatusProjeto.ABERTO, pageable);
+        verify(projetoRepository, never()).buscarVinculados(any(), any());
+    }
+
+    @Test
     void buscarPorId_deveRetornarDetalheQuandoEncontrado() {
         Projeto projeto = EntityFixtures.projeto(criador, 5);
         stubDetalhe(projeto, 5, 2);

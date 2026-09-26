@@ -60,6 +60,42 @@ public interface ProjetoRepository extends JpaRepository<Projeto, UUID> {
     @EntityGraph(attributePaths = {"criador", "criador.curso", "criador.nivelAcesso"})
     Page<Projeto> findByCriador_IdAndAtivoTrue(UUID criadorId, Pageable pageable);
 
+    /**
+     * Projetos ativos em que o usuário está envolvido: criados por ele OU em
+     * que é membro (dashboard/menu "Meus Projetos"). Duas variantes em vez de
+     * ":status IS NULL OR ..." para não depender da inferência de tipo do
+     * parâmetro nulo no Postgres.
+     */
+    @EntityGraph(attributePaths = {"criador", "criador.curso", "criador.nivelAcesso"})
+    @Query("""
+            SELECT p FROM Projeto p
+            WHERE p.ativo = true
+              AND (p.criador.id = :usuarioId
+                   OR EXISTS (SELECT 1 FROM ProjetoMembro m WHERE m.projeto = p AND m.usuario.id = :usuarioId))
+            """)
+    Page<Projeto> buscarVinculados(@Param("usuarioId") UUID usuarioId, Pageable pageable);
+
+    @EntityGraph(attributePaths = {"criador", "criador.curso", "criador.nivelAcesso"})
+    @Query("""
+            SELECT p FROM Projeto p
+            WHERE p.ativo = true
+              AND p.status = :status
+              AND (p.criador.id = :usuarioId
+                   OR EXISTS (SELECT 1 FROM ProjetoMembro m WHERE m.projeto = p AND m.usuario.id = :usuarioId))
+            """)
+    Page<Projeto> buscarVinculadosPorStatus(@Param("usuarioId") UUID usuarioId,
+                                            @Param("status") StatusProjeto status,
+                                            Pageable pageable);
+
+    /** Mesma regra de buscarVinculados, sem paginação — as conversas do usuário. */
+    @Query("""
+            SELECT p FROM Projeto p
+            WHERE p.ativo = true
+              AND (p.criador.id = :usuarioId
+                   OR EXISTS (SELECT 1 FROM ProjetoMembro m WHERE m.projeto = p AND m.usuario.id = :usuarioId))
+            """)
+    List<Projeto> listarVinculados(@Param("usuarioId") UUID usuarioId);
+
     /** Projetos em que o usuário participa como membro (não como criador). */
     @EntityGraph(attributePaths = {"criador", "criador.curso", "criador.nivelAcesso"})
     Page<Projeto> findByMembros_Usuario_IdAndAtivoTrue(UUID usuarioId, Pageable pageable);

@@ -43,6 +43,14 @@ public interface CandidaturaRepository extends JpaRepository<Candidatura, UUID> 
     /** Respeita a unique constraint (projeto_id, usuario_id): impede candidatura duplicada. */
     boolean existsByProjeto_IdAndUsuario_Id(UUID projetoId, UUID usuarioId);
 
+    /** Usado na saída/expulsão do membro, para liberar uma nova candidatura. */
+    Optional<Candidatura> findByProjeto_IdAndUsuario_Id(UUID projetoId, UUID usuarioId);
+
+    /** Usado pelo fluxo de convite para não deixar uma candidatura pendente órfã. */
+    Optional<Candidatura> findByProjeto_IdAndUsuario_IdAndStatus(UUID projetoId, UUID usuarioId, StatusCandidatura status);
+
+    boolean existsByProjeto_IdAndUsuario_IdAndStatus(UUID projetoId, UUID usuarioId, StatusCandidatura status);
+
     long countByProjeto_IdAndStatus(UUID projetoId, StatusCandidatura status);
 
     long countByUsuario_IdAndStatus(UUID usuarioId, StatusCandidatura status);

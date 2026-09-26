@@ -1,6 +1,7 @@
 package com.unifapi.academico.repository;
 
 import com.unifapi.academico.domain.enums.StatusCandidatura;
+import com.unifapi.academico.domain.enums.StatusConvite;
 import com.unifapi.academico.domain.enums.StatusProjeto;
 import com.unifapi.academico.domain.models.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -14,6 +15,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.test.context.TestPropertySource;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -43,6 +45,8 @@ class QueriesSmokeTest {
     @Autowired private ProjetoHabilidadeRepository projetoHabilidadeRepository;
     @Autowired private HabilidadeRepository habilidadeRepository;
     @Autowired private UsuarioHabilidadeRepository usuarioHabilidadeRepository;
+    @Autowired private ConviteProjetoRepository conviteProjetoRepository;
+    @Autowired private MensagemProjetoRepository mensagemProjetoRepository;
 
     private Usuario criador;
     private Usuario candidato;
@@ -109,6 +113,13 @@ class QueriesSmokeTest {
         assertThat(projetoRepository.findByMembros_Usuario_IdAndAtivoTrue(candidato.getId(), PAGE)).isEmpty();
 
         assertThat(projetoRepository.countByCriador_IdAndAtivoTrue(criador.getId())).isEqualTo(1);
+
+        // Vinculados = criador OU membro; quem só se candidatou não entra
+        assertThat(projetoRepository.buscarVinculados(criador.getId(), PAGE)).hasSize(1);
+        assertThat(projetoRepository.buscarVinculados(membro.getId(), PAGE)).hasSize(1);
+        assertThat(projetoRepository.buscarVinculados(candidato.getId(), PAGE)).isEmpty();
+        assertThat(projetoRepository.buscarVinculadosPorStatus(membro.getId(), StatusProjeto.ABERTO, PAGE)).hasSize(1);
+        assertThat(projetoRepository.buscarVinculadosPorStatus(membro.getId(), StatusProjeto.CONCLUIDO, PAGE)).isEmpty();
         assertThat(projetoRepository.findByIdAndAtivoTrue(projeto.getId())).isPresent();
 
         // EntityGraph do detalhe deve trazer criador + habilidades inicializados
@@ -184,6 +195,84 @@ class QueriesSmokeTest {
         assertThat(usuarioHabilidadeRepository.countByUsuario_Id(membro.getId())).isZero();
         assertThat(usuarioHabilidadeRepository.existsByUsuario_IdAndHabilidade_Id(
                 membro.getId(), java.getId())).isFalse();
+    }
+
+    @Test
+    void conviteProjetoRepository_executaTodasAsQueries() {
+        Usuario convidadoRef = em.find(Usuario.class, candidato.getId());
+        Usuario criadorRef = em.find(Usuario.class, criador.getId());
+        Projeto projetoRef = em.find(Projeto.class, projeto.getId());
+        em.persist(ConviteProjeto.builder()
+                .projeto(projetoRef).convidado(convidadoRef).convidante(criadorRef)
+                .status(StatusConvite.PENDENTE).criadoEm(LocalDateTime.now())
+                .build());
+        em.flush();
+        em.clear();
+
+        assertThat(conviteProjetoRepository.findByProjeto_Id(projeto.getId(), PAGE)).hasSize(1);
+        assertThat(conviteProjetoRepository.findByProjeto_IdAndStatus(
+                projeto.getId(), StatusConvite.ACEITO, PAGE)).isEmpty();
+        assertThat(conviteProjetoRepository.findByConvidado_IdAndProjeto_AtivoTrue(candidato.getId(), PAGE)).hasSize(1);
+        assertThat(conviteProjetoRepository.findByConvidado_IdAndStatusAndProjeto_AtivoTrue(
+                candidato.getId(), StatusConvite.PENDENTE, PAGE)).hasSize(1);
+        assertThat(conviteProjetoRepository.existsByProjeto_IdAndConvidado_IdAndStatus(
+                projeto.getId(), candidato.getId(), StatusConvite.PENDENTE)).isTrue();
+        assertThat(conviteProjetoRepository.countByConvidado_IdAndStatusAndProjeto_AtivoTrue(
+                candidato.getId(), StatusConvite.PENDENTE)).isEqualTo(1);
+
+        // Projeto inativado some da caixa de convites do convidado
+        Projeto inativar = em.find(Projeto.class, projeto.getId());
+        inativar.setAtivo(false);
+        em.flush();
+        em.clear();
+        assertThat(conviteProjetoRepository.countByConvidado_IdAndStatusAndProjeto_AtivoTrue(
+                candidato.getId(), StatusConvite.PENDENTE)).isZero();
+
+        assertThat(candidaturaRepository.existsByProjeto_IdAndUsuario_IdAndStatus(
+                projeto.getId(), candidato.getId(), StatusCandidatura.PENDENTE)).isTrue();
+        assertThat(candidaturaRepository.findByProjeto_IdAndUsuario_IdAndStatus(
+                projeto.getId(), candidato.getId(), StatusCandidatura.PENDENTE)).isPresent();
+    }
+
+    @Test
+    void chat_ultimasMensagensENaoLidas_executamNoBanco() {
+        Projeto projetoRef = em.find(Projeto.class, projeto.getId());
+        Usuario criadorRef = em.find(Usuario.class, criador.getId());
+        Usuario membroRef = em.find(Usuario.class, membro.getId());
+        LocalDateTime base = LocalDateTime.now().minusHours(2);
+
+        em.persist(MensagemProjeto.builder().projeto(projetoRef).autor(criadorRef).conteudo("primeira").criadoEm(base).build());
+        em.persist(MensagemProjeto.builder().projeto(projetoRef).autor(criadorRef).conteudo("segunda").criadoEm(base.plusMinutes(30)).build());
+        em.persist(MensagemProjeto.builder().projeto(projetoRef).autor(membroRef).conteudo("minha").criadoEm(base.plusMinutes(40)).build());
+        em.flush();
+        em.clear();
+
+        var ids = List.of(projeto.getId());
+
+        var ultimas = mensagemProjetoRepository.buscarUltimasMensagens(ids);
+        assertThat(ultimas).hasSize(1);
+        assertThat(ultimas.get(0).getConteudo()).isEqualTo("minha");
+
+        // Sem registro de leitura: as 2 mensagens do criador contam; a própria não
+        assertThat(mensagemProjetoRepository.contarNaoLidas(membro.getId(), ids))
+                .singleElement()
+                .satisfies(n -> assertThat(n.total()).isEqualTo(2L));
+
+        // Leu até depois da primeira: só a segunda conta
+        em.persist(LeituraChatProjeto.builder()
+                .projeto(em.find(Projeto.class, projeto.getId()))
+                .usuario(em.find(Usuario.class, membro.getId()))
+                .lidoAte(base.plusMinutes(10))
+                .build());
+        em.flush();
+        em.clear();
+        assertThat(mensagemProjetoRepository.contarNaoLidas(membro.getId(), ids))
+                .singleElement()
+                .satisfies(n -> assertThat(n.total()).isEqualTo(1L));
+
+        // Conversas do usuário = criador ou membro
+        assertThat(projetoRepository.listarVinculados(membro.getId())).hasSize(1);
+        assertThat(projetoRepository.listarVinculados(candidato.getId())).isEmpty();
     }
 
     private static Usuario novoUsuario(String email, String nome, NivelAcesso nivel, Curso curso) {

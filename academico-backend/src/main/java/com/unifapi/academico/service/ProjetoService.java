@@ -157,6 +157,23 @@ public class ProjetoService {
         return responseDetalhado(id);
     }
 
+    /** Só o criador pode remover a capa/banner do projeto (mesma trava de atualizarBanner). */
+    @Transactional
+    public ProjetoResponse removerBanner(UUID id, UUID usuarioLogadoId) {
+        Projeto projeto = obterEntidadeComoDono(id, usuarioLogadoId);
+
+        String bannerAtual = projeto.getBannerUrl();
+        if (bannerAtual == null || bannerAtual.isBlank()) {
+            throw new RegraDeNegocioException("Este projeto não possui capa para remover.");
+        }
+
+        projeto.setBannerUrl(null);
+        projetoRepository.save(projeto);
+        bannerStorageClient.deletar(bannerAtual);
+
+        return responseDetalhado(id);
+    }
+
     // ============================================
     // LEITURA
     // ============================================
@@ -171,6 +188,15 @@ public class ProjetoService {
     public Page<ProjetoResumoResponse> listarPorCriador(UUID criadorId, Pageable pageable) {
         return projetoRepository.findByCriador_IdAndAtivoTrue(criadorId, pageable)
                 .map(ProjetoResumoResponse::fromEntity);
+    }
+
+    /** Criados pelo usuário + aqueles em que ele é membro, com filtro opcional de status. */
+    @Transactional(readOnly = true)
+    public Page<ProjetoResumoResponse> listarVinculados(UUID usuarioId, StatusProjeto status, Pageable pageable) {
+        Page<Projeto> projetos = (status != null)
+                ? projetoRepository.buscarVinculadosPorStatus(usuarioId, status, pageable)
+                : projetoRepository.buscarVinculados(usuarioId, pageable);
+        return projetos.map(ProjetoResumoResponse::fromEntity);
     }
 
     @Transactional(readOnly = true)

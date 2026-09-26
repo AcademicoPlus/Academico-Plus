@@ -1,6 +1,8 @@
 package com.unifapi.academico.service;
 
+import com.unifapi.academico.domain.enums.StatusCandidatura;
 import com.unifapi.academico.domain.enums.StatusProjeto;
+import com.unifapi.academico.domain.models.Candidatura;
 import com.unifapi.academico.domain.models.NivelAcesso;
 import com.unifapi.academico.domain.models.Projeto;
 import com.unifapi.academico.domain.models.ProjetoMembro;
@@ -10,6 +12,7 @@ import com.unifapi.academico.dto.membro.AtualizarFuncaoMembroRequest;
 import com.unifapi.academico.dto.membro.ProjetoMembroResponse;
 import com.unifapi.academico.exception.RecursoNaoEncontradoException;
 import com.unifapi.academico.exception.RegraDeNegocioException;
+import com.unifapi.academico.repository.CandidaturaRepository;
 import com.unifapi.academico.repository.ProjetoMembroRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
 import org.junit.jupiter.api.BeforeEach;
@@ -41,8 +44,8 @@ import static org.mockito.Mockito.when;
  * Cobrem as duas portas de entrada de membros (adicionar via dono + adicionarMembro,
  * núcleo compartilhado com CandidaturaService.aceitar), a atualização de função e a
  * remoção — com atenção especial às assimetrias de regra de negócio entre os métodos:
- * apenas adicionarMembro() bloqueia por status do projeto; atualizarFuncao() e remover()
- * não têm essa restrição.
+ * adicionarMembro() e remover() bloqueiam em projeto encerrado; atualizarFuncao()
+ * não tem essa restrição.
  */
 @ExtendWith(MockitoExtension.class)
 class ProjetoMembroServiceTest {
@@ -52,6 +55,9 @@ class ProjetoMembroServiceTest {
 
     @Mock
     private UsuarioRepository usuarioRepository;
+
+    @Mock
+    private CandidaturaRepository candidaturaRepository;
 
     @Mock
     private ProjetoService projetoService;
@@ -382,7 +388,7 @@ class ProjetoMembroServiceTest {
     }
 
     // ============================================
-    // remover() — dono OU o próprio membro; sem restrição de status
+    // remover() — dono OU o próprio membro; bloqueado em projeto encerrado
     // ============================================
 
     @Test
@@ -471,7 +477,7 @@ class ProjetoMembroServiceTest {
 
     @ParameterizedTest
     @EnumSource(value = StatusProjeto.class, names = {"CONCLUIDO", "CANCELADO"})
-    void remover_devePermitirRemocao_independenteDoStatusDoProjeto(StatusProjeto status) {
+    void remover_deveBloquear_quandoProjetoEncerrado(StatusProjeto status) {
         projeto.setStatus(status);
         ProjetoMembro membroEntity = projetoMembro(projeto, membro, "Dev");
         UUID membroId = membroEntity.getId();
@@ -480,10 +486,30 @@ class ProjetoMembroServiceTest {
         when(projetoMembroRepository.findById(membroId)).thenReturn(Optional.of(membroEntity));
         when(projetoService.ehCriador(projeto, criador.getId())).thenReturn(true);
 
-        service.remover(projetoId, membroId, criador.getId());
+        assertThatThrownBy(() -> service.remover(projetoId, membroId, criador.getId()))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessageContaining("equipe");
 
+        verify(projetoMembroRepository, never()).delete(any());
+        verify(candidaturaRepository, never()).delete(any());
+    }
+
+    @Test
+    void remover_deveApagarCandidaturaAceita_paraPermitirNovaCandidatura() {
+        ProjetoMembro membroEntity = projetoMembro(projeto, membro, "Dev");
+        UUID membroId = membroEntity.getId();
+        Candidatura candidatura = candidatura(projeto, membro, StatusCandidatura.ACEITO);
+
+        when(projetoService.obterEntidadeAtiva(projetoId)).thenReturn(projeto);
+        when(projetoMembroRepository.findById(membroId)).thenReturn(Optional.of(membroEntity));
+        when(projetoService.ehCriador(projeto, membro.getId())).thenReturn(false);
+        when(candidaturaRepository.findByProjeto_IdAndUsuario_Id(projetoId, membro.getId()))
+                .thenReturn(Optional.of(candidatura));
+
+        service.remover(projetoId, membroId, membro.getId());
+
+        verify(candidaturaRepository).delete(candidatura);
         verify(projetoMembroRepository).delete(membroEntity);
-        verify(projetoService).sincronizarVagasPreenchidas(projeto);
     }
 
     // ============================================

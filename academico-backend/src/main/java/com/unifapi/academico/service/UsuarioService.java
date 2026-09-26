@@ -186,6 +186,22 @@ public class UsuarioService {
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
 
+    /** Remove a foto de perfil atual, se existir. */
+    @Transactional
+    public UsuarioPerfilResponse removerFoto(UUID idUsuario) {
+        Usuario usuario = buscarUsuarioPorId(idUsuario);
+
+        String fotoAtual = usuario.getFotoUrl();
+        if (fotoAtual == null || fotoAtual.isBlank()) {
+            throw new RegraDeNegocioException("Você não possui foto de perfil para remover.");
+        }
+
+        usuario.setFotoUrl(null);
+        fotoStorageClient.deletar(fotoAtual);
+
+        return UsuarioPerfilResponse.fromEntity(usuario);
+    }
+
     // ============================================
     // SOFT DELETE E RESTAURAÇÃO
     // ============================================
