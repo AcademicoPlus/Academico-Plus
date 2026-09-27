@@ -416,61 +416,6 @@ export default function Perfil() {
         </div>
       </Card>
 
-      {/* Cards de Estatística no Topo com Dados Reais Existentes */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        {/* Total de Projetos */}
-        <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.3)] flex items-center gap-3.5">
-          <div className="h-11 w-11 rounded-xl bg-purple-50 dark:bg-primary/15 text-primary dark:text-purple-400 flex items-center justify-center shrink-0 border border-purple-100 dark:border-primary/20">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M2 6a2 2 0 012-2h5l2 2h5a2 2 0 012 2v6a2 2 0 01-2 2H4a2 2 0 01-2-2V6z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 leading-none block">
-              {projetos.length}
-            </span>
-            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1 block">
-              {projetos.length === 1 ? 'Projeto associado' : 'Projetos associados'}
-            </span>
-          </div>
-        </div>
-
-        {/* Total de Habilidades */}
-        <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.3)] flex items-center gap-3.5">
-          <div className="h-11 w-11 rounded-xl bg-teal-50 dark:bg-teal-950/40 text-teal-600 dark:text-teal-400 flex items-center justify-center shrink-0 border border-teal-100 dark:border-teal-900/40">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 leading-none block">
-              {habilidades.length}
-            </span>
-            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1 block">
-              {habilidades.length === 1 ? 'Habilidade cadastrada' : 'Habilidades cadastradas'}
-            </span>
-          </div>
-        </div>
-
-        {/* Nota Média de Avaliações */}
-        <div className="bg-white dark:bg-slate-900/90 rounded-2xl p-4 sm:p-5 border border-slate-200/80 dark:border-slate-800 shadow-[0_2px_12px_-2px_rgba(0,0,0,0.04)] dark:shadow-[0_2px_12px_-2px_rgba(0,0,0,0.3)] flex items-center gap-3.5">
-          <div className="h-11 w-11 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-500 dark:text-amber-400 flex items-center justify-center shrink-0 border border-amber-100 dark:border-amber-900/40">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.286 3.958a1 1 0 00.95.69h4.162c.969 0 1.371 1.24.588 1.81l-3.368 2.448a1 1 0 00-.364 1.118l1.287 3.957c.299.922-.756 1.688-1.54 1.118l-3.367-2.447a1 1 0 00-1.176 0l-3.368 2.447c-.783.57-1.838-.196-1.539-1.118l1.286-3.957a1 1 0 00-.363-1.118L2.98 9.385c-.783-.57-.38-1.81.588-1.81h4.162a1 1 0 00.951-.69l1.286-3.958z" />
-            </svg>
-          </div>
-          <div>
-            <span className="text-2xl font-extrabold text-gray-900 dark:text-gray-100 leading-none block">
-              {usuario.notaMedia != null ? usuario.notaMedia.toFixed(1) : '—'}
-            </span>
-            <span className="text-xs font-medium text-gray-400 dark:text-gray-500 mt-1 block">
-              {usuario.totalAvaliacoes != null && usuario.totalAvaliacoes > 0
-                ? `Nota média (${usuario.totalAvaliacoes} ${usuario.totalAvaliacoes === 1 ? 'avaliação' : 'avaliações'})`
-                : 'Avaliação média'}
-            </span>
-          </div>
-        </div>
-      </div>
 
       {/* Seção: Habilidades com Grid de Cards e Barra de Progresso */}
       <Card className="p-6 sm:p-8 border border-slate-200/80 dark:border-slate-800 shadow-[0_4px_20px_-4px_rgba(0,0,0,0.05)] dark:shadow-[0_4px_20px_-4px_rgba(0,0,0,0.4)]">
