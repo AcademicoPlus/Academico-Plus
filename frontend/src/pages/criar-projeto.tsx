@@ -278,10 +278,6 @@ export default function CriarProjeto() {
         <h1 className="text-2xl sm:text-3xl font-extrabold text-gray-900 dark:text-gray-100 tracking-tight">
           Criar Projeto
         </h1>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-0.5">
-          Preencha as informações essenciais da pesquisa ou iniciativa de extensão. Sua proposta será
-          avaliada e, após aprovação institucional, aberta para candidaturas de estudantes e colaboradores.
-        </p>
       </div>
 
       {/* Card do Formulário */}
