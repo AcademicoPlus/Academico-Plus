@@ -5,7 +5,7 @@ import { listarMeusProjetos, type Projeto } from '../services/projetoService'
 import { useMeuPerfil } from '../hooks/useMeuPerfil'
 import { listarMinhasCandidaturas } from '../services/candidaturaService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
-import { useToast } from '../context/ToastContext'
+import { useToast } from '../hooks/useToast'
 import { ApiError } from '../services/apiClient'
 import EstadoVazio from '../components/EstadoVazio'
 import Skeleton from '../components/Skeleton'
@@ -143,8 +143,12 @@ export default function Dashboard() {
   }, [mostrarToast]);
 
   const primeiroNome = meuPerfil?.nome?.split(' ')[0] || '';
+<<<<<<< HEAD
   const nomeCursoObj = meuPerfil?.curso as any; 
   const nomeCurso = nomeCursoObj?.nome ?? (typeof nomeCursoObj === 'string' ? nomeCursoObj : 'Estudante');
+=======
+  const nomeCurso = meuPerfil?.curso?.nome ?? 'Estudante';
+>>>>>>> 8835fba49a0795c783840f72a4546951ec18afa3
   const cursoEPeriodo = meuPerfil?.periodo != null ? `${nomeCurso} - ${meuPerfil.periodo}º período` : nomeCurso;
   
   const habilidades = (meuPerfil?.habilidades ?? []) as { id: string; habilidade: { id: string; nome: string }; nivel?: string }[];
@@ -173,6 +177,7 @@ export default function Dashboard() {
               index === bannerAtual ? 'opacity-100 z-10' : 'opacity-0 z-0'
             }`}
           >
+<<<<<<< HEAD
             <img 
               src={banner.imagem} 
               alt={banner.titulo} 
@@ -189,6 +194,14 @@ export default function Dashboard() {
                 {banner.descricao}
               </p>
             </div>
+=======
+            <img
+              src={banner.imagem}
+              alt=""
+              className="w-full h-full object-cover"
+              draggable="false"
+            />
+>>>>>>> 8835fba49a0795c783840f72a4546951ec18afa3
           </div>
         ))}
 

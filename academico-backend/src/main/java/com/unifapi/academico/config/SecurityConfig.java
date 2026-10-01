@@ -48,6 +48,9 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health").permitAll()
                         // Cursos precisam ficar visíveis antes do login: alimenta o dropdown da tela de cadastro
                         .requestMatchers(HttpMethod.GET, "/cursos/**").permitAll()
+                        // Handshake SockJS/STOMP do chat: sem header Authorization (o JWT vai no
+                        // CONNECT frame, validado pelo StompAuthChannelInterceptor, não aqui).
+                        .requestMatchers("/ws/**").permitAll()
                         .anyRequest().authenticated()
                 )
                 // Rate limit roda antes do JWT: até tentativa de flood em /auth/** (sem token) é barrada.
@@ -57,18 +60,25 @@ public class SecurityConfig {
     }
 
     /**
+     * Compartilhado com WebSocketConfig, para o handshake STOMP/SockJS aceitar
+     * as mesmas origens do CORS HTTP em vez de duplicar o parsing da env var.
+     */
+    @Bean
+    public List<String> origensPermitidas() {
+        return Arrays.stream(corsAllowedOrigins.split(","))
+                .map(String::trim)
+                .filter(origem -> !origem.isEmpty())
+                .toList();
+    }
+
+    /**
      * Antes disso, cors.allowed-origins existia no .env mas não era lido em
      * nenhum lugar do código — o navegador bloqueava o frontend silenciosamente.
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
-        List<String> origensPermitidas = Arrays.stream(corsAllowedOrigins.split(","))
-                .map(String::trim)
-                .filter(origem -> !origem.isEmpty())
-                .toList();
-
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(origensPermitidas);
+        configuration.setAllowedOrigins(origensPermitidas());
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
