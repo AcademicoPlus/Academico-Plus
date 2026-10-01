@@ -88,6 +88,14 @@ public class UsuarioController {
         return ResponseEntity.ok(perfilAtualizado);
     }
 
+    @DeleteMapping("/me/foto")
+    @Operation(summary = "Remover foto de perfil", description = "Remove a foto de perfil atual do usuário logado")
+    public ResponseEntity<UsuarioPerfilResponse> removerFoto(
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(usuarioService.removerFoto(usuarioLogado.getId()));
+    }
+
     @DeleteMapping("/me")
     @Operation(summary = "Excluir minha conta", description = "Exclusão lógica da própria conta (direito do titular, LGPD). Exige confirmação de senha")
     public ResponseEntity<MensagemResponse> excluirMinhaConta(

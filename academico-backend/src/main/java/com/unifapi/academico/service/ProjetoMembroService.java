@@ -9,6 +9,7 @@ import com.unifapi.academico.dto.membro.AtualizarFuncaoMembroRequest;
 import com.unifapi.academico.dto.membro.ProjetoMembroResponse;
 import com.unifapi.academico.exception.RecursoNaoEncontradoException;
 import com.unifapi.academico.exception.RegraDeNegocioException;
+import com.unifapi.academico.repository.CandidaturaRepository;
 import com.unifapi.academico.repository.ProjetoMembroRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
 import lombok.RequiredArgsConstructor;
@@ -32,6 +33,7 @@ import java.util.UUID;
 public class ProjetoMembroService {
 
     private final ProjetoMembroRepository projetoMembroRepository;
+    private final CandidaturaRepository candidaturaRepository;
     private final UsuarioRepository usuarioRepository;
     private final ProjetoService projetoService;
 
@@ -132,6 +134,11 @@ public class ProjetoMembroService {
     /**
      * Remove o membro e libera a vaga. Permitido ao criador do projeto
      * (remover alguém) e ao próprio membro (sair do projeto).
+     *
+     * Bloqueado em projeto CONCLUIDO/CANCELADO: a equipe final é a base das
+     * avaliações entre participantes (AvaliacaoService), então não pode mudar
+     * depois do encerramento. A candidatura aceita é apagada junto para que a
+     * pessoa possa se candidatar de novo (unique projeto_id+usuario_id).
      */
     @Transactional
     public void remover(UUID projetoId, UUID membroId, UUID usuarioLogadoId) {
@@ -144,6 +151,16 @@ public class ProjetoMembroService {
 
         if (!ehDono && !ehProprioMembro) {
             throw new RegraDeNegocioException("Você não tem permissão para remover este membro do projeto.");
+        }
+
+        if (projeto.getStatus() == StatusProjeto.CONCLUIDO || projeto.getStatus() == StatusProjeto.CANCELADO) {
+            throw new RegraDeNegocioException("Não é possível alterar a equipe de um projeto "
+                    + projeto.getStatus().getLabel().toLowerCase() + ".");
+        }
+
+        if (membro.getUsuario() != null) {
+            candidaturaRepository.findByProjeto_IdAndUsuario_Id(projetoId, membro.getUsuario().getId())
+                    .ifPresent(candidaturaRepository::delete);
         }
 
         projetoMembroRepository.delete(membro);

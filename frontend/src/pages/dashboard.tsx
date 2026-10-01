@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom'
 import { useEffect, useState } from 'react'
 import { recomendarProjetos, type ProjetoRecomendado } from '../services/recomendacaoService'
-import { listarMeusProjetos, type Projeto } from '../services/projetoService'
+import { listarProjetosVinculados, type Projeto } from '../services/projetoService'
 import { useMeuPerfil } from '../hooks/useMeuPerfil'
 import { listarMinhasCandidaturas } from '../services/candidaturaService'
 import { STATUS_PROJETO_BADGE, STATUS_PROJETO_LABEL } from '../utils/projeto'
@@ -123,8 +123,12 @@ export default function Dashboard() {
   };
 
   useEffect(() => {
-    listarMeusProjetos({ tamanho: 3 })
-      .then((pagina) => setMeusProjetos(pagina.content))
+    // Criados por mim + os que participo; o total também alimenta o contador do perfil.
+    listarProjetosVinculados({ tamanho: 3 })
+      .then((pagina) => {
+        setMeusProjetos(pagina.content);
+        setTotalProjetosAtivos(pagina.totalElements);
+      })
       .catch((erro) => mostrarToast(mensagemErro(erro), 'erro'))
       .finally(() => setCarregandoMeusProjetos(false));
 
@@ -137,9 +141,6 @@ export default function Dashboard() {
       .then((pagina) => setTotalCandidaturasPendentes(pagina.totalElements))
       .catch((erro) => mostrarToast(mensagemErro(erro), 'erro'));
 
-    listarMeusProjetos({ status: 'ABERTO', tamanho: 1 })
-      .then((pagina) => setTotalProjetosAtivos(pagina.totalElements))
-      .catch((erro) => mostrarToast(mensagemErro(erro), 'erro'));
   }, [mostrarToast]);
 
   const primeiroNome = meuPerfil?.nome?.split(' ')[0] || '';
@@ -209,7 +210,7 @@ export default function Dashboard() {
         <button onClick={(e) => { e.stopPropagation(); proximoBanner(); }} className="absolute right-4 top-1/2 -translate-y-1/2 z-20 bg-black/20 hover:bg-black/50 text-white p-2 rounded-full backdrop-blur-sm transition-all opacity-0 group-hover:opacity-100 hidden md:block"><svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg></button>
         <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 z-20">
           {BANNERS.map((_, index) => (
-            <button key={index} onClick={(e) => { e.stopPropagation(); setBannerAtual(index); }} className={`h-2 rounded-full transition-all duration-300 ${index === bannerAtual ? 'bg-[#F27405] w-8' : 'bg-white/60 hover:bg-white w-2'}`} />
+            <button key={index} onClick={(e) => { e.stopPropagation(); setBannerAtual(index); }} aria-label={`Banner ${index + 1}`} className="py-2 px-1 -my-2"><span className={`block h-2 rounded-full transition-all duration-300 ${index === bannerAtual ? 'bg-[#F27405] w-8' : 'bg-white/60 hover:bg-white w-2'}`} /></button>
           ))}
         </div>
       </div>
@@ -250,7 +251,7 @@ export default function Dashboard() {
                 </div>
               ) : meusProjetos.length === 0 ? (
                 <EstadoVazio
-                  titulo="Você ainda não criou nenhum projeto."
+                  titulo="Você ainda não participa de nenhum projeto."
                   className="py-8"
                   acao={<Link to="/criar-projeto" className="text-[#F27405] font-bold hover:underline text-sm">Criar o primeiro →</Link>}
                 />
@@ -266,7 +267,12 @@ export default function Dashboard() {
                           
                           {/* Área do Título e Habilidades */}
                           <div className="flex-1 w-full min-w-0">
-                            <h3 className="font-bold text-[#183E6C] dark:text-blue-300 text-base truncate">{proj.titulo}</h3>
+                            <div className="flex items-center gap-2 min-w-0">
+                              <h3 className="font-bold text-[#183E6C] dark:text-blue-300 text-base truncate">{proj.titulo}</h3>
+                              {meuPerfil && proj.criador && proj.criador.id !== meuPerfil.id && (
+                                <span className="text-[10px] bg-orange-50 dark:bg-orange-950/40 text-[#F27405] px-2 py-0.5 rounded-full font-bold uppercase shrink-0">Membro</span>
+                              )}
+                            </div>
                             <div className="flex flex-wrap gap-2 mt-2">
                               {proj.habilidadesNecessarias.slice(0, 3).map((h) => (
                                 <span key={h.id} className="text-[10px] bg-blue-50 dark:bg-blue-900/40 text-[#183E6C] dark:text-blue-300 px-2 py-1 rounded font-bold border border-blue-100 dark:border-blue-800">
@@ -312,7 +318,7 @@ export default function Dashboard() {
         <div className="flex flex-col gap-6">
           
           {/* Card de Perfil Resumido */}
-          <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden flex flex-col">
+          <div className="hidden md:flex bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-gray-100 dark:border-slate-700 overflow-hidden flex-col">
             <div className="h-24 bg-gradient-to-r from-blue-500 via-indigo-500 to-[#183E6C] relative"></div>
             
             <div className="px-5 pb-5 relative flex flex-col items-center text-center">

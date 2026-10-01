@@ -82,6 +82,16 @@ public class ProjetoController {
         return ResponseEntity.ok(projetoService.atualizarBanner(id, usuarioLogado.getId(), arquivo));
     }
 
+    @DeleteMapping("/{id}/banner")
+    @Operation(summary = "Remover a capa do projeto",
+            description = "Remove a capa/banner atual do projeto. Somente o criador pode remover")
+    public ResponseEntity<ProjetoResponse> removerBanner(
+            @PathVariable UUID id,
+            @AuthenticationPrincipal Usuario usuarioLogado
+    ) {
+        return ResponseEntity.ok(projetoService.removerBanner(id, usuarioLogado.getId()));
+    }
+
     @DeleteMapping("/{id}")
     @Operation(summary = "Inativar projeto",
             description = "Exclusão lógica do projeto, preservando o histórico de candidaturas e membros")
@@ -116,6 +126,17 @@ public class ProjetoController {
             @ParameterObject @PageableDefault(size = 10, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable
     ) {
         return ResponseEntity.ok(projetoService.listarPorCriador(usuarioLogado.getId(), pageable));
+    }
+
+    @GetMapping("/vinculados")
+    @Operation(summary = "Listar projetos que criei ou em que participo",
+            description = "Une meus-projetos e participando numa única lista paginada, com filtro opcional por status")
+    public ResponseEntity<Page<ProjetoResumoResponse>> listarVinculados(
+            @RequestParam(required = false) StatusProjeto status,
+            @AuthenticationPrincipal Usuario usuarioLogado,
+            @ParameterObject @PageableDefault(size = 10, sort = "criadoEm", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        return ResponseEntity.ok(projetoService.listarVinculados(usuarioLogado.getId(), status, pageable));
     }
 
     @GetMapping("/participando")

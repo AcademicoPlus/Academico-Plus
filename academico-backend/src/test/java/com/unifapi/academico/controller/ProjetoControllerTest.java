@@ -272,6 +272,23 @@ class ProjetoControllerTest {
 
     @Test
     @WithUsuarioMock
+    void listarVinculados_deveRepassarFiltroDeStatus() throws Exception {
+        Page<ProjetoResumoResponse> pagina = new PageImpl<>(List.of(respostaResumo()), PageRequest.of(0, 10), 1);
+        when(projetoService.listarVinculados(any(UUID.class), eq(StatusProjeto.ABERTO), any())).thenReturn(pagina);
+
+        mockMvc.perform(get("/projetos/vinculados").param("status", "ABERTO"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.totalElements").value(1));
+    }
+
+    @Test
+    void listarVinculados_deveRetornar403_quandoNaoAutenticado() throws Exception {
+        mockMvc.perform(get("/projetos/vinculados"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithUsuarioMock
     void buscarPorId_deveRetornar200_quandoAutenticado() throws Exception {
         UUID id = UUID.randomUUID();
         when(projetoService.buscarPorId(eq(id))).thenReturn(respostaDetalhada());
