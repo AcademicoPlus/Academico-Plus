@@ -1,6 +1,6 @@
 # Academico+ Upload Service
 
-Microserviço responsável por validar e enviar fotos de perfil pro Cloudflare R2. Chamado via REST síncrono pelo monolito (`academico-backend`) — o upload de arquivo binário não é um bom fit pra fila de mensagens (payload grande, e o fluxo é request/response por natureza: o front precisa da URL da foto na resposta).
+Microserviço responsável por validar e enviar fotos de perfil pro Cloudflare R2. Chamado via REST síncrono pelo monolito (`academico-api`) — o upload de arquivo binário não é um bom fit pra fila de mensagens (payload grande, e o fluxo é request/response por natureza: o front precisa da URL da foto na resposta).
 
 Extraído do monolito porque já era uma peça bem isolada (interface `StorageService` + implementação R2), e o próprio ADR do backend já registrava a migração pra storage externo como próximo passo.
 
@@ -27,7 +27,7 @@ cp .env.example .env
 | Variável | Descrição |
 |---|---|
 | `INTERNAL_API_KEY` | Chave compartilhada com o monolito (`UPLOAD_SERVICE_API_KEY` no `.env` dele) |
-| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` / `R2_PUBLIC_URL` | Credenciais do bucket Cloudflare R2 — ver `academico-backend/DEPLOY.md` para o passo a passo de criação |
+| `R2_ACCOUNT_ID` / `R2_ACCESS_KEY_ID` / `R2_SECRET_ACCESS_KEY` / `R2_BUCKET_NAME` / `R2_PUBLIC_URL` | Credenciais do bucket Cloudflare R2 — ver `academico-api/DEPLOY.md` para o passo a passo de criação |
 
 ## Rodando localmente
 

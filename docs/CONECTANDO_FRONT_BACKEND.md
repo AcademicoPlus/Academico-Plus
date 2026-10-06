@@ -1,7 +1,7 @@
 # Como conectar uma tela do frontend ao backend
 
 Guia para o grupo: como ligar uma tela React (frontend/) a um endpoint do
-Spring Boot (academico-backend/). Usa como exemplo real a tela de cadastro,
+Spring Boot (academico-api/). Usa como exemplo real a tela de cadastro,
 que já está conectada — leia o código junto com este guia.
 
 ## 1. As 3 camadas do frontend
@@ -27,7 +27,7 @@ página (.tsx)  →  service (services/*.ts)  →  apiClient (services/apiClient
 
 ## 2. Pré-requisitos antes de conectar qualquer tela
 
-1. **Backend rodando** em `http://localhost:8080` (`academico-backend`).
+1. **Backend rodando** em `http://localhost:8080` (`academico-api`).
 2. **`frontend/.env`** existe e aponta pra ele — copie de `.env.example` se
    não tiver:
    ```
@@ -126,7 +126,7 @@ em `cadastro.tsx`.
 
 ## 6. Testando sem o backend rodando
 
-Nem sempre dá pra ter o `academico-backend` + banco de dados de pé (ex.:
+Nem sempre dá pra ter o `academico-api` + banco de dados de pé (ex.:
 sem Docker, ou testando só uma tela de UI). Pra isso existe um modo de
 mocks: `apiFetch` (a única função que fala com o backend, ver seção 1) pode
 responder com dados fictícios em vez de fazer a chamada HTTP real.

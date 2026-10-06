@@ -2,7 +2,7 @@
 
 Levantamento de requisitos funcionais (RF) e não-funcionais (RNF) rastreados à implementação
 atual do backend, para a seção de requisitos do TCC2. RFs apontam para o(s) endpoint(s) que os
-implementam (fonte: `academico-backend/src/main/java/.../controller/`); RNFs apontam para o
+implementam (fonte: `academico-api/src/main/java/.../controller/`); RNFs apontam para o
 mecanismo de implementação real, não para uma meta abstrata.
 
 ## Requisitos funcionais

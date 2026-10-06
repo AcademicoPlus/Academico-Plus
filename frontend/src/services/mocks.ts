@@ -1,6 +1,6 @@
 // Dados fictícios usados no lugar do backend real quando VITE_USE_MOCKS=true
 // (ver apiClient.ts). Objetivo: quem está no frontend consegue rodar
-// `npm run dev` e testar as telas sem precisar subir o academico-backend
+// `npm run dev` e testar as telas sem precisar subir o academico-api
 // nem o banco. Veja docs/CONECTANDO_FRONT_BACKEND.md, seção "Testando sem
 // o backend".
 //

@@ -34,7 +34,7 @@ Desenvolver uma plataforma web (MVP) que ofereça projetos e permita busca por c
 
 ## 🏗️ Arquitetura
 
-O sistema é um monolito (Spring Boot) com duas partes extraídas como microserviços — decisão didática para o TCC, escolhidas por serem as de menor acoplamento com o restante do domínio (nenhuma dependência de repositório/entidade, um único ponto de chamada cada). Ver `academico-backend/DEPLOY.md` para o racional completo.
+O sistema é um monolito (Spring Boot) com duas partes extraídas como microserviços — decisão didática para o TCC, escolhidas por serem as de menor acoplamento com o restante do domínio (nenhuma dependência de repositório/entidade, um único ponto de chamada cada). Ver `academico-api/DEPLOY.md` para o racional completo.
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -44,7 +44,7 @@ O sistema é um monolito (Spring Boot) com duas partes extraídas como microserv
                          │ HTTP/REST
                          ↓
 ┌─────────────────────────────────────────────────────────────┐
-│              academico-backend (monolito)                   │
+│              academico-api (monolito)                   │
 │         Java + Spring Security + JWT Auth                   │
 │  - Controllers (REST APIs)                                  │
 │  - Services (Business Logic)                                │
@@ -66,7 +66,7 @@ O sistema é um monolito (Spring Boot) com duas partes extraídas como microserv
 
 | Camada | Tecnologia | Situação |
 |--------|-----------|--------|
-| **Backend** | Java 21 + Spring Boot 3.5, Spring Security, JWT, Spring Data JPA | Em desenvolvimento ativo — ver [academico-backend/README.md](./academico-backend/README.md) |
+| **Backend** | Java 21 + Spring Boot 3.5, Spring Security, JWT, Spring Data JPA | Em desenvolvimento ativo — ver [academico-api/README.md](./academico-api/README.md) |
 | **Frontend** | React 19 + TypeScript + Vite, React Router, Tailwind CSS | Em desenvolvimento ativo — telas de autenticação, dashboard, projetos, candidaturas e um painel de administração já implementadas |
 | **Database** | PostgreSQL 14+ | Schema versionado via Flyway (`ddl-auto=validate`) |
 | **Auth** | JWT (JSON Web Tokens), sem refresh token | Em uso |
@@ -77,7 +77,7 @@ O sistema é um monolito (Spring Boot) com duas partes extraídas como microserv
 
 ```
 Academico-Plus/
-├── academico-backend/         # Monolito Java/Spring Boot (ver README próprio)
+├── academico-api/         # Monolito Java/Spring Boot (ver README próprio)
 │   ├── src/
 │   ├── docker-compose.yml     # Postgres + pgAdmin + RabbitMQ para dev local
 │   └── pom.xml
@@ -101,7 +101,7 @@ Cadastro na plataforma exige aceite dos [Termos de Uso](./legal/TERMOS_DE_USO.md
 
 ### Backend
 
-Veja o passo a passo completo em **[academico-backend/README.md](./academico-backend/README.md)** — configuração do `.env`, `docker-compose up -d` para o Postgres local, e `./mvnw spring-boot:run`.
+Veja o passo a passo completo em **[academico-api/README.md](./academico-api/README.md)** — configuração do `.env`, `docker-compose up -d` para o Postgres local, e `./mvnw spring-boot:run`.
 
 ### Frontend
 
@@ -119,7 +119,7 @@ de como o frontend fala com a API (camadas, padrão de tela nova, mocks).
 
 ### Deploy em produção
 
-Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a passo para Render (os três serviços + Postgres), CloudAMQP (RabbitMQ) e Cloudflare R2 (storage de fotos de perfil).
+Ver **[academico-api/DEPLOY.md](./academico-api/DEPLOY.md)** — passo a passo para Render (os três serviços + Postgres), CloudAMQP (RabbitMQ) e Cloudflare R2 (storage de fotos de perfil).
 
 ---
 
@@ -165,7 +165,7 @@ Ver **[academico-backend/DEPLOY.md](./academico-backend/DEPLOY.md)** — passo a
 
 ```bash
 # Backend
-cd academico-backend
+cd academico-api
 ./mvnw test
 
 # Frontend
@@ -177,7 +177,7 @@ npm test
 
 ## 📊 Banco de Dados
 
-Tabelas atuais (ver `academico-backend/src/main/resources/db/migration` e as entidades JPA para o schema completo):
+Tabelas atuais (ver `academico-api/src/main/resources/db/migration` e as entidades JPA para o schema completo):
 
 `usuarios`, `niveis_acesso`, `cursos`, `habilidades`, `usuario_habilidades`, `projetos`, `projeto_habilidades`, `projeto_membros`, `candidaturas`, `avaliacoes`, `tokens_revogados`, `projeto_cancelamento_aviso`.
 

@@ -57,7 +57,7 @@ razões didáticas (ver [decisão 9](./decisoes-arquiteturais.md#9-extração-de
 ## 1. Diagrama Entidade-Relacionamento
 
 Construído a partir das migrações Flyway em
-`academico-backend/src/main/resources/db/migration/` (schema versionado, `ddl-auto=validate` —
+`academico-api/src/main/resources/db/migration/` (schema versionado, `ddl-auto=validate` —
 ver [decisões arquiteturais](./decisoes-arquiteturais.md), item 6) mais as entidades JPA para os
 campos e relacionamentos completos.
 
@@ -277,7 +277,7 @@ para o racional de por que só essas duas partes viraram serviço separado.
 graph TB
     FE["Frontend<br/>React + Vite + TypeScript"]
 
-    subgraph Backend["academico-backend (monolito)"]
+    subgraph Backend["academico-api (monolito)"]
         direction TB
         RL["GlobalRateLimitFilter<br/>limite por IP (120 req/min)"]
         JWT["JwtAuthenticationFilter<br/>valida Bearer token"]

@@ -4,16 +4,16 @@ on:
   push:
     branches: [main]
     paths:
-      - "academico-backend/**"
+      - "academico-api/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     paths:
-      - "academico-backend/**"
+      - "academico-api/**"
       - ".github/workflows/backend-ci.yml"
 
 defaults:
   run:
-    working-directory: academico-backend
+    working-directory: academico-api
 
 env:
   # Mesmas credenciais do docker-compose.yml do backend, para consistência local/CI.
@@ -58,7 +58,7 @@ jobs:
           distribution: temurin
           java-version: "21"
           cache: maven
-          cache-dependency-path: academico-backend/pom.xml
+          cache-dependency-path: academico-api/pom.xml
 
       # Reforço: garante que ./mvnw seja executável mesmo se o bit +x for perdido
       # de novo num commit futuro feito a partir do Windows (o git ali guarda o
@@ -77,4 +77,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: academico-backend/target/surefire-reports/
+          path: academico-api/target/surefire-reports/

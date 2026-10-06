@@ -131,7 +131,7 @@ na mesma resposta).
 **Consequências**: resolve a pendência original — a foto sobrevive a redeploys e a múltiplas
 instâncias do monolito, já que o armazenamento é externo. Em troca, introduz uma dependência de
 rede síncrona (se o `academico-upload-service` cair, o upload de foto falha) e mais uma peça de
-infraestrutura pra configurar e implantar (ver `academico-backend/DEPLOY.md`). Ver decisão 9
+infraestrutura pra configurar e implantar (ver `academico-api/DEPLOY.md`). Ver decisão 9
 para o racional mais amplo de por que essa e a extração do e-mail foram as duas partes
 escolhidas para virar microserviço.
 
@@ -172,12 +172,12 @@ instância única.
 domínio principal e com um único ponto de chamada cada: `academico-email-service` (consome a
 fila `email.codigo-verificacao` via RabbitMQ, publicada pelo monolito, e envia o OTP de
 recuperação de senha pelo Resend) e `academico-upload-service` (ver decisão 7). O restante do
-domínio continua no monolito (`academico-backend`).
+domínio continua no monolito (`academico-api`).
 
 **Consequências**: ganho didático de demonstrar tanto comunicação assíncrona (fila + dead-letter
 queue, sem retry automático) quanto síncrona (REST interno com chave compartilhada) sem pagar o
 custo de distribuir o domínio transacional principal. Custo real: três peças de infraestrutura a
-mais para rodar e implantar (RabbitMQ e os dois serviços — ver `academico-backend/DEPLOY.md`), e
+mais para rodar e implantar (RabbitMQ e os dois serviços — ver `academico-api/DEPLOY.md`), e
 falha de rede vira um novo modo de falha que não existia quando tudo era uma chamada de método
 local — mitigado pela DLQ no lado do e-mail (nada trava se o Resend cair) e pelo upload de foto
 ser uma etapa isolada do cadastro/edição de perfil (uma falha ali não impede o resto do

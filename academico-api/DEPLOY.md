@@ -1,6 +1,6 @@
 # Deploy em produção
 
-Guia para colocar no ar, via **Render**: o monolito (`academico-backend`), o **academico-email-service** (consome RabbitMQ, envia e-mails via Resend) e o **academico-upload-service** (fotos de perfil, via Cloudflare R2). O broker RabbitMQ roda no **CloudAMQP** (Render não tem um serviço de fila gerenciado). O frontend (SPA estática) é hospedado separadamente (Vercel, Netlify ou Cloudflare Pages — qualquer uma delas serve).
+Guia para colocar no ar, via **Render**: o monolito (`academico-api`), o **academico-email-service** (consome RabbitMQ, envia e-mails via Resend) e o **academico-upload-service** (fotos de perfil, via Cloudflare R2). O broker RabbitMQ roda no **CloudAMQP** (Render não tem um serviço de fila gerenciado). O frontend (SPA estática) é hospedado separadamente (Vercel, Netlify ou Cloudflare Pages — qualquer uma delas serve).
 
 ## 1. Cloudflare R2 (storage de fotos de perfil)
 
@@ -86,7 +86,7 @@ Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no Rab
 ## 6. Render — Web Service (backend)
 
 1. **New > Web Service**, conecte o repositório Git.
-2. Runtime: **Docker**. Root directory: `academico-backend` (o `Dockerfile` está lá).
+2. Runtime: **Docker**. Root directory: `academico-api` (o `Dockerfile` está lá).
 3. Plano: Starter (US$7/mês) ou superior.
 4. Health check path: `/api/actuator/health`.
 5. Configure as variáveis de ambiente (aba **Environment**) — mesmas chaves do `.env.example`:

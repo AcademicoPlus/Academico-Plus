@@ -1,5 +1,5 @@
 // Chamadas para o AuthController do backend (rotas /auth/*).
-// Os tipos abaixo espelham os records Java em academico-backend
+// Os tipos abaixo espelham os records Java em academico-api
 // (dto/auth/LoginRequest, LoginResponse, CadastroRequest, CadastroResponse).
 import { apiFetch } from './apiClient';
 

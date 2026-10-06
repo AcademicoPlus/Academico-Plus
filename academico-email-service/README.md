@@ -1,6 +1,6 @@
 # Academico+ Email Service
 
-Microserviço responsável por enviar o e-mail com o código OTP de recuperação de senha. Consome a fila `email.codigo-verificacao` (RabbitMQ), publicada pelo monolito (`academico-backend`) quando um usuário solicita reset de senha, e envia o e-mail via [Resend](https://resend.com/).
+Microserviço responsável por enviar o e-mail com o código OTP de recuperação de senha. Consome a fila `email.codigo-verificacao` (RabbitMQ), publicada pelo monolito (`academico-api`) quando um usuário solicita reset de senha, e envia o e-mail via [Resend](https://resend.com/).
 
 Extraído do monolito porque essa parte não tinha nenhum acoplamento com o restante do domínio (nenhuma dependência de repositório/entidade) e o fluxo já era conceitualmente assíncrono — bom candidato didático de microserviço pro TCC.
 
@@ -27,13 +27,13 @@ cp .env.example .env
 
 | Variável | Descrição |
 |---|---|
-| `RABBITMQ_HOST` / `PORT` / `USERNAME` / `PASSWORD` / `VHOST` | Conexão com o broker (local: docker-compose do `academico-backend`; produção: CloudAMQP) |
+| `RABBITMQ_HOST` / `PORT` / `USERNAME` / `PASSWORD` / `VHOST` | Conexão com o broker (local: docker-compose do `academico-api`; produção: CloudAMQP) |
 | `RESEND_API_KEY` | Opcional — sem ela (ou sem prefixo `re_`), cai em modo simulação e só loga o código no console |
 | `EMAIL_FROM` | Remetente exibido no e-mail |
 
 ## Rodando localmente
 
-Precisa do RabbitMQ de pé (`docker-compose up -d` no `academico-backend`):
+Precisa do RabbitMQ de pé (`docker-compose up -d` no `academico-api`):
 
 ```bash
 ./mvnw spring-boot:run
