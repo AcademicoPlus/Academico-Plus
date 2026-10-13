@@ -138,13 +138,28 @@ erDiagram
         text comentario
         boolean removida
     }
-    DENUNCIAS_AVALIACAO {
+    DENUNCIAS {
         uuid id PK
+        varchar tipo_alvo
         uuid avaliacao_id FK
+        uuid projeto_id FK
+        uuid usuario_denunciado_id FK
         uuid denunciante_id FK
         uuid analisado_por_id FK
+        varchar categoria
         text motivo
         varchar status
+        varchar medida
+    }
+    SANCOES {
+        uuid id PK
+        uuid usuario_id FK
+        uuid denuncia_id FK
+        uuid aplicado_por_id FK
+        varchar medida
+        text justificativa
+        timestamp expira_em
+        timestamp visualizado_em
     }
     PROJETO_CANCELAMENTO_AVISO {
         uuid id PK
@@ -174,9 +189,14 @@ erDiagram
     PROJETOS ||--o{ AVALIACOES : "e avaliado em"
     USUARIOS ||--o{ AVALIACOES : "avalia (avaliador)"
     USUARIOS ||--o{ AVALIACOES : "e avaliado (avaliado)"
-    AVALIACOES ||--o{ DENUNCIAS_AVALIACAO : "pode ser denunciada em"
-    USUARIOS ||--o{ DENUNCIAS_AVALIACAO : "denuncia (denunciante)"
-    USUARIOS ||--o{ DENUNCIAS_AVALIACAO : "resolve (admin)"
+    AVALIACOES ||--o{ DENUNCIAS : "pode ser denunciada em"
+    PROJETOS ||--o{ DENUNCIAS : "pode ser denunciado em"
+    USUARIOS ||--o{ DENUNCIAS : "tem o perfil denunciado em"
+    USUARIOS ||--o{ DENUNCIAS : "denuncia (denunciante)"
+    USUARIOS ||--o{ DENUNCIAS : "resolve (admin)"
+    DENUNCIAS ||--o{ SANCOES : "procedente pode gerar"
+    USUARIOS ||--o{ SANCOES : "recebe (sancionado)"
+    USUARIOS ||--o{ SANCOES : "aplica (admin)"
     PROJETOS ||--o{ PROJETO_CANCELAMENTO_AVISO : "gera aviso em"
     USUARIOS ||--o{ PROJETO_CANCELAMENTO_AVISO : recebe
 ```
@@ -235,6 +255,13 @@ graph LR
         UC23[Denunciar avaliação abusiva]
     end
 
+    subgraph Moderacao["Moderação"]
+        UC23a[Denunciar projeto]
+        UC23b[Denunciar perfil]
+        UC23c[Analisar denúncia e aplicar medida]
+        UC23d[Receber advertência ou suspensão]
+    end
+
     subgraph Recomendacao["Recomendação"]
         UC24[Ver projetos recomendados]
         UC25[Ver candidatos recomendados]
@@ -252,6 +279,7 @@ graph LR
     Aluno --> Candidaturas
     Aluno --> Avaliacoes
     Aluno --> Recomendacao
+    Aluno --> Moderacao
 
     Professor --> Autenticacao
     Professor --> Perfil
@@ -259,10 +287,12 @@ graph LR
     Professor --> Candidaturas
     Professor --> Avaliacoes
     Professor --> Recomendacao
+    Professor --> Moderacao
 
     Admin --> Autenticacao
     Admin --> Perfil
     Admin --> Administracao
+    Admin --> Moderacao
 ```
 
 ## 3. Diagrama de arquitetura

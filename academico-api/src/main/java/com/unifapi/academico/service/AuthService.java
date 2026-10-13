@@ -19,7 +19,11 @@ import com.unifapi.academico.exception.RegraDeNegocioException;
 import com.unifapi.academico.repository.CursoRepository;
 import com.unifapi.academico.repository.NivelAcessoRepository;
 import com.unifapi.academico.repository.ProjetoCanceladoAvisoRepository;
+import com.unifapi.academico.repository.SancaoRepository;
 import com.unifapi.academico.repository.TokenRevogadoRepository;
+import com.unifapi.academico.domain.enums.MedidaModeracao;
+import com.unifapi.academico.domain.models.Sancao;
+import com.unifapi.academico.dto.denuncia.SancaoResponse;
 import com.unifapi.academico.repository.UsuarioRepository;
 import com.unifapi.academico.security.JwtTokenProvider;
 import com.unifapi.academico.security.RateLimiterService;
@@ -30,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.UUID;
 
@@ -39,10 +44,14 @@ public class AuthService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
 
+    private static final DateTimeFormatter FORMATO_PRAZO_SUSPENSAO =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy");
+
     private final UsuarioRepository usuarioRepository;
     private final CursoRepository cursoRepository;
     private final NivelAcessoRepository nivelAcessoRepository;
     private final ProjetoCanceladoAvisoRepository projetoAvisoRepository;
+    private final SancaoRepository sancaoRepository;
     private final TokenRevogadoRepository tokenRevogadoRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
@@ -56,7 +65,7 @@ public class AuthService {
     @Transactional
     public LoginResponse login(LoginRequest request) {
         if (request.email() == null || request.email().isBlank()) {
-            return new LoginResponse(false, "Informe o e-mail.", null, null, List.of());
+            return new LoginResponse(false, "Informe o e-mail.", null, null, List.of(), List.of());
         }
 
         String emailNorm = request.email().trim().toLowerCase();
@@ -67,7 +76,7 @@ public class AuthService {
 
         if (usuario == null || !passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {
             rateLimiterService.registrarFalha(emailNorm);
-            return new LoginResponse(false, "Email ou senha incorretos.", null, null, List.of());
+            return new LoginResponse(false, "Email ou senha incorretos.", null, null, List.of(), List.of());
         }
 
         rateLimiterService.registrarSucesso(emailNorm);
@@ -75,7 +84,14 @@ public class AuthService {
         // Mesmo contrato de resposta (200 + sucesso:false) da credencial errada acima,
         // em vez de lançar exceção — mantém as duas falhas de login consistentes.
         if (Boolean.FALSE.equals(usuario.getAtivo())) {
-            return new LoginResponse(false, "Esta conta está desativada.", null, null, List.of());
+            return new LoginResponse(false, "Esta conta está desativada.", null, null, List.of(), List.of());
+        }
+
+        // Suspensão da moderação: barra a entrada enquanto o prazo corre. A
+        // mensagem traz prazo e justificativa porque é a única via pela qual o
+        // suspenso consegue saber o motivo — ele não entra para ler o aviso.
+        if (usuario.estaSuspenso()) {
+            return new LoginResponse(false, mensagemDeSuspensao(usuario), null, null, List.of(), List.of());
         }
 
         String token = jwtTokenProvider.gerarTokenAcesso(usuario.getId(), usuario.getNivelAcesso().getNome());
@@ -83,7 +99,10 @@ public class AuthService {
         
         List<ProjetoCanceladoResumoResponse> projetosCancelados = consumirProjetosCancelados(usuario.getId());
 
-        return new LoginResponse(true, "Login realizado com sucesso.", token, resumo, projetosCancelados);
+        List<SancaoResponse> avisosModeracao = consumirSancoes(usuario.getId());
+
+        return new LoginResponse(true, "Login realizado com sucesso.", token, resumo,
+                projetosCancelados, avisosModeracao);
     }
 
     @Transactional
@@ -250,6 +269,33 @@ public class AuthService {
                     aviso.getTipo()
             );
         }).toList();
+    }
+
+    /**
+     * Sanções ainda não exibidas: devolvidas uma única vez e marcadas como
+     * vistas no mesmo gesto, igual ao aviso de projeto cancelado.
+     */
+    private List<SancaoResponse> consumirSancoes(UUID usuarioId) {
+        List<Sancao> sancoes = sancaoRepository
+                .findByUsuario_IdAndVisualizadoEmIsNullOrderByCriadoEmAsc(usuarioId);
+
+        if (sancoes.isEmpty()) return List.of();
+
+        LocalDateTime agora = LocalDateTime.now();
+        return sancoes.stream().map(sancao -> {
+            sancao.setVisualizadoEm(agora);
+            return SancaoResponse.fromEntity(sancao);
+        }).toList();
+    }
+
+    private String mensagemDeSuspensao(Usuario usuario) {
+        String ate = usuario.getSuspensoAte().format(FORMATO_PRAZO_SUSPENSAO);
+
+        return sancaoRepository.findByUsuario_IdOrderByCriadoEmDesc(usuario.getId()).stream()
+                .filter(sancao -> sancao.getMedida() == MedidaModeracao.SUSPENSAO)
+                .findFirst()
+                .map(sancao -> "Sua conta está suspensa até " + ate + ". Motivo: " + sancao.getJustificativa())
+                .orElse("Sua conta está suspensa até " + ate + ".");
     }
 
     private String mascararEmail(String email) {

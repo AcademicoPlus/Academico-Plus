@@ -1,8 +1,10 @@
 package com.unifapi.academico.support;
 
+import com.unifapi.academico.domain.enums.CategoriaDenuncia;
 import com.unifapi.academico.domain.enums.NivelHabilidade;
 import com.unifapi.academico.domain.enums.StatusCandidatura;
 import com.unifapi.academico.domain.enums.StatusProjeto;
+import com.unifapi.academico.domain.enums.TipoAlvoDenuncia;
 import com.unifapi.academico.domain.models.*;
 
 import java.time.LocalDateTime;
@@ -144,11 +146,37 @@ public final class EntityFixtures {
                 .build();
     }
 
-    public static DenunciaAvaliacao denuncia(Avaliacao avaliacao, Usuario denunciante, String motivo) {
-        return DenunciaAvaliacao.builder()
+    public static Denuncia denuncia(Avaliacao avaliacao, Usuario denunciante, String motivo) {
+        return Denuncia.builder()
                 .id(UUID.randomUUID())
+                .tipoAlvo(TipoAlvoDenuncia.AVALIACAO)
                 .avaliacao(avaliacao)
                 .denunciante(denunciante)
+                .categoria(CategoriaDenuncia.CONTEUDO_OFENSIVO)
+                .motivo(motivo)
+                .criadoEm(LocalDateTime.now())
+                .build();
+    }
+
+    public static Denuncia denunciaDeProjeto(Projeto projeto, Usuario denunciante, String motivo) {
+        return Denuncia.builder()
+                .id(UUID.randomUUID())
+                .tipoAlvo(TipoAlvoDenuncia.PROJETO)
+                .projeto(projeto)
+                .denunciante(denunciante)
+                .categoria(CategoriaDenuncia.SPAM)
+                .motivo(motivo)
+                .criadoEm(LocalDateTime.now())
+                .build();
+    }
+
+    public static Denuncia denunciaDePerfil(Usuario denunciado, Usuario denunciante, String motivo) {
+        return Denuncia.builder()
+                .id(UUID.randomUUID())
+                .tipoAlvo(TipoAlvoDenuncia.PERFIL)
+                .usuarioDenunciado(denunciado)
+                .denunciante(denunciante)
+                .categoria(CategoriaDenuncia.CONTEUDO_OFENSIVO)
                 .motivo(motivo)
                 .criadoEm(LocalDateTime.now())
                 .build();

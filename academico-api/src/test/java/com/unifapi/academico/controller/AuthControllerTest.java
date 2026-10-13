@@ -66,7 +66,7 @@ class AuthControllerTest {
                 UUID.randomUUID(), "Usuario Teste",
                 "Engenharia de Software", null, "ALUNO", 3, 4.5, 2);
         LoginResponse response = new LoginResponse(true, "Login realizado com sucesso.",
-                "jwt-token-fake", resumo, List.of());
+                "jwt-token-fake", resumo, List.of(), List.of());
 
         when(authService.login(any(LoginRequest.class))).thenReturn(response);
 

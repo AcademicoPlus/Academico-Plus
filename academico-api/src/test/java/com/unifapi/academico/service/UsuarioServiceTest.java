@@ -321,15 +321,16 @@ class UsuarioServiceTest {
     }
 
     @Test
-    void atualizarPerfil_deveSobrescreverBioComStringVazia_masNaoQuandoBioForNula() {
+    void atualizarPerfil_deveLimparBioComStringVazia_masNaoQuandoBioForNula() {
         usuario.setBio("Bio antiga");
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
 
-        // bio="" é aplicada (apenas null é ignorado)
+        // bio="" é aplicada e normalizada para null, que é como o perfil
+        // representa "sem biografia" (apenas null no request é ignorado).
         UsuarioUpdatePerfilRequest requestComBioVazia = new UsuarioUpdatePerfilRequest(
                 null, null, null, "", null, null, null);
         usuarioService.atualizarPerfil(usuario.getId(), requestComBioVazia);
-        assertThat(usuario.getBio()).isEqualTo("");
+        assertThat(usuario.getBio()).isNull();
 
         // bio=null não é aplicada, mantém o valor anterior
         usuario.setBio("Bio atual");

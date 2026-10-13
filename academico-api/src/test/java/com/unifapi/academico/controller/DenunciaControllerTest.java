@@ -1,10 +1,16 @@
 package com.unifapi.academico.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.unifapi.academico.domain.enums.CategoriaDenuncia;
+import com.unifapi.academico.domain.enums.MedidaModeracao;
 import com.unifapi.academico.domain.enums.StatusDenuncia;
+import com.unifapi.academico.domain.enums.TipoAlvoDenuncia;
 import com.unifapi.academico.dto.auth.UsuarioResumoResponse;
-import com.unifapi.academico.dto.avaliacao.DenunciaResponse;
-import com.unifapi.academico.dto.avaliacao.DenunciarAvaliacaoRequest;
+import com.unifapi.academico.dto.denuncia.AlvoDenunciadoResponse;
+import com.unifapi.academico.dto.denuncia.DenunciaResponse;
+import com.unifapi.academico.dto.denuncia.DenunciarRequest;
+import com.unifapi.academico.dto.denuncia.HistoricoModeracaoResponse;
+import com.unifapi.academico.dto.denuncia.ResolverDenunciaRequest;
 import com.unifapi.academico.security.GlobalRateLimitFilter;
 import com.unifapi.academico.security.JwtAuthenticationFilter;
 import com.unifapi.academico.service.DenunciaService;
@@ -49,55 +55,68 @@ class DenunciaControllerTest {
 
     @MockitoBean private DenunciaService denunciaService;
 
+    private static UsuarioResumoResponse usuario(String nome) {
+        return new UsuarioResumoResponse(
+                UUID.randomUUID(), nome, "Sistemas de Informação", null, "ALUNO", 3, 4.0, 2);
+    }
+
     private static DenunciaResponse respostaValida() {
-        UsuarioResumoResponse avaliador = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Avaliador Um",
-                "Sistemas de Informação", null, "ALUNO", 3, 4.0, 2
-        );
-        UsuarioResumoResponse denunciante = new UsuarioResumoResponse(
-                UUID.randomUUID(), "Denunciante Um",
-                "Engenharia de Software", null, "ALUNO", 4, 3.5, 1
-        );
+        UsuarioResumoResponse responsavel = usuario("Avaliador Um");
+
         return new DenunciaResponse(
-                UUID.randomUUID(), UUID.randomUUID(), avaliador, 1, "Comentário ofensivo",
-                denunciante, "A avaliação contém xingamentos e ofensas pessoais.",
-                StatusDenuncia.PENDENTE, LocalDateTime.now(), null
+                UUID.randomUUID(),
+                TipoAlvoDenuncia.AVALIACAO,
+                new AlvoDenunciadoResponse(
+                        UUID.randomUUID(), "Avaliação de Avaliador Um", "Comentário ofensivo", 1, responsavel),
+                responsavel,
+                usuario("Denunciante Um"),
+                CategoriaDenuncia.CONTEUDO_OFENSIVO,
+                "A avaliação contém xingamentos e ofensas pessoais.",
+                StatusDenuncia.PENDENTE,
+                null,
+                new HistoricoModeracaoResponse(
+                        0, 0, false, null, MedidaModeracao.ADVERTENCIA, "Sem histórico de sanções."),
+                LocalDateTime.now(),
+                null
         );
     }
 
+    private static DenunciarRequest pedidoValido() {
+        return new DenunciarRequest(
+                CategoriaDenuncia.CONTEUDO_OFENSIVO, "A avaliação contém xingamentos e ofensas pessoais.");
+    }
+
     // ---------------------------------------------------------------
-    // POST /avaliacoes/{avaliacaoId}/denuncias — autenticado (qualquer role)
+    // POST /avaliacoes/{id}/denuncias — autenticado (qualquer role)
     // ---------------------------------------------------------------
 
     @Test
     @WithUsuarioMock
-    void deveDenunciarComSucessoERetornar201() throws Exception {
+    void deveDenunciarAvaliacaoComSucessoERetornar201() throws Exception {
         UUID avaliacaoId = UUID.randomUUID();
-        DenunciarAvaliacaoRequest request = new DenunciarAvaliacaoRequest(
-                "A avaliação contém xingamentos e ofensas pessoais.");
         DenunciaResponse resposta = respostaValida();
 
-        when(denunciaService.denunciar(eq(avaliacaoId), any(DenunciarAvaliacaoRequest.class), any(UUID.class)))
+        when(denunciaService.denunciarAvaliacao(eq(avaliacaoId), any(DenunciarRequest.class), any(UUID.class)))
                 .thenReturn(resposta);
 
         mockMvc.perform(post("/avaliacoes/" + avaliacaoId + "/denuncias")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(objectMapper.writeValueAsString(request)))
+                        .content(objectMapper.writeValueAsString(pedidoValido())))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").value(resposta.id().toString()))
+                .andExpect(jsonPath("$.tipoAlvo").value("AVALIACAO"))
                 .andExpect(jsonPath("$.status").value("PENDENTE"))
                 .andExpect(jsonPath("$.motivo").value(resposta.motivo()));
 
-        verify(denunciaService).denunciar(eq(avaliacaoId), any(DenunciarAvaliacaoRequest.class), any(UUID.class));
+        verify(denunciaService).denunciarAvaliacao(eq(avaliacaoId), any(DenunciarRequest.class), any(UUID.class));
     }
 
     @Test
     @WithUsuarioMock
     void deveRetornar400QuandoMotivoForBranco() throws Exception {
-        UUID avaliacaoId = UUID.randomUUID();
-        DenunciarAvaliacaoRequest request = new DenunciarAvaliacaoRequest("");
+        DenunciarRequest request = new DenunciarRequest(CategoriaDenuncia.SPAM, "");
 
-        mockMvc.perform(post("/avaliacoes/" + avaliacaoId + "/denuncias")
+        mockMvc.perform(post("/avaliacoes/" + UUID.randomUUID() + "/denuncias")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isBadRequest())
@@ -108,14 +127,68 @@ class DenunciaControllerTest {
     }
 
     @Test
-    void deveRetornar403AoDenunciarSemAutenticacao() throws Exception {
-        UUID avaliacaoId = UUID.randomUUID();
-        DenunciarAvaliacaoRequest request = new DenunciarAvaliacaoRequest(
-                "A avaliação contém xingamentos e ofensas pessoais.");
+    @WithUsuarioMock
+    void deveRetornar400QuandoCategoriaNaoForInformada() throws Exception {
+        DenunciarRequest request = new DenunciarRequest(null, "A avaliação contém ofensas pessoais.");
 
-        mockMvc.perform(post("/avaliacoes/" + avaliacaoId + "/denuncias")
+        mockMvc.perform(post("/avaliacoes/" + UUID.randomUUID() + "/denuncias")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros[0].campo").value("categoria"));
+
+        verifyNoInteractions(denunciaService);
+    }
+
+    @Test
+    void deveRetornar403AoDenunciarSemAutenticacao() throws Exception {
+        mockMvc.perform(post("/avaliacoes/" + UUID.randomUUID() + "/denuncias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pedidoValido())))
+                .andExpect(status().isForbidden());
+
+        verifyNoInteractions(denunciaService);
+    }
+
+    // ---------------------------------------------------------------
+    // POST /projetos/{id}/denuncias e /usuarios/{id}/denuncias
+    // ---------------------------------------------------------------
+
+    @Test
+    @WithUsuarioMock
+    void deveDenunciarProjetoComSucessoERetornar201() throws Exception {
+        UUID projetoId = UUID.randomUUID();
+        when(denunciaService.denunciarProjeto(eq(projetoId), any(DenunciarRequest.class), any(UUID.class)))
+                .thenReturn(respostaValida());
+
+        mockMvc.perform(post("/projetos/" + projetoId + "/denuncias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pedidoValido())))
+                .andExpect(status().isCreated());
+
+        verify(denunciaService).denunciarProjeto(eq(projetoId), any(DenunciarRequest.class), any(UUID.class));
+    }
+
+    @Test
+    @WithUsuarioMock
+    void deveDenunciarPerfilComSucessoERetornar201() throws Exception {
+        UUID usuarioId = UUID.randomUUID();
+        when(denunciaService.denunciarPerfil(eq(usuarioId), any(DenunciarRequest.class), any(UUID.class)))
+                .thenReturn(respostaValida());
+
+        mockMvc.perform(post("/usuarios/" + usuarioId + "/denuncias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pedidoValido())))
+                .andExpect(status().isCreated());
+
+        verify(denunciaService).denunciarPerfil(eq(usuarioId), any(DenunciarRequest.class), any(UUID.class));
+    }
+
+    @Test
+    void deveRetornar403AoDenunciarPerfilSemAutenticacao() throws Exception {
+        mockMvc.perform(post("/usuarios/" + UUID.randomUUID() + "/denuncias")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(pedidoValido())))
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(denunciaService);
@@ -129,14 +202,27 @@ class DenunciaControllerTest {
     @WithUsuarioMock(role = "ADMIN")
     void deveListarPendentesComoAdmin() throws Exception {
         Page<DenunciaResponse> pagina = new PageImpl<>(List.of(respostaValida()), PageRequest.of(0, 10), 1);
-        when(denunciaService.listarPendentes(any())).thenReturn(pagina);
+        when(denunciaService.listarPendentes(any(), any())).thenReturn(pagina);
 
         mockMvc.perform(get("/denuncias"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.content", hasSize(1)))
-                .andExpect(jsonPath("$.content[0].status").value("PENDENTE"));
+                .andExpect(jsonPath("$.content[0].status").value("PENDENTE"))
+                .andExpect(jsonPath("$.content[0].historicoResponsavel.medidaSugerida").value("ADVERTENCIA"));
 
-        verify(denunciaService).listarPendentes(any());
+        verify(denunciaService).listarPendentes(any(), any());
+    }
+
+    @Test
+    @WithUsuarioMock(role = "ADMIN")
+    void deveRepassarOFiltroDeTipoDeAlvo() throws Exception {
+        when(denunciaService.listarPendentes(eq(TipoAlvoDenuncia.PERFIL), any()))
+                .thenReturn(new PageImpl<>(List.of(), PageRequest.of(0, 10), 0));
+
+        mockMvc.perform(get("/denuncias").param("tipoAlvo", "PERFIL"))
+                .andExpect(status().isOk());
+
+        verify(denunciaService).listarPendentes(eq(TipoAlvoDenuncia.PERFIL), any());
     }
 
     @Test
@@ -157,7 +243,7 @@ class DenunciaControllerTest {
     }
 
     // ---------------------------------------------------------------
-    // PATCH /denuncias/{id}/resolver?procedente= — somente ADMIN
+    // PATCH /denuncias/{id}/resolver — somente ADMIN
     // ---------------------------------------------------------------
 
     @Test
@@ -165,24 +251,58 @@ class DenunciaControllerTest {
     void deveResolverDenunciaComoAdmin() throws Exception {
         UUID denunciaId = UUID.randomUUID();
         DenunciaResponse resposta = respostaValida();
+        ResolverDenunciaRequest request = new ResolverDenunciaRequest(
+                MedidaModeracao.ADVERTENCIA, null, "Comentário ofensivo a colega.");
 
-        when(denunciaService.resolver(eq(denunciaId), eq(true), any(UUID.class))).thenReturn(resposta);
+        when(denunciaService.resolver(eq(denunciaId), any(ResolverDenunciaRequest.class), any(UUID.class)))
+                .thenReturn(resposta);
 
         mockMvc.perform(patch("/denuncias/" + denunciaId + "/resolver")
-                        .param("procedente", "true"))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(resposta.id().toString()));
 
-        verify(denunciaService).resolver(eq(denunciaId), eq(true), any(UUID.class));
+        verify(denunciaService).resolver(eq(denunciaId), any(ResolverDenunciaRequest.class), any(UUID.class));
+    }
+
+    @Test
+    @WithUsuarioMock(role = "ADMIN")
+    void deveRetornar400QuandoMedidaNaoForInformada() throws Exception {
+        ResolverDenunciaRequest request = new ResolverDenunciaRequest(null, null, "Qualquer coisa");
+
+        mockMvc.perform(patch("/denuncias/" + UUID.randomUUID() + "/resolver")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros[0].campo").value("medida"));
+
+        verifyNoInteractions(denunciaService);
+    }
+
+    @Test
+    @WithUsuarioMock(role = "ADMIN")
+    void deveRetornar400QuandoPrazoDeSuspensaoForAbsurdo() throws Exception {
+        ResolverDenunciaRequest request = new ResolverDenunciaRequest(
+                MedidaModeracao.SUSPENSAO, 5000, "Conteúdo grave.");
+
+        mockMvc.perform(patch("/denuncias/" + UUID.randomUUID() + "/resolver")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.erros[0].campo").value("diasSuspensao"));
+
+        verifyNoInteractions(denunciaService);
     }
 
     @Test
     @WithUsuarioMock(role = "ALUNO")
     void deveRetornar403AoResolverComoAluno() throws Exception {
-        UUID denunciaId = UUID.randomUUID();
+        ResolverDenunciaRequest request = new ResolverDenunciaRequest(MedidaModeracao.ARQUIVAR, null, null);
 
-        mockMvc.perform(patch("/denuncias/" + denunciaId + "/resolver")
-                        .param("procedente", "true"))
+        mockMvc.perform(patch("/denuncias/" + UUID.randomUUID() + "/resolver")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(denunciaService);
@@ -190,10 +310,11 @@ class DenunciaControllerTest {
 
     @Test
     void deveRetornar403AoResolverSemAutenticacao() throws Exception {
-        UUID denunciaId = UUID.randomUUID();
+        ResolverDenunciaRequest request = new ResolverDenunciaRequest(MedidaModeracao.ARQUIVAR, null, null);
 
-        mockMvc.perform(patch("/denuncias/" + denunciaId + "/resolver")
-                        .param("procedente", "true"))
+        mockMvc.perform(patch("/denuncias/" + UUID.randomUUID() + "/resolver")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isForbidden());
 
         verifyNoInteractions(denunciaService);

@@ -61,6 +61,24 @@ public class Usuario {
     @Builder.Default
     private Boolean ativo = true;
 
+    /**
+     * Fim da suspensão aplicada pela moderação; nulo quando não há suspensão
+     * vigente. Espelha a Sancao de medida SUSPENSAO mais recente para o filtro
+     * JWT barrar o acesso sem join a cada requisição.
+     *
+     * Deliberadamente separado de {@code ativo}: lá false significa conta
+     * excluída pelo titular (@SQLDelete/@SQLRestriction, direito da LGPD), e
+     * reaproveitar o campo misturaria punição com exclusão a pedido — além de
+     * sumir com o usuário de toda consulta, inclusive da denúncia que o aponta.
+     */
+    @Column(name = "suspenso_ate")
+    private LocalDateTime suspensoAte;
+
+    /** True enquanto houver suspensão vigente (prazo ainda no futuro). */
+    public boolean estaSuspenso() {
+        return suspensoAte != null && suspensoAte.isAfter(LocalDateTime.now());
+    }
+
     // ============================================
     // REPUTAÇÃO (avaliações recebidas de colaboradores)
     // ============================================

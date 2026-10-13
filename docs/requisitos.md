@@ -38,11 +38,16 @@ mecanismo de implementação real, não para uma meta abstrata.
 | RF27 | Avaliar um colaborador de um projeto já encerrado (concluído ou cancelado) | `POST /projetos/{id}/avaliacoes` |
 | RF28 | Consultar as avaliações recebidas por um usuário | `GET /usuarios/{id}/avaliacoes` |
 | RF29 | Denunciar uma avaliação recebida considerada abusiva | `POST /avaliacoes/{id}/denuncias` |
-| RF30 | Analisar e resolver denúncias pendentes — restrito a ADMIN | `GET /denuncias`, `PATCH /denuncias/{id}/resolver` |
-| RF31 | Ver projetos recomendados por compatibilidade com as próprias habilidades | `GET /recomendacoes/projetos` |
-| RF32 | Ver candidatos recomendados para um projeto próprio | `GET /recomendacoes/projetos/{id}/candidatos` |
-| RF33 | Listar usuários e alterar o nível de acesso de um usuário — restrito a ADMIN | `GET /usuarios`, `PATCH /usuarios/{id}/nivel-acesso` |
-| RF34 | Consultar os níveis de acesso existentes — restrito a ADMIN | `GET /niveis-acesso` |
+| RF30 | Denunciar um projeto — qualquer usuário autenticado, menos o criador | `POST /projetos/{id}/denuncias` |
+| RF31 | Denunciar o perfil de outro usuário | `POST /usuarios/{id}/denuncias` |
+| RF32 | Analisar denúncias pendentes, filtrando por tipo de alvo e vendo o histórico de sanções do responsável — restrito a ADMIN | `GET /denuncias?tipoAlvo=` |
+| RF33 | Resolver uma denúncia aplicando a medida escolhida (arquivar, remover conteúdo, advertir ou suspender) — restrito a ADMIN | `PATCH /denuncias/{id}/resolver` |
+| RF34 | Receber e dar ciência das advertências aplicadas, no login seguinte à decisão | `POST /auth/login` (campo `avisosModeracao`) |
+| RF35 | Ter o acesso bloqueado enquanto durar uma suspensão | `POST /auth/login` e filtro JWT em toda requisição autenticada |
+| RF36 | Ver projetos recomendados por compatibilidade com as próprias habilidades | `GET /recomendacoes/projetos` |
+| RF37 | Ver candidatos recomendados para um projeto próprio | `GET /recomendacoes/projetos/{id}/candidatos` |
+| RF38 | Listar usuários e alterar o nível de acesso de um usuário — restrito a ADMIN | `GET /usuarios`, `PATCH /usuarios/{id}/nivel-acesso` |
+| RF39 | Consultar os níveis de acesso existentes — restrito a ADMIN | `GET /niveis-acesso` |
 
 ## Requisitos não-funcionais
 
@@ -55,7 +60,7 @@ mecanismo de implementação real, não para uma meta abstrata.
 | RNF05 | Documentação da API sempre atualizada | Swagger UI / OpenAPI gerados em tempo de execução a partir do próprio código (`springdoc-openapi`), não um documento manual que desatualiza |
 | RNF06 | Usabilidade (objetivo específico do TCC: "avaliar usabilidade através de testes com usuários") | **Parcialmente verificável**: o frontend já cobre autenticação, dashboard, exploração/criação/edição de projetos e candidaturas (enviar, acompanhar, cancelar, aceitar/rejeitar) — dá pra testar o fluxo principal ponta a ponta com usuários reais. Ainda faltam telas de avaliação entre colegas, recomendação de candidatos e perfil próprio (services já prontos no frontend, sem tela — ver `docs/CONECTANDO_FRONT_BACKEND.md`) |
 | RNF07 | Manutenibilidade | Arquitetura em camadas (controller → service → repository), DTOs por recurso, exceções de domínio centralizadas num `@RestControllerAdvice`; suíte de testes automatizados cobrindo as regras de negócio críticas (ver [decisão 8](./decisoes-arquiteturais.md#8-estratégia-de-testes-em-camadas-unitário--slice--poucos-e2e)) |
-| RNF08 | Auditabilidade da moderação | Soft-delete em avaliações removidas por denúncia procedente preserva o histórico completo (avaliação original + denúncia + resolução do admin) para eventual auditoria |
+| RNF08 | Auditabilidade da moderação | Soft-delete em avaliações/projetos removidos por denúncia procedente preserva o histórico completo (conteúdo original + denúncia + medida aplicada + admin responsável). A tabela `sancoes` registra cada advertência e suspensão com justificativa, autor e prazo, de modo que a escada "primeiro advertir, depois suspender" é reconstituível a posteriori |
 
 ## Nota sobre rastreabilidade
 

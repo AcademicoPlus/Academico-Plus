@@ -17,6 +17,7 @@ import com.unifapi.academico.exception.RegraDeNegocioException;
 import com.unifapi.academico.repository.CursoRepository;
 import com.unifapi.academico.repository.NivelAcessoRepository;
 import com.unifapi.academico.repository.ProjetoCanceladoAvisoRepository;
+import com.unifapi.academico.repository.SancaoRepository;
 import com.unifapi.academico.repository.TokenRevogadoRepository;
 import com.unifapi.academico.repository.UsuarioRepository;
 import com.unifapi.academico.security.JwtTokenProvider;
@@ -62,6 +63,7 @@ class AuthServiceTest {
     @Mock private ProjetoCanceladoAvisoRepository projetoAvisoRepository;
     @Mock private TokenRevogadoRepository tokenRevogadoRepository;
     @Mock private PasswordEncoder passwordEncoder;
+    @Mock private SancaoRepository sancaoRepository;
     @Mock private JwtTokenProvider jwtTokenProvider;
     @Mock private CodigoVerificacaoPublisher codigoVerificacaoPublisher;
     @Mock private RateLimiterService rateLimiterService;
@@ -79,6 +81,7 @@ class AuthServiceTest {
                 cursoRepository,
                 nivelAcessoRepository,
                 projetoAvisoRepository,
+                sancaoRepository,
                 tokenRevogadoRepository,
                 passwordEncoder,
                 jwtTokenProvider,

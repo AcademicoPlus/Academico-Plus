@@ -187,7 +187,7 @@ está feita para toda a API. O que falta, na maioria dos casos, é só a
 | `projetoMembroService.ts` | `ProjetoMembroController` | Equipe de um projeto |
 | `candidaturaService.ts` | `CandidaturaController` | Candidatar-se, aceitar, rejeitar, cancelar |
 | `avaliacaoService.ts` | `ProjetoAvaliacaoController` + parte do `UsuarioController` | Avaliar participante, ver avaliações recebidas |
-| `denunciaService.ts` | `DenunciaController` | Denunciar avaliação abusiva, fila de revisão (admin) |
+| `denunciaService.ts` | `DenunciaController` | Denunciar avaliação, projeto ou perfil; fila de moderação e aplicação da medida — arquivar, remover conteúdo, advertir ou suspender (admin) |
 | `recomendacaoService.ts` | `RecomendacaoController` | Projetos/candidatos recomendados por habilidade |
 
 Cada arquivo tem, no topo, um comentário dizendo qual `Controller.java`

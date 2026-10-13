@@ -142,14 +142,16 @@ public class UsuarioService {
 
         if (request.periodo() != null)
             usuario.setPeriodo(request.periodo());
+        // Campos de texto livre aceitam string vazia como "limpar": o front
+        // manda "" quando o usuário apaga o conteúdo, e aí gravamos null.
         if (request.bio() != null)
-            usuario.setBio(request.bio());
+            usuario.setBio(normalizarTextoOpcional(request.bio()));
         if (request.fotoUrl() != null)
             usuario.setFotoUrl(request.fotoUrl());
         if (request.linkedinUrl() != null)
-            usuario.setLinkedinUrl(request.linkedinUrl());
+            usuario.setLinkedinUrl(normalizarTextoOpcional(request.linkedinUrl()));
         if (request.githubUrl() != null)
-            usuario.setGithubUrl(request.githubUrl());
+            usuario.setGithubUrl(normalizarTextoOpcional(request.githubUrl()));
 
         return UsuarioPerfilResponse.fromEntity(usuario);
     }
@@ -250,6 +252,11 @@ public class UsuarioService {
     // ============================================
     // MÉTODOS AUXILIARES (HELPERS)
     // ============================================
+
+    /** Texto vindo do formulário: em branco vira null, o resto vem aparado. */
+    private String normalizarTextoOpcional(String valor) {
+        return valor.isBlank() ? null : valor.trim();
+    }
 
     private Usuario buscarUsuarioPorId(UUID id) {
         return usuarioRepository.findById(id)

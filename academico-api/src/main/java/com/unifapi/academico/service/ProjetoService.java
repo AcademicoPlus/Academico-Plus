@@ -130,8 +130,23 @@ public class ProjetoService {
     /** Exclusão lógica: mantém o histórico de candidaturas e membros. */
     @Transactional
     public void inativar(UUID id, UUID usuarioLogadoId) {
-        Projeto projeto = obterEntidadeComoDono(id, usuarioLogadoId);
+        aplicarInativacao(obterEntidadeComoDono(id, usuarioLogadoId));
+    }
 
+    /**
+     * Mesma derrubada, mas por decisão de moderação (denúncia procedente) em
+     * vez de vontade do criador — por isso sem a trava de dono. Carrega por id
+     * mesmo já inativo, para resolver a denúncia continuar valendo caso o
+     * criador tenha encerrado o projeto no meio da análise.
+     */
+    @Transactional
+    public void inativarPorModeracao(UUID id) {
+        Projeto projeto = projetoRepository.findById(id)
+                .orElseThrow(() -> new RecursoNaoEncontradoException("Projeto não encontrado com o ID informado."));
+        aplicarInativacao(projeto);
+    }
+
+    private void aplicarInativacao(Projeto projeto) {
         if (projeto.getStatus() != StatusProjeto.CANCELADO && projeto.getStatus() != StatusProjeto.CONCLUIDO) {
             registrarAvisosDeCancelamento(projeto);
             projeto.setStatus(StatusProjeto.CANCELADO);

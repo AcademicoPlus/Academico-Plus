@@ -59,6 +59,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             Usuario usuario = usuarioRepository.findByIdWithNivelAcesso(userId).orElse(null);
 
+            // Suspensão aplicada no meio da sessão: o token continua válido e
+            // assinado, então é aqui que ela precisa morder — do contrário o
+            // suspenso seguiria usando a plataforma até o token expirar.
+            if (usuario != null && usuario.estaSuspenso()) {
+                response.setStatus(HttpStatus.FORBIDDEN.value());
+                response.setContentType("application/json");
+                response.getWriter().write(
+                        "{\"erro\": \"Sua conta está suspensa. Faça login para ver o motivo e o prazo.\"}");
+                return;
+            }
+
             if (usuario != null && Boolean.TRUE.equals(usuario.getAtivo())) {
                 String roleAtual = usuario.getNivelAcesso().getNome();
 
