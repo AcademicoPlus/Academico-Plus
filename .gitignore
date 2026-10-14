@@ -1,3 +1,32 @@
+# Rede de segurança do monorepo. Cada subprojeto tem o seu .gitignore próprio e
+# mais específico (academico-api/, frontend/, academico-email-service/,
+# academico-upload-service/) — este arquivo existe para que um diretório novo,
+# ou um arquivo criado fora deles, não entre no repositório por descuido.
+
+# Segredos — nunca versionar. O versionado é o .env.example de cada serviço.
+.env
+.env.*
+!.env.example
+
+# Saídas de build
+target/
+build/
+dist/
+dist-ssr/
+
+# Dependências
+node_modules/
+
+# Logs
+*.log
+logs/
+
+# Editores e ferramentas
 .vscode
+.idea/
+*.iml
 .claude
-node_modules
+
+# Sistema operacional
+.DS_Store
+Thumbs.db

@@ -22,15 +22,16 @@ import static org.mockito.Mockito.when;
 /**
  * Testes unitários (sem contexto Spring) para {@link GlobalRateLimitFilter}.
  *
- * <p>O filtro recebe o limite de requisições por janela diretamente pelo construtor
- * (o valor que, em produção, o Spring injeta via {@code @Value("${app.rate-limit.requisicoes-por-minuto:120}")}),
- * então não é necessário usar {@code ReflectionTestUtils} — basta instanciar a classe
- * com um limite baixo para tornar o teste rápido e determinístico.
+ * <p>O filtro recebe os limites por janela diretamente pelo construtor
+ * (os valores que, em produção, o Spring injeta via {@code @Value}), então não é
+ * necessário usar {@code ReflectionTestUtils} — basta instanciar a classe
+ * com limites baixos para tornar o teste rápido e determinístico.
  */
 @ExtendWith(MockitoExtension.class)
 class GlobalRateLimitFilterTest {
 
     private static final int LIMITE = 3;
+    private static final int LIMITE_CADASTRO = 2;
 
     @Mock
     private HttpServletRequest request;
@@ -47,7 +48,7 @@ class GlobalRateLimitFilterTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        filter = new GlobalRateLimitFilter(LIMITE);
+        filter = new GlobalRateLimitFilter(LIMITE, LIMITE_CADASTRO);
 
         corpoDaResposta = new StringWriter();
         PrintWriter writer = new PrintWriter(corpoDaResposta);
@@ -128,5 +129,42 @@ class GlobalRateLimitFilterTest {
 
         verify(filterChain, times(LIMITE)).doFilter(request, response);
         verify(response, times(2)).setStatus(429);
+    }
+
+    /**
+     * O cadastro revela se um e-mail já existe (decisão consciente, pela UX de
+     * quem esqueceu que já tinha conta), então é o limite por hora que impede
+     * usar o endpoint para varrer uma lista de e-mails.
+     */
+    @Test
+    void cadastroDeveTerLimiteProprioMaisApertadoQueOGlobal() throws Exception {
+        when(request.getRemoteAddr()).thenReturn("203.0.113.7");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getServletPath()).thenReturn("/auth/cadastro");
+
+        for (int i = 0; i < LIMITE_CADASTRO; i++) {
+            filter.doFilterInternal(request, response, filterChain);
+        }
+        // Ainda dentro do limite global (LIMITE = 3), mas além do de cadastro.
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain, times(LIMITE_CADASTRO)).doFilter(request, response);
+        verify(response, times(1)).setStatus(429);
+        assertThat(corpoDaResposta.toString())
+                .isEqualTo("{\"erro\": \"Muitas tentativas de cadastro. Tente novamente mais tarde.\"}");
+    }
+
+    @Test
+    void limiteDeCadastroNaoDeveAfetarOutrasRotas() throws Exception {
+        when(request.getRemoteAddr()).thenReturn("203.0.113.8");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getServletPath()).thenReturn("/auth/login");
+
+        for (int i = 0; i < LIMITE; i++) {
+            filter.doFilterInternal(request, response, filterChain);
+        }
+
+        verify(filterChain, times(LIMITE)).doFilter(request, response);
+        verify(response, never()).setStatus(429);
     }
 }

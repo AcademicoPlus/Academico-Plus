@@ -70,6 +70,7 @@ O sistema é um monolito (Spring Boot) com duas partes extraídas como microserv
 | **Frontend** | React 19 + TypeScript + Vite, React Router, Tailwind CSS | Em desenvolvimento ativo — telas de autenticação, dashboard, projetos, candidaturas e um painel de administração já implementadas |
 | **Database** | PostgreSQL 14+ | Schema versionado via Flyway (`ddl-auto=validate`) |
 | **Auth** | JWT (JSON Web Tokens), sem refresh token | Em uso |
+| **Tempo real** | WebSocket (STOMP sobre SockJS) para o chat de projeto | Em uso |
 
 ---
 
@@ -143,8 +144,10 @@ Ver **[academico-api/DEPLOY.md](./academico-api/DEPLOY.md)** — passo a passo p
 - [x] Avaliação entre colegas que participaram do mesmo projeto (nota 1-5 + comentário, após o projeto encerrar)
 - [x] Denúncia de avaliação abusiva pelo avaliado, com resolução por admin
 - [x] Exclusão de conta pelo próprio usuário (LGPD)
+- [x] Chat por projeto em tempo real (STOMP sobre SockJS), restrito ao criador e aos membros aceitos, com contador de não lidas
+- [x] Convite de membros pelo criador do projeto, com aceite/recusa pelo convidado
 - [ ] Endosso de competências por professores (diferente do item acima — não implementado)
-- [ ] Sistema de mensagens
+- [ ] Mensagens diretas entre usuários fora do contexto de um projeto
 
 ### Frontend
 - [x] Autenticação (login, cadastro, termos de uso, política de privacidade)
@@ -157,6 +160,7 @@ Ver **[academico-api/DEPLOY.md](./academico-api/DEPLOY.md)** — passo a passo p
 - [x] Tela de perfil (`/usuarios/:id` e edição em `/usuarios/:id/editar`), com habilidades e avaliações recebidas
 - [x] "Encontrar Pessoas" (`/pessoas`): busca por nome/curso/habilidade (server-side), com paginação
 - [x] Avaliação entre colegas de projeto (após conclusão) e candidatos recomendados para o criador
+- [x] Chat do projeto (`/mensagens`), com lista de conversas e badge de não lidas no menu lateral
 - [x] Testes automatizados de frontend (Vitest + Testing Library)
 
 ---
@@ -179,7 +183,7 @@ npm test
 
 Tabelas atuais (ver `academico-api/src/main/resources/db/migration` e as entidades JPA para o schema completo):
 
-`usuarios`, `niveis_acesso`, `cursos`, `habilidades`, `usuario_habilidades`, `projetos`, `projeto_habilidades`, `projeto_membros`, `candidaturas`, `avaliacoes`, `tokens_revogados`, `projeto_cancelamento_aviso`.
+`usuarios`, `niveis_acesso`, `cursos`, `habilidades`, `usuario_habilidades`, `projetos`, `projeto_habilidades`, `projeto_membros`, `candidaturas`, `convites_projeto`, `avaliacoes`, `denuncias_avaliacao`, `sancoes`, `mensagens_projeto`, `leituras_chat_projeto`, `tokens_revogados`, `projeto_cancelamento_aviso`.
 
 ---
 

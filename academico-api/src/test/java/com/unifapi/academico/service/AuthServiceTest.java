@@ -245,6 +245,26 @@ class AuthServiceTest {
         verify(usuarioRepository, never()).save(any());
     }
 
+    /**
+     * existsByEmail não enxerga conta excluída (@SQLRestriction("ativo = true")),
+     * mas usuarios.email continua UNIQUE no banco — sem esta checagem o INSERT
+     * estouraria a constraint e o usuário receberia um 500 sem explicação.
+     */
+    @Test
+    void deveLancarExcecaoQuandoEmailPertenceAContaExcluida() {
+        CadastroRequest request = new CadastroRequest(
+                "excluido@unifapi.edu.br", "Novo Usuario", 1, curso.getId(), "senha12345", true);
+
+        when(usuarioRepository.existsByEmail("excluido@unifapi.edu.br")).thenReturn(false);
+        when(usuarioRepository.existsByEmailIncluindoInativos("excluido@unifapi.edu.br")).thenReturn(true);
+
+        assertThatThrownBy(() -> authService.cadastrar(request))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessageContaining("desativada ou excluída");
+
+        verify(usuarioRepository, never()).save(any());
+    }
+
     @Test
     void deveLancarExcecaoQuandoCursoNaoEncontrado() {
         UUID idCursoInexistente = UUID.randomUUID();

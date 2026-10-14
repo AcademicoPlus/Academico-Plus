@@ -35,15 +35,29 @@ public class SecurityConfig {
     @Value("${cors.allowed-origins}")
     private String corsAllowedOrigins;
 
+    /**
+     * Espelha springdoc.*.enabled. Com a documentação desligada (o padrão), os
+     * caminhos do Swagger nem entram na lista de rotas públicas — antes disso
+     * {@code /v3/api-docs/**} e {@code /swagger-ui/**} eram permitAll
+     * incondicionalmente, publicando o mapa inteiro da API em produção.
+     */
+    @Value("${springdoc.api-docs.enabled:false}")
+    private boolean documentacaoHabilitada;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(auth -> auth
+                .authorizeHttpRequests(auth -> {
+                    // Precisa vir antes de anyRequest(): o Spring Security recusa
+                    // qualquer matcher registrado depois dele.
+                    if (documentacaoHabilitada) {
+                        auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
+                    }
+                    auth
                         .requestMatchers("/auth/**").permitAll() // Endpoints públicos de login, cadastro e reset
-                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**").permitAll()
                         // Health check do provedor de deploy (Render etc.) — não exige autenticação
                         .requestMatchers("/actuator/health").permitAll()
                         // Cursos precisam ficar visíveis antes do login: alimenta o dropdown da tela de cadastro
@@ -51,8 +65,8 @@ public class SecurityConfig {
                         // Handshake SockJS/STOMP do chat: sem header Authorization (o JWT vai no
                         // CONNECT frame, validado pelo StompAuthChannelInterceptor, não aqui).
                         .requestMatchers("/ws/**").permitAll()
-                        .anyRequest().authenticated()
-                )
+                        .anyRequest().authenticated();
+                })
                 // Rate limit roda antes do JWT: até tentativa de flood em /auth/** (sem token) é barrada.
                 .addFilterBefore(globalRateLimitFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)

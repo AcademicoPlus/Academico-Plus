@@ -60,10 +60,16 @@ Com a configuração padrão, a API fica em `http://localhost:8080/api`.
 
 ## Documentação da API
 
-Com a aplicação no ar:
+Desligada por padrão (`SWAGGER_ENABLED=false`): quando ligada, a documentação é
+pública e sem autenticação, o que em produção entrega de graça o mapa completo da
+API — rotas, DTOs e regras de validação. Com `SWAGGER_ENABLED=true` no `.env`
+(o que o `.env.example` já traz para dev) e a aplicação no ar:
 
 - Swagger UI: `http://localhost:8080/api/swagger-ui.html`
 - OpenAPI JSON: `http://localhost:8080/api/v3/api-docs`
+
+Com a variável desligada, esses dois caminhos nem entram na lista de rotas
+públicas do `SecurityConfig` e respondem `403`.
 
 ## Testes
 
@@ -75,16 +81,35 @@ Com a aplicação no ar:
 
 Login (`POST /auth/login`) retorna um JWT (`Bearer`). Ele carrega o ID do usuário e o nível de acesso (`ALUNO`, `PROFESSOR` ou `ADMIN`) no payload; endpoints administrativos usam `@PreAuthorize("hasRole('ADMIN')")`. Não há refresh token — o token de acesso dura `JWT_EXPIRATION` (ms) e precisa de novo login ao expirar. Logout (`POST /usuarios/logout`) invalida o token corrente numa blacklist, limpa automaticamente por um job diário. Cadastro (`POST /auth/cadastro`) exige `aceitouTermos: true`; a data do aceite fica registrada em `Usuario.termosAceitosEm`.
 
-Um usuário pode excluir a própria conta a qualquer momento (`DELETE /usuarios/me`, mediante confirmação de senha) — exclusão lógica, direito do titular sob a LGPD.
+Quando a requisição traz um `Bearer` token que não serve mais — expirado, malformado, revogado, de conta excluída/desativada, ou com nível de acesso diferente do atual — o `JwtAuthenticationFilter` responde **401** com um corpo JSON explicando o motivo, e o frontend encerra a sessão e leva ao login. Requisição **sem** header `Authorization` continua caindo no `Http403ForbiddenEntryPoint` padrão do Spring Security (**403**), e 403 segue sendo também a resposta de falta de permissão (`@PreAuthorize`) e de conta suspensa — ou seja, 401 significa "sua sessão acabou" e 403, "você não pode fazer isso".
+
+Um usuário pode excluir a própria conta a qualquer momento (`DELETE /usuarios/me`, mediante confirmação de senha) — exclusão lógica, direito do titular sob a LGPD. Como a exclusão é lógica e `usuarios.email` é `UNIQUE`, o e-mail de uma conta excluída **não pode ser reaproveitado** num novo cadastro: `POST /auth/cadastro` recusa com 400 e uma mensagem explicando o motivo.
+
+### Primeiro admin
+
+Promover alguém a ADMIN exige `hasRole('ADMIN')`, e o cadastro público sempre atribui `ALUNO` — então num banco novo não há nenhum admin e o painel `/admin` (incluindo a fila de denúncias) fica inacessível. Para resolver isso uma vez: cadastre-se normalmente, defina `ADMIN_BOOTSTRAP_EMAIL` com esse e-mail e reinicie o serviço — o `AdminBootstrap` promove a conta na subida. É idempotente, vira no-op se a variável estiver vazia ou a conta já for ADMIN, e nunca cria conta (por isso não precisa de senha em variável de ambiente). Ver `DEPLOY.md`, passo 8.
 
 ## Rate limiting
 
-Dois níveis independentes:
+Três níveis independentes:
 
 - **Por conta**: `login` e `validarOtp` (recuperação de senha) bloqueiam por 15 min após 5 tentativas falhas em 15 min, por e-mail (`RateLimiterService`).
-- **Geral, por IP**: toda a API aceita no máximo `app.rate-limit.requisicoes-por-minuto` requisições por minuto por IP (padrão: 120; configurável, não exige variável de ambiente). Acima disso, `429 Too Many Requests` (`GlobalRateLimitFilter`).
+- **Geral, por IP**: toda a API aceita no máximo `app.rate-limit.requisicoes-por-minuto` requisições por minuto por IP (padrão: 120). Acima disso, `429 Too Many Requests` (`GlobalRateLimitFilter`).
+- **Cadastro, por IP**: `POST /auth/cadastro` tem teto próprio de `app.rate-limit.cadastros-por-hora` por hora (padrão: 10), bem abaixo do geral. Ver a seção seguinte para o porquê.
 
-Ambos guardam o estado em memória (instância única). Se a aplicação escalar horizontalmente, isso precisa virar um contador compartilhado (Redis).
+### Enumeração de usuários no cadastro — risco aceito
+
+`POST /auth/cadastro` responde "E-mail já está cadastrado no sistema" quando o endereço existe. Isso é um oráculo de enumeração: quem tiver uma lista de e-mails descobre quais têm conta aqui. A recuperação de senha evita isso de propósito (resposta genérica, e-mail mascarado), o cadastro **não** — e a diferença é deliberada, não esquecimento:
+
+- a alternativa (responder sucesso genérico e avisar o dono da conta por e-mail) deixa quem simplesmente esqueceu que já tinha conta sem entender por que não consegue entrar;
+- o dado vazado é de baixo valor neste contexto: a plataforma é de uma única instituição, e o diretório de pessoas já é visível para qualquer usuário autenticado;
+- o que torna o ataque inviável na prática é o volume, e é aí que o limite de 10 cadastros/hora por IP morde.
+
+Se o risco deixar de ser aceitável (abertura para fora da instituição, por exemplo), o caminho é a resposta genérica + aviso por e-mail, e aí o `academico-email-service` precisa de uma fila e um template novos.
+
+### Limitação: instância única
+
+Os três guardam estado **em memória**. Isso só funciona com **uma** instância da aplicação: com duas ou mais atrás de um balanceador, cada uma passa a ter seu próprio contador e o limite efetivo é multiplicado pelo número de instâncias. No plano Starter do Render (uma instância) está correto; **antes de aumentar o número de instâncias**, isso precisa virar um contador compartilhado (Redis, via Bucket4j ou equivalente). Ver `DEPLOY.md`.
 
 ## Recursos e endpoints
 
@@ -103,8 +128,11 @@ Ambos guardam o estado em memória (instância única). Se a aplicação escalar
 | Avaliações | `/projetos/{projetoId}/avaliacoes`, `/usuarios/{id}/avaliacoes` | Avaliação entre quem participou do mesmo projeto |
 | Denúncias | `/avaliacoes/{avaliacaoId}/denuncias`, `/denuncias` | Denúncia de avaliação abusiva pelo avaliado; resolução por admin |
 | Recomendações | `/recomendacoes` | Ranking de projetos/candidatos por compatibilidade de habilidades |
+| Convites | `/projetos/{projetoId}/convites`, `/convites` | Criador convida alguém para o projeto; convidado aceita/recusa |
+| Chat do projeto | `/projetos/{projetoId}/mensagens`, `/ws` | Histórico e envio em tempo real (STOMP sobre SockJS), restrito a criador e membros aceitos |
+| Conversas | `/conversas` | Lista os chats de projeto do usuário, contador de não lidas e marcação de leitura |
 
-A lista completa de rotas, parâmetros e schemas está no Swagger UI.
+A lista completa de rotas, parâmetros e schemas está no Swagger UI (com `SWAGGER_ENABLED=true` — ver "Documentação da API").
 
 ## Avaliação de colaboradores
 
@@ -160,5 +188,5 @@ src/main/java/com/unifapi/academico/
 
 - **Sem refresh token**: avaliado como desnecessário para a duração atual do access token (24h por padrão); reconsiderar se o tempo de expiração for reduzido.
 - **Sem endosso de competências por professores** — diferente do sistema de avaliação entre colegas de projeto (esse já existe), não há um fluxo onde um professor valida formalmente uma habilidade de um aluno.
-- **Sem sistema de mensagens** entre usuários.
+- **Sem mensagens diretas entre usuários**: existe chat, mas sempre no contexto de um projeto (`/projetos/{id}/mensagens`), restrito a criador e membros aceitos. Não há conversa privada entre duas pessoas fora de um projeto em comum.
 - **Upload de foto**: delegado ao `academico-upload-service` via REST síncrono, que envia pro Cloudflare R2 — ver README daquele serviço.

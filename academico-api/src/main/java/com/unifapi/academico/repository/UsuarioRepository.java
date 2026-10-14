@@ -22,6 +22,17 @@ public interface UsuarioRepository extends JpaRepository<Usuario, UUID>, JpaSpec
 
     boolean existsByEmail(String email);
 
+    /**
+     * Diferente de existsByEmail, enxerga também contas desativadas/excluídas.
+     *
+     * <p>Precisa ser nativa: @SQLRestriction("ativo = true") na entidade Usuario
+     * é aplicado a qualquer consulta JPQL/derivada, então existsByEmail responde
+     * "false" para uma conta excluída — mas a coluna usuarios.email continua
+     * UNIQUE no banco, e o INSERT do cadastro violaria a constraint.
+     */
+    @Query(value = "SELECT EXISTS(SELECT 1 FROM usuarios WHERE email = :email)", nativeQuery = true)
+    boolean existsByEmailIncluindoInativos(@Param("email") String email);
+
     @Query("SELECT u FROM Usuario u JOIN FETCH u.nivelAcesso WHERE u.id = :id")
     Optional<Usuario> findByIdWithNivelAcesso(@Param("id") UUID id);
 

@@ -5,6 +5,7 @@ import com.unifapi.academico.exception.dto.ErroResposta;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -142,6 +143,28 @@ public class GlobalExceptionHandler {
         );
 
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(erro);
+    }
+
+    // 5b. Rede de segurança para constraints do banco (UNIQUE, FK, NOT NULL) que
+    // escaparam da validação de regra de negócio. Sem isso qualquer colisão vira
+    // 500 "Erro Interno do Servidor" — resposta inútil para quem só reenviou um
+    // e-mail já usado. A causa real fica no log, não na resposta: a mensagem do
+    // Postgres expõe nomes de tabela/coluna e o valor que colidiu.
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ResponseEntity<ErroResposta> handleViolacaoDeIntegridade(
+            DataIntegrityViolationException ex,
+            HttpServletRequest request) {
+
+        log.warn("Violação de integridade na requisição [{}]: ", request.getRequestURI(), ex);
+
+        ErroResposta erro = ErroResposta.simples(
+                HttpStatus.CONFLICT.value(),
+                "Conflito de Dados",
+                "Esta operação conflita com um registro já existente. Revise os dados e tente novamente.",
+                request.getRequestURI()
+        );
+
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(erro);
     }
 
     // 6. Catch-All: Trata qualquer erro 500 inesperado (NullPointer, erros de BD, etc)

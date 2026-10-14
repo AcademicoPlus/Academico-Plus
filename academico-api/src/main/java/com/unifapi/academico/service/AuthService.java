@@ -113,6 +113,16 @@ public class AuthService {
             throw new RegraDeNegocioException("E-mail '" + emailNorm + "' já está cadastrado no sistema.");
         }
 
+        // A checagem acima não enxerga conta excluída/desativada (@SQLRestriction
+        // na entidade), mas usuarios.email continua UNIQUE no banco. Sem este
+        // segundo teste o INSERT violaria a constraint e o erro chegaria ao
+        // usuário como 500 genérico, sem explicar nada.
+        if (usuarioRepository.existsByEmailIncluindoInativos(emailNorm)) {
+            throw new RegraDeNegocioException(
+                    "Este e-mail pertence a uma conta desativada ou excluída e não pode ser "
+                            + "reutilizado no cadastro. Entre em contato com a administração.");
+        }
+
         Curso curso = cursoRepository.findById(request.idCurso())
                 .orElseThrow(() -> new RecursoNaoEncontradoException("Curso não encontrado com o ID: " + request.idCurso()));
 
@@ -163,9 +173,12 @@ public class AuthService {
         usuario.setCodigoRecuperacaoExpiraEm(LocalDateTime.now().plusMinutes(15));
         usuarioRepository.save(usuario);
 
-        // Fire-and-forget: o envio passou a ser assíncrono (fila consumida pelo
-        // academico-email-service). Falhas reais de envio não voltam pro chamador
-        // HTTP — ficam observáveis via log/DLQ do próprio email-service.
+        // Fire-and-forget: o envio é assíncrono (fila consumida pelo
+        // academico-email-service). O publisher não propaga exceção nem quando o
+        // broker está fora do ar — a resposta continua sendo a mensagem genérica
+        // abaixo, porque qualquer resposta diferente neste ponto só aconteceria
+        // para e-mail existente e reabriria o vazamento de enumeração que este
+        // endpoint evita. Falhas ficam no log e na DLQ (ver javadoc do publisher).
         codigoVerificacaoPublisher.publicar(usuario.getEmail(), otp, 15);
 
         return new MensagemResponse(true, mensagemGenerica);

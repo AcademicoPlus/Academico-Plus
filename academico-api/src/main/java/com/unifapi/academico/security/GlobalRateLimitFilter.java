@@ -22,19 +22,38 @@ import java.util.concurrent.ConcurrentHashMap;
  * publicada atrás de um proxy reverso, configure
  * server.forward-headers-strategy=framework para que o Spring/Tomcat resolva
  * o IP real do cliente de forma confiável antes de chegar aqui.
+ *
+ * <p>Além do limite geral por minuto, {@code POST /auth/cadastro} tem um limite
+ * próprio e bem mais apertado por hora. O cadastro responde "e-mail já
+ * cadastrado" quando o endereço existe — decisão consciente, pela clareza para
+ * quem esqueceu que já tinha conta —, e isso transforma o endpoint num oráculo
+ * de enumeração de usuários. O limite por hora é o que torna varrer uma lista
+ * de e-mails inviável na prática. Ver README, seção "Rate limiting".
+ *
+ * <p>Os contadores são em memória: isso só funciona com uma instância da
+ * aplicação. Ver a mesma ressalva em {@link RateLimiterService}.
  */
 @Component
 public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
+    /** Sem o context-path (/api) — getServletPath() já o remove. */
+    private static final String CAMINHO_CADASTRO = "/auth/cadastro";
+
     private final int limiteRequisicoesPorJanela;
     private final Duration janela = Duration.ofMinutes(1);
 
+    private final int limiteCadastrosPorJanela;
+    private final Duration janelaCadastro = Duration.ofHours(1);
+
     private final ConcurrentHashMap<String, Contador> contadoresPorIp = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Contador> contadoresCadastroPorIp = new ConcurrentHashMap<>();
 
     public GlobalRateLimitFilter(
-            @Value("${app.rate-limit.requisicoes-por-minuto:120}") int limiteRequisicoesPorJanela
+            @Value("${app.rate-limit.requisicoes-por-minuto:120}") int limiteRequisicoesPorJanela,
+            @Value("${app.rate-limit.cadastros-por-hora:10}") int limiteCadastrosPorJanela
     ) {
         this.limiteRequisicoesPorJanela = limiteRequisicoesPorJanela;
+        this.limiteCadastrosPorJanela = limiteCadastrosPorJanela;
     }
 
     @Override
@@ -44,19 +63,35 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
             FilterChain filterChain
     ) throws ServletException, IOException {
 
-        if (excedeuLimite(request.getRemoteAddr())) {
-            response.setStatus(429); // Too Many Requests
-            response.setContentType("application/json");
-            response.getWriter().write("{\"erro\": \"Muitas requisições. Tente novamente em instantes.\"}");
+        String ip = request.getRemoteAddr();
+
+        if (excedeuLimite(contadoresPorIp, ip, limiteRequisicoesPorJanela, janela)) {
+            responderExcesso(response, "Muitas requisições. Tente novamente em instantes.");
+            return;
+        }
+
+        if (ehTentativaDeCadastro(request)
+                && excedeuLimite(contadoresCadastroPorIp, ip, limiteCadastrosPorJanela, janelaCadastro)) {
+            responderExcesso(response, "Muitas tentativas de cadastro. Tente novamente mais tarde.");
             return;
         }
 
         filterChain.doFilter(request, response);
     }
 
-    private boolean excedeuLimite(String ip) {
+    private boolean ehTentativaDeCadastro(HttpServletRequest request) {
+        return "POST".equalsIgnoreCase(request.getMethod())
+                && CAMINHO_CADASTRO.equals(request.getServletPath());
+    }
+
+    private static boolean excedeuLimite(
+            ConcurrentHashMap<String, Contador> contadores,
+            String ip,
+            int limite,
+            Duration janela
+    ) {
         Instant agora = Instant.now();
-        Contador contador = contadoresPorIp.compute(ip, (chave, atual) -> {
+        Contador contador = contadores.compute(ip, (chave, atual) -> {
             if (atual == null || atual.janelaExpiraEm.isBefore(agora)) {
                 atual = new Contador();
                 atual.janelaExpiraEm = agora.plus(janela);
@@ -64,14 +99,21 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
             atual.contagem++;
             return atual;
         });
-        return contador.contagem > limiteRequisicoesPorJanela;
+        return contador.contagem > limite;
     }
 
-    /** Evita que o mapa cresça indefinidamente com IPs que pararam de acessar. */
+    private static void responderExcesso(HttpServletResponse response, String mensagem) throws IOException {
+        response.setStatus(429); // Too Many Requests
+        response.setContentType("application/json");
+        response.getWriter().write("{\"erro\": \"" + mensagem + "\"}");
+    }
+
+    /** Evita que os mapas cresçam indefinidamente com IPs que pararam de acessar. */
     @Scheduled(fixedRate = 5 * 60 * 1000)
     public void limparExpirados() {
         Instant agora = Instant.now();
         contadoresPorIp.entrySet().removeIf(entry -> entry.getValue().janelaExpiraEm.isBefore(agora));
+        contadoresCadastroPorIp.entrySet().removeIf(entry -> entry.getValue().janelaExpiraEm.isBefore(agora));
     }
 
     private static class Contador {

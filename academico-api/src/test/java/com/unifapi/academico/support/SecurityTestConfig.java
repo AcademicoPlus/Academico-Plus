@@ -53,7 +53,7 @@ public class SecurityTestConfig {
 
     @Bean
     public GlobalRateLimitFilter globalRateLimitFilter() {
-        return new GlobalRateLimitFilter(Integer.MAX_VALUE) {
+        return new GlobalRateLimitFilter(Integer.MAX_VALUE, Integer.MAX_VALUE) {
             @Override
             protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
                     throws ServletException, IOException {

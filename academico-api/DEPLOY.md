@@ -108,6 +108,8 @@ Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no Rab
    | `UPLOAD_SERVICE_API_KEY` | mesma chave configurada no passo 5 (`INTERNAL_API_KEY`) |
    | `LOGGING_LEVEL_ROOT` | `INFO` |
    | `LOGGING_LEVEL_COM_UNIFAPI_ACADEMICO` | `INFO` |
+   | `ADMIN_BOOTSTRAP_EMAIL` | deixe vazio no primeiro deploy — ver passo 8 |
+   | `SWAGGER_ENABLED` | **não defina** (padrão `false`). Ligado, publica o mapa completo da API sem autenticação |
 
 6. Deploy. O Render provisiona HTTPS automaticamente (não precisa configurar nada na aplicação).
 
@@ -123,6 +125,31 @@ VITE_USE_MOCKS=false
 `VITE_USE_MOCKS` **precisa** estar `false` (ou ausente — esse é o padrão) em produção — com
 `true` o frontend nunca chama o backend real, só devolve dados fictícios de `services/mocks.ts`
 (usado só pra desenvolver telas sem o backend de pé, ver `docs/CONECTANDO_FRONT_BACKEND.md`).
+
+## 8. Primeiro admin
+
+Alterar o nível de acesso de alguém exige `hasRole('ADMIN')`, e o cadastro público sempre
+atribui ALUNO — então num banco novo **não existe nenhum admin** e o painel `/admin` (incluindo
+a fila de denúncias) fica inacessível até alguém ser promovido. Este passo resolve isso uma vez só:
+
+1. Com o frontend no ar, **cadastre-se normalmente** pela tela de cadastro, com o e-mail que vai
+   ser o do administrador.
+2. No Render, no serviço do backend, defina `ADMIN_BOOTSTRAP_EMAIL` com esse mesmo e-mail.
+3. Reinicie o serviço (**Manual Deploy > Restart service**). No log de inicialização deve aparecer
+   `Usuário '<email>' promovido a ADMIN via ADMIN_BOOTSTRAP_EMAIL.`
+4. A partir daí esse admin promove os demais pela própria interface (`/admin` > Usuários), então a
+   variável pode ser **removida** do ambiente. Deixá-la configurada é inofensivo: a promoção é
+   idempotente e vira no-op se a conta já for ADMIN.
+
+Se o e-mail não corresponder a nenhuma conta ativa, o serviço sobe normalmente e registra um
+`WARN` no log — nenhuma conta é criada por essa variável, só promovida (assim não é preciso passar
+senha por variável de ambiente).
+
+## ⚠️ Não aumente o número de instâncias do backend
+
+Os limites de requisição (`GlobalRateLimitFilter` e `RateLimiterService`) contam **em memória**, dentro do processo. Com uma instância, correto. Com duas ou mais atrás do balanceador do Render, cada uma passa a ter seu próprio contador: o limite efetivo vira o dobro, o triplo, e a proteção contra força bruta de login e contra criação de contas em massa enfraquece na mesma proporção.
+
+Então, no Render, mantenha o backend com **1 instância** (o padrão dos planos Starter). Se um dia precisar escalar horizontalmente, troque os contadores por um store compartilhado (Redis) **antes** — não depois. Os dois serviços auxiliares (e-mail e upload) não têm esse acoplamento e podem escalar livremente.
 
 ## Pendências que continuam fora do código (decisão de infra, não de código)
 
