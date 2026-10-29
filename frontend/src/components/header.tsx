@@ -28,7 +28,7 @@ export default function Header({ onToggleMenu }: HeaderProps) {
 
   return (
     <header 
-      className="shadow-md h-16 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-50 bg-[linear-gradient(to_right,#fcfcfc,#ff944d,#213e6c)] dark:bg-[linear-gradient(to_right,#1f2937,#b3541c,#10172b)]"
+      className="shadow-md h-16 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-50 bg-[linear-gradient(to_right,#ecf1f9,#2658ad)] dark:bg-[linear-gradient(to_right,#1c294f)]"
     >
       <div className="flex items-center gap-2 sm:gap-4">
         <button

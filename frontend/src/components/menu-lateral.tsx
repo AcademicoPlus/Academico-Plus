@@ -79,7 +79,7 @@ export default function MenuLateral({ isOpen = false, onClose = () => {} }: Menu
       )}
 
       {/* Fundo principal ajustado para a cor laranja exata (#F27405) ou dark mode */}
-      <aside className={`${isOpen ? 'flex absolute left-0 z-50 shadow-2xl' : 'hidden'} lg:flex w-72 bg-[#F27405] dark:bg-slate-900 h-full flex-col transition-transform duration-300`}>
+      <aside className={`${isOpen ? 'flex absolute left-0 z-50 shadow-2xl' : 'hidden'} lg:flex w-72 bg-[#2658ad] dark:bg-slate-900 h-full flex-col transition-transform duration-300`}>
 
         {/* PARTE DE CIMA DO MENU */}
         <div className="flex-1 overflow-y-auto py-6 custom-scrollbar">
