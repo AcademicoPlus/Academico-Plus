@@ -462,6 +462,52 @@ class ProjetoServiceTest {
             assertThat(aviso.getTipo()).isEqualTo("cancelamento");
             assertThat(aviso.getProjetoNome()).isEqualTo(projeto.getTitulo());
             assertThat(aviso.getProjeto()).isEqualTo(projeto);
+            assertThat(aviso.getMotivo()).isNull();
+        });
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void alterarStatus_deveGuardarMotivoNoAviso_quandoCancelarComMotivo() {
+        // Regressão: o motivo vinha no request, mas era descartado.
+        Projeto projeto = EntityFixtures.projeto(criador, "Projeto", 5, StatusProjeto.EM_ANDAMENTO);
+        Usuario membro = EntityFixtures.usuario("membro@unifapi.edu.br", null);
+        when(projetoRepository.findByIdAndAtivoTrue(projeto.getId())).thenReturn(Optional.of(projeto));
+        when(projetoMembroRepository.findByProjeto_IdOrderByDataAdesaoAsc(projeto.getId()))
+                .thenReturn(List.of(EntityFixtures.projetoMembro(projeto, membro, "Dev")));
+        stubDetalhe(projeto, 1, 0);
+
+        projetoService.alterarStatus(projeto.getId(),
+                statusRequest(StatusProjeto.CANCELADO, "  Falta de verba  "), criador.getId());
+
+        ArgumentCaptor<List<ProjetoCanceladoAviso>> captor = ArgumentCaptor.forClass(List.class);
+        verify(projetoCanceladoAvisoRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).singleElement()
+                .satisfies(aviso -> assertThat(aviso.getMotivo()).isEqualTo("Falta de verba"));
+    }
+
+    @SuppressWarnings("unchecked")
+    @Test
+    void alterarStatus_deveAvisarCadaMembro_quandoConcluir() {
+        // Concluir libera as avaliações: a equipe precisa ficar sabendo.
+        Projeto projeto = EntityFixtures.projeto(criador, "Projeto Concluível", 5, StatusProjeto.EM_ANDAMENTO);
+        Usuario membro1 = EntityFixtures.usuario("membro1@unifapi.edu.br", null);
+        Usuario membro2 = EntityFixtures.usuario("membro2@unifapi.edu.br", null);
+        when(projetoRepository.findByIdAndAtivoTrue(projeto.getId())).thenReturn(Optional.of(projeto));
+        when(projetoMembroRepository.findByProjeto_IdOrderByDataAdesaoAsc(projeto.getId())).thenReturn(List.of(
+                EntityFixtures.projetoMembro(projeto, membro1, "Dev"),
+                EntityFixtures.projetoMembro(projeto, membro2, "Dev")));
+        stubDetalhe(projeto, 2, 0);
+
+        projetoService.alterarStatus(projeto.getId(), statusRequest(StatusProjeto.CONCLUIDO), criador.getId());
+
+        ArgumentCaptor<List<ProjetoCanceladoAviso>> captor = ArgumentCaptor.forClass(List.class);
+        verify(projetoCanceladoAvisoRepository).saveAll(captor.capture());
+        assertThat(captor.getValue()).extracting(ProjetoCanceladoAviso::getUsuario)
+                .containsExactlyInAnyOrder(membro1, membro2);
+        assertThat(captor.getValue()).allSatisfy(aviso -> {
+            assertThat(aviso.getTipo()).isEqualTo(ProjetoCanceladoAviso.TIPO_CONCLUSAO);
+            assertThat(aviso.getMotivo()).isNull();
         });
     }
 

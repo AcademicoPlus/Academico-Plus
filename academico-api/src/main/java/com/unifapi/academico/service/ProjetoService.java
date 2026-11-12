@@ -43,6 +43,8 @@ public class ProjetoService {
 
     /** Limite da coluna projeto_cancelamento_aviso.projeto_nome. */
     private static final int TAMANHO_MAXIMO_NOME_AVISO = 200;
+    /** Limite da coluna projeto_cancelamento_aviso.motivo (V14). */
+    private static final int TAMANHO_MAXIMO_MOTIVO_AVISO = 500;
 
     private final ProjetoRepository projetoRepository;
     private final UsuarioRepository usuarioRepository;
@@ -121,7 +123,11 @@ public class ProjetoService {
         projetoRepository.save(projeto);
 
         if (novoStatus == StatusProjeto.CANCELADO) {
-            registrarAvisosDeCancelamento(projeto);
+            registrarAvisos(projeto, ProjetoCanceladoAviso.TIPO_CANCELAMENTO, normalizar(request.motivo()));
+        } else if (novoStatus == StatusProjeto.CONCLUIDO) {
+            // Concluir libera as avaliações entre colegas: sem o aviso, a equipe
+            // não fica sabendo que já pode avaliar.
+            registrarAvisos(projeto, ProjetoCanceladoAviso.TIPO_CONCLUSAO, null);
         }
 
         return responseDetalhado(id);
@@ -148,7 +154,7 @@ public class ProjetoService {
 
     private void aplicarInativacao(Projeto projeto) {
         if (projeto.getStatus() != StatusProjeto.CANCELADO && projeto.getStatus() != StatusProjeto.CONCLUIDO) {
-            registrarAvisosDeCancelamento(projeto);
+            registrarAvisos(projeto, ProjetoCanceladoAviso.TIPO_CANCELAMENTO, null);
             projeto.setStatus(StatusProjeto.CANCELADO);
         }
 
@@ -319,10 +325,11 @@ public class ProjetoService {
     }
 
     /**
-     * Grava um aviso por membro. O AuthService entrega esses avisos no login,
-     * então é assim que a equipe descobre que o projeto foi cancelado.
+     * Grava um aviso por membro (o criador é quem disparou, não precisa ser
+     * avisado). O frontend busca os pendentes em GET /avisos e mostra assim que
+     * o membro estiver usando o app — ver AvisoProjetoService.
      */
-    private void registrarAvisosDeCancelamento(Projeto projeto) {
+    private void registrarAvisos(Projeto projeto, String tipo, String motivo) {
         List<ProjetoMembro> membros = projetoMembroRepository.findByProjeto_IdOrderByDataAdesaoAsc(projeto.getId());
         if (membros.isEmpty()) {
             return;
@@ -338,7 +345,8 @@ public class ProjetoService {
                         .projeto(projeto)
                         .projetoNome(truncar(projeto.getTitulo(), TAMANHO_MAXIMO_NOME_AVISO))
                         .projetoData(dataReferencia)
-                        .tipo("cancelamento")
+                        .tipo(tipo)
+                        .motivo(truncar(motivo, TAMANHO_MAXIMO_MOTIVO_AVISO))
                         .build())
                 .toList();
 

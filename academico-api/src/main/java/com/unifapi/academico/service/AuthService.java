@@ -120,7 +120,7 @@ public class AuthService {
         String token = jwtTokenProvider.gerarTokenAcesso(usuario.getId(), usuario.getNivelAcesso().getNome());
         UsuarioResumoResponse resumo = UsuarioResumoResponse.fromEntity(usuario);
         
-        List<ProjetoCanceladoResumoResponse> projetosCancelados = consumirProjetosCancelados(usuario.getId());
+        List<ProjetoCanceladoResumoResponse> projetosCancelados = listarAvisosDeProjetoPendentes(usuario.getId());
 
         List<SancaoResponse> avisosModeracao = consumirSancoes(usuario.getId());
 
@@ -301,15 +301,19 @@ public class AuthService {
     // MÉTODOS PRIVADOS / HELPERS
     // ============================================
 
-    private List<ProjetoCanceladoResumoResponse> consumirProjetosCancelados(UUID usuarioId) {
+    /**
+     * Devolve os avisos de projeto pendentes SEM marcá-los como vistos. Antes o
+     * login os consumia, mas o frontend nunca exibiu esse campo: o aviso era
+     * marcado como visto e se perdia. Quem exibe e marca agora é a tela, via
+     * GET /avisos e PATCH /avisos/{id}/visualizado (AvisoProjetoService).
+     */
+    private List<ProjetoCanceladoResumoResponse> listarAvisosDeProjetoPendentes(UUID usuarioId) {
         List<ProjetoCanceladoAviso> avisos = projetoAvisoRepository
                 .findByUsuario_IdAndVisualizadoEmIsNullOrderByCriadoEmAsc(usuarioId);
 
         if (avisos.isEmpty()) return List.of();
 
-        LocalDateTime agora = LocalDateTime.now();
         return avisos.stream().map(aviso -> {
-            aviso.setVisualizadoEm(agora);
             return new ProjetoCanceladoResumoResponse(
                     aviso.getProjetoId(),
                     aviso.getProjetoNome(),

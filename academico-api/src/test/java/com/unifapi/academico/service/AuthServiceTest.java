@@ -187,7 +187,7 @@ class AuthServiceTest {
     }
 
     @Test
-    void deveLogarComSucessoEConsumirAvisoDeProjetoCanceladoPendente() {
+    void deveLogarComSucessoEListarAvisoDeProjetoPendenteSemConsumir() {
         String email = usuario.getEmail();
         LoginRequest request = new LoginRequest(email, "senhaCorreta");
 
@@ -216,9 +216,10 @@ class AuthServiceTest {
         assertThat(response.avisosCancelamento()).hasSize(1);
         assertThat(response.avisosCancelamento().get(0).nome()).isEqualTo("Projeto X");
 
-        // O aviso é marcado como visualizado (consumido) durante o login — não há um save() explícito
-        // no repositório, pois a transação do @Transactional persiste a mudança via dirty checking.
-        assertThat(aviso.getVisualizadoEm()).isNotNull();
+        // Regressão: o login marcava o aviso como visto, mas o frontend nunca exibia
+        // esse campo — o aviso se perdia. Agora quem marca é a tela, ao fechar o
+        // aviso (PATCH /avisos/{id}/visualizado).
+        assertThat(aviso.getVisualizadoEm()).isNull();
 
         verify(rateLimiterService).registrarSucesso(chaveLoginIp(email));
     }

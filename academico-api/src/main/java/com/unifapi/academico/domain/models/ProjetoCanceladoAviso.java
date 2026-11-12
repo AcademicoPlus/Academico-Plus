@@ -50,9 +50,17 @@ public class ProjetoCanceladoAviso {
     @Column(name = "projeto_data", nullable = false)
     private LocalDate projetoData;
 
+    /** "cancelamento" ou "conclusao" — ver {@link #TIPO_CANCELAMENTO} e {@link #TIPO_CONCLUSAO}. */
     @Builder.Default
     @Column(name = "tipo", nullable = false, length = 20)
-    private String tipo = "cancelamento";
+    private String tipo = TIPO_CANCELAMENTO;
+
+    public static final String TIPO_CANCELAMENTO = "cancelamento";
+    public static final String TIPO_CONCLUSAO = "conclusao";
+
+    /** Motivo informado pelo criador ao cancelar; nulo nos demais casos. */
+    @Column(name = "motivo", length = 500)
+    private String motivo;
 
     @CreationTimestamp
     @Column(name = "criado_em", nullable = false, updatable = false)
