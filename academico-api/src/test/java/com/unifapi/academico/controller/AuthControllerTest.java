@@ -68,7 +68,7 @@ class AuthControllerTest {
         LoginResponse response = new LoginResponse(true, "Login realizado com sucesso.",
                 "jwt-token-fake", resumo, List.of(), List.of());
 
-        when(authService.login(any(LoginRequest.class))).thenReturn(response);
+        when(authService.login(any(LoginRequest.class), anyString())).thenReturn(response);
 
         mockMvc.perform(post("/auth/login")
                         .contentType("application/json")
@@ -78,7 +78,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.token").value("jwt-token-fake"))
                 .andExpect(jsonPath("$.usuario.nome").value("Usuario Teste"));
 
-        verify(authService).login(any(LoginRequest.class));
+        verify(authService).login(any(LoginRequest.class), anyString());
     }
 
     @Test
@@ -97,7 +97,7 @@ class AuthControllerTest {
                 .andExpect(jsonPath("$.erros").isArray())
                 .andExpect(jsonPath("$.erros[0].campo").value("email"));
 
-        verify(authService, never()).login(any(LoginRequest.class));
+        verify(authService, never()).login(any(LoginRequest.class), anyString());
     }
 
     // ============================================

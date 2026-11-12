@@ -146,8 +146,6 @@ public class UsuarioService {
         // manda "" quando o usuário apaga o conteúdo, e aí gravamos null.
         if (request.bio() != null)
             usuario.setBio(normalizarTextoOpcional(request.bio()));
-        if (request.fotoUrl() != null)
-            usuario.setFotoUrl(request.fotoUrl());
         if (request.linkedinUrl() != null)
             usuario.setLinkedinUrl(normalizarTextoOpcional(request.linkedinUrl()));
         if (request.githubUrl() != null)
@@ -169,8 +167,13 @@ public class UsuarioService {
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(request.novaSenha()));
+        // Invalida todos os tokens emitidos até aqui (outras abas, outros
+        // aparelhos, um eventual invasor). Quem trocou a senha recebe um token
+        // novo na resposta para não ser deslogado junto.
+        usuario.setSenhaAlteradaEm(LocalDateTime.now());
 
-        return UsuarioUpdateSenhaResponse.sucesso();
+        String novoToken = jwtTokenProvider.gerarTokenAcesso(usuario.getId(), usuario.getNivelAcesso().getNome());
+        return UsuarioUpdateSenhaResponse.sucesso(novoToken);
     }
 
     /** Envia a nova foto pro academico-upload-service e remove a anterior, se existir. */

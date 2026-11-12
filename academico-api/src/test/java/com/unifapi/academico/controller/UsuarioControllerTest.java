@@ -94,7 +94,7 @@ class UsuarioControllerTest {
     @WithUsuarioMock
     void atualizarMeuPerfil_deveRetornar200_quandoDadosValidos() throws Exception {
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                "Novo Nome", null, 4, "nova bio", null, null, null);
+                "Novo Nome", null, 4, "nova bio", null, null);
         when(usuarioService.atualizarPerfil(any(UUID.class), any(UsuarioUpdatePerfilRequest.class)))
                 .thenReturn(perfilPadrao(UUID.randomUUID()));
 
@@ -108,7 +108,7 @@ class UsuarioControllerTest {
     @WithUsuarioMock
     void atualizarMeuPerfil_deveRetornar400_quandoNomeEmBranco() throws Exception {
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                "", null, 4, "nova bio", null, null, null);
+                "", null, 4, "nova bio", null, null);
 
         mockMvc.perform(put("/usuarios/me")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -124,7 +124,7 @@ class UsuarioControllerTest {
     void alterarSenha_deveRetornar200_quandoDadosValidos() throws Exception {
         UsuarioUpdateSenhaRequest request = new UsuarioUpdateSenhaRequest("senhaAtual123", "senhaNova123");
         when(usuarioService.atualizarSenha(any(UUID.class), any(UsuarioUpdateSenhaRequest.class)))
-                .thenReturn(UsuarioUpdateSenhaResponse.sucesso());
+                .thenReturn(UsuarioUpdateSenhaResponse.sucesso("token-novo"));
 
         mockMvc.perform(patch("/usuarios/me/senha")
                         .contentType(MediaType.APPLICATION_JSON)

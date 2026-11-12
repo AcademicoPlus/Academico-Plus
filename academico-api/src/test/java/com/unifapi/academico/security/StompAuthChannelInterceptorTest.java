@@ -115,4 +115,51 @@ class StompAuthChannelInterceptorTest {
         assertThatThrownBy(() -> interceptor.preSend(subscribe("/topic/projetos/" + projeto.getId(), null), canal))
                 .isInstanceOf(IllegalArgumentException.class);
     }
+
+    // ============================================
+    // CONNECT
+    // ============================================
+
+    private Message<byte[]> connect(String token) {
+        StompHeaderAccessor accessor = StompHeaderAccessor.create(StompCommand.CONNECT);
+        accessor.addNativeHeader("Authorization", "Bearer " + token);
+        accessor.setLeaveMutable(true);
+        return MessageBuilder.createMessage(new byte[0], accessor.getMessageHeaders());
+    }
+
+    private void tokenValidoPara(Usuario usuario, String token, java.time.Instant emitidoEm) {
+        when(tokenRevogadoRepository.existsByToken(token)).thenReturn(false);
+        when(jwtTokenProvider.validarToken(token, "ACCESS")).thenReturn(true);
+        when(jwtTokenProvider.obterSubjectDoToken(token)).thenReturn(usuario.getId());
+        when(jwtTokenProvider.obterRoleDoToken(token)).thenReturn(usuario.getNivelAcesso().getNome());
+        when(usuarioRepository.findByIdWithNivelAcesso(usuario.getId())).thenReturn(Optional.of(usuario));
+        org.mockito.Mockito.lenient().when(jwtTokenProvider.obterEmissaoDoToken(token)).thenReturn(emitidoEm);
+    }
+
+    @Test
+    void connect_devePermitir_quandoTokenValido() {
+        tokenValidoPara(criador, "tok", java.time.Instant.now());
+
+        assertThatCode(() -> interceptor.preSend(connect("tok"), canal)).doesNotThrowAnyException();
+    }
+
+    @Test
+    void connect_deveNegar_quandoTokenEmitidoAntesDaTrocaDeSenha() {
+        criador.setSenhaAlteradaEm(java.time.LocalDateTime.now());
+        tokenValidoPara(criador, "tok-antigo", java.time.Instant.now().minusSeconds(3600));
+
+        assertThatThrownBy(() -> interceptor.preSend(connect("tok-antigo"), canal))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("senha foi alterada");
+    }
+
+    @Test
+    void connect_deveNegar_quandoUsuarioSuspenso() {
+        criador.setSuspensoAte(java.time.LocalDateTime.now().plusDays(3));
+        tokenValidoPara(criador, "tok", java.time.Instant.now());
+
+        assertThatThrownBy(() -> interceptor.preSend(connect("tok"), canal))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("suspensa");
+    }
 }

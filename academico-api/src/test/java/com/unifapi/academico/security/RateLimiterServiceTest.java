@@ -137,4 +137,45 @@ class RateLimiterServiceTest {
         assertThatCode(() -> rateLimiterService.verificarDisponivel(chaveB))
                 .doesNotThrowAnyException();
     }
+
+    @Test
+    void registrarFalhaComTetoProprioSoBloqueiaAoAtingirEsseTeto() {
+        String chave = "login:conta@teste.com";
+
+        for (int i = 0; i < 29; i++) {
+            rateLimiterService.registrarFalha(chave, 30);
+        }
+        assertThatCode(() -> rateLimiterService.verificarDisponivel(chave)).doesNotThrowAnyException();
+
+        rateLimiterService.registrarFalha(chave, 30);
+        assertThatThrownBy(() -> rateLimiterService.verificarDisponivel(chave))
+                .isInstanceOf(RegraDeNegocioException.class);
+    }
+
+    @Test
+    void consumirCotaDevePermitirAteOLimiteERecusarDepois() {
+        String chave = "reset-hora:alguem@teste.com";
+
+        for (int i = 0; i < 3; i++) {
+            rateLimiterService.consumirCota(chave, 3, java.time.Duration.ofHours(1), "excedeu");
+        }
+
+        assertThatThrownBy(() -> rateLimiterService.consumirCota(chave, 3, java.time.Duration.ofHours(1), "excedeu"))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("excedeu");
+        // Cotas são independentes por chave.
+        assertThatCode(() -> rateLimiterService.consumirCota("reset-hora:outra@teste.com", 3,
+                java.time.Duration.ofHours(1), "excedeu")).doesNotThrowAnyException();
+    }
+
+    @Test
+    void consumirCotaRecomecaQuandoAJanelaExpira() throws Exception {
+        String chave = "reset-intervalo:alguem@teste.com";
+        rateLimiterService.consumirCota(chave, 1, java.time.Duration.ofMillis(20), "excedeu");
+
+        Thread.sleep(40);
+
+        assertThatCode(() -> rateLimiterService.consumirCota(chave, 1, java.time.Duration.ofMillis(20), "excedeu"))
+                .doesNotThrowAnyException();
+    }
 }

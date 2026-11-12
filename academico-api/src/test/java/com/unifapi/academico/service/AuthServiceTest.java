@@ -41,6 +41,7 @@ import static com.unifapi.academico.support.EntityFixtures.usuario;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doThrow;
@@ -74,6 +75,18 @@ class AuthServiceTest {
     private Curso curso;
     private Usuario usuario;
 
+    private static final String IP = "203.0.113.7";
+
+    private static String chaveLoginIp(String email) {
+        return "login:" + email + "|" + IP;
+    }
+
+    private AuthService authServiceComRateLimiterReal() {
+        return new AuthService(usuarioRepository, cursoRepository, nivelAcessoRepository, projetoAvisoRepository,
+                sancaoRepository, tokenRevogadoRepository, passwordEncoder, jwtTokenProvider,
+                codigoVerificacaoPublisher, new RateLimiterService());
+    }
+
     @BeforeEach
     void setUp() {
         authService = new AuthService(
@@ -104,9 +117,9 @@ class AuthServiceTest {
         LoginRequest request = new LoginRequest(email, "senha123");
 
         doThrow(new RegraDeNegocioException("Muitas tentativas. Tente novamente mais tarde."))
-                .when(rateLimiterService).verificarDisponivel(email);
+                .when(rateLimiterService).verificarDisponivel(chaveLoginIp(email));
 
-        assertThatThrownBy(() -> authService.login(request))
+        assertThatThrownBy(() -> authService.login(request, IP))
                 .isInstanceOf(RegraDeNegocioException.class)
                 .hasMessage("Muitas tentativas. Tente novamente mais tarde.");
 
@@ -120,7 +133,7 @@ class AuthServiceTest {
 
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.empty());
 
-        LoginResponse response = authService.login(request);
+        LoginResponse response = authService.login(request, IP);
 
         assertThat(response.sucesso()).isFalse();
         assertThat(response.mensagem()).isEqualTo("Email ou senha incorretos.");
@@ -128,7 +141,8 @@ class AuthServiceTest {
         assertThat(response.usuario()).isNull();
         assertThat(response.avisosCancelamento()).isEmpty();
 
-        verify(rateLimiterService).registrarFalha(email);
+        verify(rateLimiterService).registrarFalha(chaveLoginIp(email), AuthService.MAX_FALHAS_LOGIN_POR_IP);
+        verify(rateLimiterService).registrarFalha("login:" + email, AuthService.MAX_FALHAS_LOGIN_POR_CONTA);
         verify(rateLimiterService, never()).registrarSucesso(any());
     }
 
@@ -140,12 +154,13 @@ class AuthServiceTest {
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("senhaErrada", usuario.getSenhaHash())).thenReturn(false);
 
-        LoginResponse response = authService.login(request);
+        LoginResponse response = authService.login(request, IP);
 
         assertThat(response.sucesso()).isFalse();
         assertThat(response.mensagem()).isEqualTo("Email ou senha incorretos.");
 
-        verify(rateLimiterService).registrarFalha(email);
+        verify(rateLimiterService).registrarFalha(chaveLoginIp(email), AuthService.MAX_FALHAS_LOGIN_POR_IP);
+        verify(rateLimiterService).registrarFalha("login:" + email, AuthService.MAX_FALHAS_LOGIN_POR_CONTA);
         verify(rateLimiterService, never()).registrarSucesso(any());
         verify(jwtTokenProvider, never()).gerarTokenAcesso(any(), any());
     }
@@ -159,15 +174,15 @@ class AuthServiceTest {
         when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
         when(passwordEncoder.matches("senhaCorreta", usuario.getSenhaHash())).thenReturn(true);
 
-        LoginResponse response = authService.login(request);
+        LoginResponse response = authService.login(request, IP);
 
         assertThat(response.sucesso()).isFalse();
         assertThat(response.mensagem()).isEqualTo("Esta conta está desativada.");
         assertThat(response.token()).isNull();
 
         // A senha bateu, então o rate limiter é resetado mesmo que o login falhe por conta desativada.
-        verify(rateLimiterService).registrarSucesso(email);
-        verify(rateLimiterService, never()).registrarFalha(any());
+        verify(rateLimiterService).registrarSucesso(chaveLoginIp(email));
+        verify(rateLimiterService, never()).registrarFalha(any(), anyInt());
         verify(jwtTokenProvider, never()).gerarTokenAcesso(any(), any());
     }
 
@@ -191,7 +206,7 @@ class AuthServiceTest {
         when(projetoAvisoRepository.findByUsuario_IdAndVisualizadoEmIsNullOrderByCriadoEmAsc(usuario.getId()))
                 .thenReturn(List.of(aviso));
 
-        LoginResponse response = authService.login(request);
+        LoginResponse response = authService.login(request, IP);
 
         assertThat(response.sucesso()).isTrue();
         assertThat(response.mensagem()).isEqualTo("Login realizado com sucesso.");
@@ -205,7 +220,7 @@ class AuthServiceTest {
         // no repositório, pois a transação do @Transactional persiste a mudança via dirty checking.
         assertThat(aviso.getVisualizadoEm()).isNotNull();
 
-        verify(rateLimiterService).registrarSucesso(email);
+        verify(rateLimiterService).registrarSucesso(chaveLoginIp(email));
     }
 
     @Test
@@ -221,10 +236,46 @@ class AuthServiceTest {
         when(projetoAvisoRepository.findByUsuario_IdAndVisualizadoEmIsNullOrderByCriadoEmAsc(usuario.getId()))
                 .thenReturn(List.of());
 
-        LoginResponse response = authService.login(request);
+        LoginResponse response = authService.login(request, IP);
 
         assertThat(response.sucesso()).isTrue();
         assertThat(response.avisosCancelamento()).isEmpty();
+    }
+
+    @Test
+    void falhasDeOutroIpNaoTravamOLoginDoDonoDaConta() {
+        // Regressão: o bloqueio era só por e-mail, então 5 senhas erradas de
+        // qualquer pessoa trancavam o dono da conta por 15 minutos.
+        AuthService comLimiterReal = authServiceComRateLimiterReal();
+        String email = usuario.getEmail();
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("senhaErrada", usuario.getSenhaHash())).thenReturn(false);
+        when(passwordEncoder.matches("senhaCorreta", usuario.getSenhaHash())).thenReturn(true);
+        when(jwtTokenProvider.gerarTokenAcesso(usuario.getId(), nivelAluno.getNome())).thenReturn("token-jwt");
+
+        for (int i = 0; i < AuthService.MAX_FALHAS_LOGIN_POR_IP; i++) {
+            comLimiterReal.login(new LoginRequest(email, "senhaErrada"), "198.51.100.66");
+        }
+
+        assertThatThrownBy(() -> comLimiterReal.login(new LoginRequest(email, "senhaCorreta"), "198.51.100.66"))
+                .isInstanceOf(RegraDeNegocioException.class);
+        assertThat(comLimiterReal.login(new LoginRequest(email, "senhaCorreta"), IP).sucesso()).isTrue();
+    }
+
+    @Test
+    void contaTravaQuandoForcaBrutaVemDeMuitosIps() {
+        AuthService comLimiterReal = authServiceComRateLimiterReal();
+        String email = usuario.getEmail();
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.matches("senhaErrada", usuario.getSenhaHash())).thenReturn(false);
+
+        for (int i = 0; i < AuthService.MAX_FALHAS_LOGIN_POR_CONTA; i++) {
+            comLimiterReal.login(new LoginRequest(email, "senhaErrada"), "10.0.0." + i);
+        }
+
+        assertThatThrownBy(() -> comLimiterReal.login(new LoginRequest(email, "senhaErrada"), "10.0.1.1"))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Muitas tentativas. Tente novamente mais tarde.");
     }
 
     // ============================================
@@ -366,6 +417,36 @@ class AuthServiceTest {
         // Fire-and-forget: publicar na fila é o único envolvimento do AuthService com o
         // envio — falhas reais de entrega não voltam mais pro chamador HTTP (ver academico-email-service).
         verify(codigoVerificacaoPublisher).publicar(eq(usuario.getEmail()), anyString(), eq(15));
+    }
+
+    @Test
+    void deveAplicarCotaPorEmailAntesDeConsultarOBancoAoSolicitarReset() {
+        String email = "qualquer@unifapi.edu.br";
+        doThrow(new RegraDeNegocioException("Aguarde um minuto antes de pedir um novo código."))
+                .when(rateLimiterService).consumirCota(eq("reset-intervalo:" + email), eq(1), any(), anyString());
+
+        assertThatThrownBy(() -> authService.solicitarResetSenha(email))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Aguarde um minuto antes de pedir um novo código.");
+
+        // A cota vale igual para e-mail cadastrado ou não: nem chega a consultar o banco.
+        verify(usuarioRepository, never()).findByEmail(any());
+        verifyNoInteractions(codigoVerificacaoPublisher);
+    }
+
+    @Test
+    void segundoPedidoDeCodigoNoMesmoMinutoEhRecusado() {
+        AuthService comLimiterReal = authServiceComRateLimiterReal();
+        String email = usuario.getEmail();
+        when(usuarioRepository.findByEmail(email)).thenReturn(Optional.of(usuario));
+        when(passwordEncoder.encode(anyString())).thenReturn("hash-otp");
+
+        comLimiterReal.solicitarResetSenha(email);
+
+        assertThatThrownBy(() -> comLimiterReal.solicitarResetSenha(email))
+                .isInstanceOf(RegraDeNegocioException.class)
+                .hasMessage("Aguarde um minuto antes de pedir um novo código.");
+        verify(codigoVerificacaoPublisher, times(1)).publicar(eq(email), anyString(), eq(15));
     }
 
     @Test
@@ -601,6 +682,8 @@ class AuthServiceTest {
         assertThat(response.sucesso()).isTrue();
         assertThat(response.mensagem()).isEqualTo("Senha redefinida com sucesso.");
         assertThat(usuario.getSenhaHash()).isEqualTo("novo-hash-bcrypt");
+        // Marca a troca: o filtro JWT passa a recusar os tokens emitidos antes.
+        assertThat(usuario.getSenhaAlteradaEm()).isNotNull();
 
         ArgumentCaptor<TokenRevogado> captor = ArgumentCaptor.forClass(TokenRevogado.class);
         verify(tokenRevogadoRepository, times(1)).save(captor.capture());

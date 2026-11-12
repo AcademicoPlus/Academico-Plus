@@ -274,7 +274,7 @@ class UsuarioServiceTest {
         when(cursoRepository.findById(idCursoInvalido)).thenReturn(Optional.empty());
 
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                null, idCursoInvalido, null, null, null, null, null);
+                null, idCursoInvalido, null, null, null, null);
 
         assertThatThrownBy(() -> usuarioService.atualizarPerfil(usuario.getId(), request))
                 .isInstanceOf(RecursoNaoEncontradoException.class)
@@ -287,7 +287,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
 
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                "   ", null, null, null, null, null, null);
+                "   ", null, null, null, null, null);
 
         usuarioService.atualizarPerfil(usuario.getId(), request);
 
@@ -299,7 +299,7 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
 
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                "  Novo Nome  ", null, null, null, null, null, null);
+                "  Novo Nome  ", null, null, null, null, null);
 
         usuarioService.atualizarPerfil(usuario.getId(), request);
 
@@ -313,7 +313,7 @@ class UsuarioServiceTest {
         when(cursoRepository.findById(novoCurso.getId())).thenReturn(Optional.of(novoCurso));
 
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                null, novoCurso.getId(), null, null, null, null, null);
+                null, novoCurso.getId(), null, null, null, null);
 
         usuarioService.atualizarPerfil(usuario.getId(), request);
 
@@ -328,14 +328,14 @@ class UsuarioServiceTest {
         // bio="" é aplicada e normalizada para null, que é como o perfil
         // representa "sem biografia" (apenas null no request é ignorado).
         UsuarioUpdatePerfilRequest requestComBioVazia = new UsuarioUpdatePerfilRequest(
-                null, null, null, "", null, null, null);
+                null, null, null, "", null, null);
         usuarioService.atualizarPerfil(usuario.getId(), requestComBioVazia);
         assertThat(usuario.getBio()).isNull();
 
         // bio=null não é aplicada, mantém o valor anterior
         usuario.setBio("Bio atual");
         UsuarioUpdatePerfilRequest requestComBioNula = new UsuarioUpdatePerfilRequest(
-                null, null, null, null, null, null, null);
+                null, null, null, null, null, null);
         usuarioService.atualizarPerfil(usuario.getId(), requestComBioNula);
         assertThat(usuario.getBio()).isEqualTo("Bio atual");
     }
@@ -345,16 +345,34 @@ class UsuarioServiceTest {
         when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
 
         UsuarioUpdatePerfilRequest request = new UsuarioUpdatePerfilRequest(
-                null, null, 5, "Nova bio", "http://foto.com/nova.png",
+                null, null, 5, "Nova bio",
                 "http://linkedin.com/in/teste", "http://github.com/teste");
 
         usuarioService.atualizarPerfil(usuario.getId(), request);
 
         assertThat(usuario.getPeriodo()).isEqualTo(5);
         assertThat(usuario.getBio()).isEqualTo("Nova bio");
-        assertThat(usuario.getFotoUrl()).isEqualTo("http://foto.com/nova.png");
         assertThat(usuario.getLinkedinUrl()).isEqualTo("http://linkedin.com/in/teste");
         assertThat(usuario.getGithubUrl()).isEqualTo("http://github.com/teste");
+    }
+
+    @Test
+    void atualizarPerfil_naoDeveAlterarFoto_mesmoQueOCorpoTragaFotoUrl() throws Exception {
+        // Regressão: fotoUrl livre no PUT /usuarios/me permitia apontar a foto
+        // para o arquivo de outra pessoa e apagá-lo via DELETE /usuarios/me/foto.
+        usuario.setFotoUrl("https://pub.r2.dev/perfis/minha-foto.png");
+        when(usuarioRepository.findById(usuario.getId())).thenReturn(Optional.of(usuario));
+
+        // Mesmo comportamento do ObjectMapper do Spring Boot: campo desconhecido é ignorado.
+        UsuarioUpdatePerfilRequest request = new com.fasterxml.jackson.databind.ObjectMapper()
+                .configure(com.fasterxml.jackson.databind.DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .readValue("{\"nome\":\"Nome Valido\","
+                        + "\"fotoUrl\":\"https://pub.r2.dev/perfis/foto-de-outra-pessoa.png\"}",
+                        UsuarioUpdatePerfilRequest.class);
+
+        usuarioService.atualizarPerfil(usuario.getId(), request);
+
+        assertThat(usuario.getFotoUrl()).isEqualTo("https://pub.r2.dev/perfis/minha-foto.png");
     }
 
     // ============================================
@@ -396,6 +414,8 @@ class UsuarioServiceTest {
         when(passwordEncoder.matches("senhaAtual123", hashAntigo)).thenReturn(true);
         when(passwordEncoder.matches("novaSenha123", hashAntigo)).thenReturn(false);
         when(passwordEncoder.encode("novaSenha123")).thenReturn("$2a$10$novoHash");
+        when(jwtTokenProvider.gerarTokenAcesso(usuario.getId(), usuario.getNivelAcesso().getNome()))
+                .thenReturn("token-novo");
 
         UsuarioUpdateSenhaRequest request = new UsuarioUpdateSenhaRequest("senhaAtual123", "novaSenha123");
 
@@ -404,6 +424,10 @@ class UsuarioServiceTest {
         assertThat(response.mensagem()).isEqualTo("Senha alterada com sucesso.");
         assertThat(usuario.getSenhaHash()).isEqualTo("$2a$10$novoHash");
         verify(passwordEncoder).encode("novaSenha123");
+        // Troca de senha derruba as sessões antigas e devolve um token novo
+        // para quem fez a troca continuar logado.
+        assertThat(usuario.getSenhaAlteradaEm()).isNotNull();
+        assertThat(response.token()).isEqualTo("token-novo");
     }
 
     // ============================================

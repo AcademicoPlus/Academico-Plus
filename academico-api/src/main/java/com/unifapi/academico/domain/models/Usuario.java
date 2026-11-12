@@ -6,7 +6,10 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.SQLDelete;
 import org.hibernate.annotations.SQLRestriction;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.temporal.ChronoUnit;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
@@ -112,6 +115,28 @@ public class Usuario {
 
     @Column(name = "codigo_recuperacao_expira_em")
     private LocalDateTime codigoRecuperacaoExpiraEm;
+
+    /**
+     * Última troca de senha (pelo perfil ou pela recuperação). Todo token
+     * emitido antes disso deixa de valer — sem refresh token, é o único jeito
+     * de derrubar uma sessão roubada antes das 24h de expiração.
+     */
+    @Column(name = "senha_alterada_em")
+    private LocalDateTime senhaAlteradaEm;
+
+    /**
+     * True se o token foi emitido antes da última troca de senha. Compara em
+     * segundos porque o "iat" do JWT não guarda fração: um token emitido no
+     * mesmo segundo da troca (o que a própria troca devolve) continua valendo.
+     */
+    public boolean tokenAnteriorATrocaDeSenha(Instant emitidoEm) {
+        if (senhaAlteradaEm == null || emitidoEm == null) {
+            return false;
+        }
+        Instant troca = senhaAlteradaEm.atZone(ZoneId.systemDefault()).toInstant()
+                .truncatedTo(ChronoUnit.SECONDS);
+        return emitidoEm.truncatedTo(ChronoUnit.SECONDS).isBefore(troca);
+    }
 
     // ============================================
     // TIMESTAMPS E SOFT DELETE

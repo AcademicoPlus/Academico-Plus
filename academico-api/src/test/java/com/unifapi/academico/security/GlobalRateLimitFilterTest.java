@@ -32,6 +32,7 @@ class GlobalRateLimitFilterTest {
 
     private static final int LIMITE = 3;
     private static final int LIMITE_CADASTRO = 2;
+    private static final int LIMITE_RESET = 2;
 
     @Mock
     private HttpServletRequest request;
@@ -48,7 +49,7 @@ class GlobalRateLimitFilterTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        filter = new GlobalRateLimitFilter(LIMITE, LIMITE_CADASTRO);
+        filter = new GlobalRateLimitFilter(LIMITE, LIMITE_CADASTRO, LIMITE_RESET);
 
         corpoDaResposta = new StringWriter();
         PrintWriter writer = new PrintWriter(corpoDaResposta);
@@ -166,5 +167,23 @@ class GlobalRateLimitFilterTest {
 
         verify(filterChain, times(LIMITE)).doFilter(request, response);
         verify(response, never()).setStatus(429);
+    }
+
+    /** Um IP não pode pedir código para uma lista de e-mails e esgotar a cota do provedor de e-mail. */
+    @Test
+    void pedidoDeCodigoDeResetDeveTerLimiteProprioPorIp() throws Exception {
+        when(request.getRemoteAddr()).thenReturn("203.0.113.9");
+        when(request.getMethod()).thenReturn("POST");
+        when(request.getServletPath()).thenReturn("/auth/reset-senha/solicitar");
+
+        for (int i = 0; i < LIMITE_RESET; i++) {
+            filter.doFilterInternal(request, response, filterChain);
+        }
+        filter.doFilterInternal(request, response, filterChain);
+
+        verify(filterChain, times(LIMITE_RESET)).doFilter(request, response);
+        verify(response, times(1)).setStatus(429);
+        assertThat(corpoDaResposta.toString())
+                .isEqualTo("{\"erro\": \"Muitos pedidos de código. Tente novamente mais tarde.\"}");
     }
 }

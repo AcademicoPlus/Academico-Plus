@@ -110,6 +110,15 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
             throw new IllegalArgumentException("Usuário inativo.");
         }
 
+        // Mesmas travas do JwtAuthenticationFilter, que não roda para frames STOMP.
+        if (usuario.estaSuspenso()) {
+            throw new IllegalArgumentException("Sua conta está suspensa.");
+        }
+
+        if (usuario.tokenAnteriorATrocaDeSenha(jwtTokenProvider.obterEmissaoDoToken(token))) {
+            throw new IllegalArgumentException("Sua senha foi alterada. Faça login novamente.");
+        }
+
         String roleAtual = usuario.getNivelAcesso().getNome();
         if (!roleAtual.equals(roleDoToken)) {
             throw new IllegalArgumentException("Permissões do usuário mudaram. Faça login novamente.");

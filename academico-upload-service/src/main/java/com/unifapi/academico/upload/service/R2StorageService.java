@@ -18,6 +18,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.util.UUID;
+import java.util.regex.Pattern;
 
 @Slf4j
 @Service
@@ -39,6 +40,10 @@ public class R2StorageService {
     private String publicUrl;
 
     private static final String PREFIXO = "perfis/";
+
+    /** UUID gerado em salvar() seguido da extensão, sem barra (não sai do prefixo). */
+    private static final Pattern NOME_ARQUIVO_GERADO = Pattern.compile(
+            "[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}[^/]*");
 
     private S3Client s3Client;
 
@@ -83,11 +88,26 @@ public class R2StorageService {
         }
     }
 
-    public void deletar(String urlOuChave) {
-        if (urlOuChave == null || urlOuChave.isBlank()) return;
+    public void deletar(String url) {
+        deletar(url, PREFIXO);
+    }
+
+    /**
+     * Remove um arquivo gerado por {@link #salvar(MultipartFile, String)} sob o
+     * prefixo informado. Antes, qualquer chave do bucket era aceita (inclusive
+     * uma chave crua, sem a URL pública), então quem conseguisse fazer o
+     * monolito repassar uma URL arbitrária apagava foto/capa de outras pessoas.
+     */
+    public void deletar(String url, String prefixo) {
+        if (url == null || url.isBlank()) return;
+
+        String chave = extrairChaveGerenciada(url, publicUrl, prefixo);
+        if (chave == null) {
+            log.warn("Remoção recusada: URL fora do padrão gerado por este serviço ({}).", prefixo);
+            throw new UploadException("URL de arquivo inválida para remoção.");
+        }
 
         try {
-            String chave = extrairChave(urlOuChave);
             s3Client.deleteObject(DeleteObjectRequest.builder()
                     .bucket(bucket)
                     .key(chave)
@@ -98,11 +118,27 @@ public class R2StorageService {
         }
     }
 
-    private String extrairChave(String urlOuChave) {
-        if (urlOuChave.startsWith(publicUrl)) {
-            String semBase = urlOuChave.substring(publicUrl.length());
-            return semBase.startsWith("/") ? semBase.substring(1) : semBase;
+    /**
+     * Devolve a chave só se a URL tiver exatamente o formato que {@code salvar}
+     * produz: {@code <publicUrl>/<prefixo><uuid><extensão>}, sem "/" depois do
+     * prefixo. Qualquer outra coisa devolve null.
+     */
+    static String extrairChaveGerenciada(String url, String publicUrl, String prefixo) {
+        if (url == null || publicUrl == null || publicUrl.isBlank() || prefixo == null) {
+            return null;
         }
-        return urlOuChave;
+
+        String base = publicUrl + "/";
+        if (!url.startsWith(base)) {
+            return null;
+        }
+
+        String chave = url.substring(base.length());
+        if (!chave.startsWith(prefixo)) {
+            return null;
+        }
+
+        String nomeArquivo = chave.substring(prefixo.length());
+        return NOME_ARQUIVO_GERADO.matcher(nomeArquivo).matches() ? chave : null;
     }
 }

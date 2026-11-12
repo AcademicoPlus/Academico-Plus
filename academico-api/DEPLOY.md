@@ -45,15 +45,18 @@ O Render não tem um serviço de mensageria gerenciado, então o RabbitMQ roda n
    ```
    (Se usar a Internal Database URL — recomendado quando backend e banco estão na mesma região do Render, é mais rápido e não conta como tráfego externo.)
 
-## 4. Render — Web Service (academico-email-service)
+## 4. Render — Background Worker (academico-email-service)
 
 Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no RabbitMQ na inicialização.
 
-1. **New > Web Service**, conecte o repositório Git.
+Ninguém chama este serviço por HTTP: ele só consome a fila. Por isso ele vai como
+**Background Worker** (sem URL pública, mesmo preço do Web Service Starter), e não como Web Service.
+
+1. **New > Background Worker**, conecte o repositório Git.
 2. Runtime: **Docker**. Root directory: `academico-email-service`.
-3. Plano: Starter é suficiente (serviço leve, sem banco).
-4. Health check path: `/actuator/health`.
-5. Variáveis de ambiente (mesmas chaves do `.env.example` do serviço):
+3. Plano: Starter é suficiente (serviço leve, sem banco). **Não use o plano Free**: serviço grátis
+   hiberna sem tráfego HTTP e, hibernado, não consome a fila — os códigos de verificação ficam parados.
+4. Variáveis de ambiente (mesmas chaves do `.env.example` do serviço):
 
    | Variável | Valor |
    |---|---|
@@ -63,17 +66,21 @@ Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no Rab
    | `EMAIL_FROM` | remetente exibido no e-mail |
    | `LOGGING_LEVEL_ROOT` | `INFO` |
 
-## 5. Render — Web Service (academico-upload-service)
+## 5. Render — Private Service (academico-upload-service)
 
-1. **New > Web Service**, conecte o repositório Git.
+Só o monolito chama este serviço. Como **Private Service** ele não ganha URL pública: fica
+acessível apenas pela rede interna do Render, para os outros serviços da mesma conta e região.
+A chave `INTERNAL_API_KEY` continua valendo como segunda camada. Não publique como Web Service:
+aí a única proteção passa a ser a chave.
+
+1. **New > Private Service**, conecte o repositório Git.
 2. Runtime: **Docker**. Root directory: `academico-upload-service`.
-3. Plano: Starter é suficiente.
-4. Health check path: `/actuator/health`.
-5. Variáveis de ambiente:
+3. Plano: Starter é suficiente. Crie na **mesma região** do monolito (rede privada é por região).
+4. Variáveis de ambiente:
 
    | Variável | Valor |
    |---|---|
-   | `INTERNAL_API_KEY` | gere uma string aleatória — o monolito precisa da mesma chave |
+   | `INTERNAL_API_KEY` | `openssl rand -base64 48` — o monolito precisa da mesma chave. Nunca o valor de exemplo `changeme-shared-secret` (o serviço avisa no log se a chave for fraca) |
    | `R2_ACCOUNT_ID` | do passo 1 |
    | `R2_ACCESS_KEY_ID` | do passo 1 |
    | `R2_SECRET_ACCESS_KEY` | do passo 1 |
@@ -81,7 +88,10 @@ Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no Rab
    | `R2_PUBLIC_URL` | do passo 1 |
    | `LOGGING_LEVEL_ROOT` | `INFO` |
 
-6. Anote a URL pública deste serviço no Render (ex.: `https://academico-upload-service.onrender.com`) — o monolito vai usá-la como `UPLOAD_SERVICE_URL`.
+5. Anote o **endereço interno** do serviço (painel do serviço > **Connect** > **Internal**, no formato
+   `academico-upload-service:8082` — o nome é o que você deu ao serviço). O monolito vai usá-lo como
+   `UPLOAD_SERVICE_URL`, com `http://` na frente (ex.: `http://academico-upload-service:8082`).
+   O tráfego interno não passa pela internet, então não precisa de HTTPS.
 
 ## 6. Render — Web Service (backend)
 
@@ -104,7 +114,7 @@ Deploy este serviço antes do monolito — ele é quem declara a fila/DLQ no Rab
    | `CORS_ALLOWED_ORIGINS` | URL do frontend em produção (ex.: `https://academicoplus.vercel.app`) |
    | `RABBITMQ_HOST` / `PORT` / `USERNAME` / `PASSWORD` / `VHOST` | do passo 2 (CloudAMQP) |
    | `RABBITMQ_SSL_ENABLED` | `true` |
-   | `UPLOAD_SERVICE_URL` | URL do passo 5.6 |
+   | `UPLOAD_SERVICE_URL` | endereço interno do passo 5.5 (`http://academico-upload-service:8082`) |
    | `UPLOAD_SERVICE_API_KEY` | mesma chave configurada no passo 5 (`INTERNAL_API_KEY`) |
    | `LOGGING_LEVEL_ROOT` | `INFO` |
    | `LOGGING_LEVEL_COM_UNIFAPI_ACADEMICO` | `INFO` |

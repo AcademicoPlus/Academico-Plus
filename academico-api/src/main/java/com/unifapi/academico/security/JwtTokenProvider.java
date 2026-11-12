@@ -82,6 +82,12 @@ public class JwtTokenProvider {
         return claims.get("role", String.class);
     }
 
+    /** Claim "iat": quando o token foi emitido (precisão de segundos). */
+    public Instant obterEmissaoDoToken(String token) {
+        Date emitidoEm = extrairClaims(token).getIssuedAt();
+        return emitidoEm != null ? emitidoEm.toInstant() : null;
+    }
+
     // Método responsável por extrair a data de expiração do JWT
     public LocalDateTime obterDataExpiracaoDoToken(String token) {
         Claims claims = extrairClaims(token);

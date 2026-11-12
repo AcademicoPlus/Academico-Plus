@@ -28,7 +28,7 @@ public class BannerController {
 
     @DeleteMapping
     public ResponseEntity<Void> deletar(@RequestParam("url") String url) {
-        storageService.deletar(url);
+        storageService.deletar(url, PREFIXO);
         return ResponseEntity.noContent().build();
     }
 

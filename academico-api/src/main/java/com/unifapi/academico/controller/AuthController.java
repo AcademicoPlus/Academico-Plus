@@ -16,6 +16,7 @@ import com.unifapi.academico.dto.auth.LoginResponse;
 import com.unifapi.academico.service.AuthService;
 
 import io.swagger.v3.oas.annotations.Operation;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -31,8 +32,11 @@ public class AuthController {
 
     @PostMapping("/login")
     @Operation(summary = "Login de usuário", description = "Autentica um usuário e retorna um token JWT")
-    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<LoginResponse> login(@Valid @RequestBody LoginRequest request,
+                                               HttpServletRequest httpRequest) {
+        // IP real do cliente (server.forward-headers-strategy resolve o proxy):
+        // o bloqueio por força bruta conta por e-mail + IP, ver AuthService.login.
+        return ResponseEntity.ok(authService.login(request, httpRequest.getRemoteAddr()));
     }
 
     @PostMapping("/cadastro")

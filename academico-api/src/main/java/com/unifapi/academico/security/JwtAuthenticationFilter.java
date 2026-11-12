@@ -88,6 +88,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             return;
         }
 
+        // Senha trocada/redefinida depois da emissão: derruba a sessão (inclusive
+        // a de quem tenha roubado a conta).
+        if (usuario.tokenAnteriorATrocaDeSenha(jwtTokenProvider.obterEmissaoDoToken(token))) {
+            responderSessaoInvalida(response, "Sua senha foi alterada. Faça login novamente.");
+            return;
+        }
+
         String roleAtual = usuario.getNivelAcesso().getNome();
 
         // Nível de acesso mudou depois da emissão (ex.: promovido a ADMIN): o

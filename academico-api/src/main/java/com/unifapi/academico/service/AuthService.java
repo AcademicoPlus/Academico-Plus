@@ -33,6 +33,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -43,6 +44,12 @@ import java.util.UUID;
 public class AuthService {
 
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+
+    static final int MAX_FALHAS_LOGIN_POR_IP = 5;
+    static final int MAX_FALHAS_LOGIN_POR_CONTA = 30;
+
+    static final Duration INTERVALO_MINIMO_ENTRE_CODIGOS = Duration.ofMinutes(1);
+    static final int MAX_CODIGOS_POR_HORA = 5;
 
     private static final DateTimeFormatter FORMATO_PRAZO_SUSPENSAO =
             DateTimeFormatter.ofPattern("dd/MM/yyyy");
@@ -62,24 +69,40 @@ public class AuthService {
     // LOGIN & CADASTRO PÚBLICO
     // ============================================
 
+    /**
+     * Dois contadores de falha, porque um só por e-mail deixava qualquer pessoa
+     * travar o login de outra com 5 senhas erradas, de novo e de novo:
+     * <ul>
+     *   <li>e-mail + IP: trava em {@value #MAX_FALHAS_LOGIN_POR_IP} — quem erra é
+     *       barrado sem atingir o dono da conta, que entra de outro IP;</li>
+     *   <li>só e-mail: teto bem mais alto ({@value #MAX_FALHAS_LOGIN_POR_CONTA}),
+     *       contra força bruta distribuída em muitos IPs.</li>
+     * </ul>
+     * O sucesso zera só o contador do IP: zerar o da conta deixaria um ataque
+     * distribuído recomeçar toda vez que o dono entrasse.
+     */
     @Transactional
-    public LoginResponse login(LoginRequest request) {
+    public LoginResponse login(LoginRequest request, String ipCliente) {
         if (request.email() == null || request.email().isBlank()) {
             return new LoginResponse(false, "Informe o e-mail.", null, null, List.of(), List.of());
         }
 
         String emailNorm = request.email().trim().toLowerCase();
+        String chaveConta = "login:" + emailNorm;
+        String chaveIp = chaveConta + "|" + ipCliente;
 
-        rateLimiterService.verificarDisponivel(emailNorm);
+        rateLimiterService.verificarDisponivel(chaveIp);
+        rateLimiterService.verificarDisponivel(chaveConta);
 
         Usuario usuario = usuarioRepository.findByEmail(emailNorm).orElse(null);
 
         if (usuario == null || !passwordEncoder.matches(request.senha(), usuario.getSenhaHash())) {
-            rateLimiterService.registrarFalha(emailNorm);
+            rateLimiterService.registrarFalha(chaveIp, MAX_FALHAS_LOGIN_POR_IP);
+            rateLimiterService.registrarFalha(chaveConta, MAX_FALHAS_LOGIN_POR_CONTA);
             return new LoginResponse(false, "Email ou senha incorretos.", null, null, List.of(), List.of());
         }
 
-        rateLimiterService.registrarSucesso(emailNorm);
+        rateLimiterService.registrarSucesso(chaveIp);
 
         // Mesmo contrato de resposta (200 + sucesso:false) da credencial errada acima,
         // em vez de lançar exceção — mantém as duas falhas de login consistentes.
@@ -162,6 +185,16 @@ public class AuthService {
 
         String emailNorm = email.trim().toLowerCase();
         String mensagemGenerica = "Se este e-mail estiver cadastrado, um código de verificação foi enviado.";
+
+        // Cota por e-mail ANTES de consultar o banco: vale igual para e-mail
+        // existente ou não, então o erro de cota não revela quem tem conta.
+        // Sem ela, dava para inundar a caixa de alguém com códigos e esgotar a
+        // cota diária do provedor de e-mail (Resend free: 100/dia), travando a
+        // recuperação de senha de todo mundo.
+        rateLimiterService.consumirCota("reset-intervalo:" + emailNorm, 1, INTERVALO_MINIMO_ENTRE_CODIGOS,
+                "Aguarde um minuto antes de pedir um novo código.");
+        rateLimiterService.consumirCota("reset-hora:" + emailNorm, MAX_CODIGOS_POR_HORA, Duration.ofHours(1),
+                "Muitos códigos pedidos para este e-mail. Tente novamente mais tarde.");
 
         Usuario usuario = usuarioRepository.findByEmail(emailNorm).orElse(null);
         if (usuario == null) {
@@ -255,6 +288,8 @@ public class AuthService {
         }
 
         usuario.setSenhaHash(passwordEncoder.encode(novaSenha));
+        // Derruba as sessões abertas: se a conta foi invadida, o invasor sai junto.
+        usuario.setSenhaAlteradaEm(LocalDateTime.now());
 
         LocalDateTime expiracaoToken = jwtTokenProvider.obterDataExpiracaoDoToken(tokenRedefinicao);
         tokenRevogadoRepository.save(new TokenRevogado(tokenRedefinicao, LocalDateTime.now(), expiracaoToken));

@@ -18,10 +18,10 @@ import java.util.concurrent.ConcurrentHashMap;
  * Limite de requisições por IP em toda a API — sem isso, qualquer endpoint
  * (não só login/OTP) aceita volume ilimitado de requisições. Usa
  * request.getRemoteAddr() (não X-Forwarded-For: esse header é enviado pelo
- * cliente e pode ser forjado para burlar o limite). Se a aplicação for
- * publicada atrás de um proxy reverso, configure
- * server.forward-headers-strategy=framework para que o Spring/Tomcat resolva
- * o IP real do cliente de forma confiável antes de chegar aqui.
+ * cliente e pode ser forjado para burlar o limite). Atrás do proxy do PaaS, o
+ * IP real chega aqui porque application.properties define
+ * server.forward-headers-strategy=native: o RemoteIpValve do Tomcat só confia
+ * no X-Forwarded-For quando a conexão vem de um proxy de rede interna.
  *
  * <p>Além do limite geral por minuto, {@code POST /auth/cadastro} tem um limite
  * próprio e bem mais apertado por hora. O cadastro responde "e-mail já
@@ -38,22 +38,33 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
 
     /** Sem o context-path (/api) — getServletPath() já o remove. */
     private static final String CAMINHO_CADASTRO = "/auth/cadastro";
+    private static final String CAMINHO_SOLICITAR_RESET = "/auth/reset-senha/solicitar";
 
     private final int limiteRequisicoesPorJanela;
     private final Duration janela = Duration.ofMinutes(1);
 
     private final int limiteCadastrosPorJanela;
-    private final Duration janelaCadastro = Duration.ofHours(1);
+    private final Duration janelaDeUmaHora = Duration.ofHours(1);
+
+    /**
+     * Pedido de código de recuperação por IP. O AuthService já limita por
+     * e-mail; este teto impede um único IP de pedir códigos para uma lista de
+     * e-mails diferentes e esgotar a cota diária do provedor de e-mail.
+     */
+    private final int limiteCodigosResetPorJanela;
 
     private final ConcurrentHashMap<String, Contador> contadoresPorIp = new ConcurrentHashMap<>();
     private final ConcurrentHashMap<String, Contador> contadoresCadastroPorIp = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<String, Contador> contadoresResetPorIp = new ConcurrentHashMap<>();
 
     public GlobalRateLimitFilter(
             @Value("${app.rate-limit.requisicoes-por-minuto:120}") int limiteRequisicoesPorJanela,
-            @Value("${app.rate-limit.cadastros-por-hora:10}") int limiteCadastrosPorJanela
+            @Value("${app.rate-limit.cadastros-por-hora:10}") int limiteCadastrosPorJanela,
+            @Value("${app.rate-limit.codigos-reset-por-hora:10}") int limiteCodigosResetPorJanela
     ) {
         this.limiteRequisicoesPorJanela = limiteRequisicoesPorJanela;
         this.limiteCadastrosPorJanela = limiteCadastrosPorJanela;
+        this.limiteCodigosResetPorJanela = limiteCodigosResetPorJanela;
     }
 
     @Override
@@ -71,8 +82,14 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
         }
 
         if (ehTentativaDeCadastro(request)
-                && excedeuLimite(contadoresCadastroPorIp, ip, limiteCadastrosPorJanela, janelaCadastro)) {
+                && excedeuLimite(contadoresCadastroPorIp, ip, limiteCadastrosPorJanela, janelaDeUmaHora)) {
             responderExcesso(response, "Muitas tentativas de cadastro. Tente novamente mais tarde.");
+            return;
+        }
+
+        if (ehPost(request, CAMINHO_SOLICITAR_RESET)
+                && excedeuLimite(contadoresResetPorIp, ip, limiteCodigosResetPorJanela, janelaDeUmaHora)) {
+            responderExcesso(response, "Muitos pedidos de código. Tente novamente mais tarde.");
             return;
         }
 
@@ -80,8 +97,12 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
     }
 
     private boolean ehTentativaDeCadastro(HttpServletRequest request) {
+        return ehPost(request, CAMINHO_CADASTRO);
+    }
+
+    private static boolean ehPost(HttpServletRequest request, String caminho) {
         return "POST".equalsIgnoreCase(request.getMethod())
-                && CAMINHO_CADASTRO.equals(request.getServletPath());
+                && caminho.equals(request.getServletPath());
     }
 
     private static boolean excedeuLimite(
@@ -114,6 +135,7 @@ public class GlobalRateLimitFilter extends OncePerRequestFilter {
         Instant agora = Instant.now();
         contadoresPorIp.entrySet().removeIf(entry -> entry.getValue().janelaExpiraEm.isBefore(agora));
         contadoresCadastroPorIp.entrySet().removeIf(entry -> entry.getValue().janelaExpiraEm.isBefore(agora));
+        contadoresResetPorIp.entrySet().removeIf(entry -> entry.getValue().janelaExpiraEm.isBefore(agora));
     }
 
     private static class Contador {
